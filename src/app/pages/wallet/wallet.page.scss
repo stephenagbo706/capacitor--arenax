@@ -4,14 +4,14 @@
 
 .ax-balance {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .atm-card {
   position: relative;
   overflow: hidden;
-  border-radius: 22px;
-  padding: 18px;
+  border-radius: 18px;
+  padding: 14px;
   border: 1px solid rgba(86, 232, 250, 0.45);
   background:
     radial-gradient(circle at 88% 12%, rgba(58, 237, 255, 0.35), transparent 42%),
@@ -86,17 +86,18 @@
 }
 
 .atm-card__number {
-  margin-top: 8px;
-  font-size: 1rem;
-  letter-spacing: 0.14em;
+  margin-top: 6px;
+  font-size: 0.92rem;
+  letter-spacing: 0.08em;
   color: #ebf3ff;
   font-weight: 600;
+  word-break: break-word;
 }
 
 .atm-card__balance-row {
-  margin-top: 8px;
+  margin-top: 4px;
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .atm-card__balance-label {
@@ -107,21 +108,23 @@
 
 .atm-card h2 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.7rem;
   letter-spacing: 0.02em;
   color: #ffffff;
   text-shadow: 0 8px 24px rgba(31, 222, 255, 0.33);
 }
 
 .atm-card__actions {
-  margin-top: 6px;
-  gap: 10px;
+  margin-top: 4px;
+  gap: 8px;
 }
 
 .atm-btn {
   flex: 1;
-  min-height: 44px;
-  border-radius: 13px;
+  min-height: 38px;
+  border-radius: 11px;
+  padding: 8px 10px;
+  font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   border: 1px solid transparent;
@@ -156,7 +159,35 @@
 }
 
 @media (max-width: 380px) {
+  .atm-card {
+    padding: 12px;
+  }
+
+  .atm-card__brand {
+    font-size: 0.66rem;
+    padding: 3px 7px;
+  }
+
+  .atm-card__logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .atm-card h2 {
+    font-size: 1.5rem;
+  }
+
   .atm-card__actions {
-    flex-direction: column;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .atm-btn {
+    min-height: 36px;
+    font-size: 0.82rem;
+  }
+
+  .atm-btn i {
+    font-size: 0.78rem;
   }
 }
