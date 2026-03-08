@@ -11,6 +11,7 @@ ion-content {
   --background: radial-gradient(circle at 20% 10%, rgba(46, 68, 150, 0.45), transparent 45%),
     radial-gradient(circle at 80% 30%, rgba(111, 66, 255, 0.18), transparent 50%),
     linear-gradient(155deg, var(--home-bg-0), var(--home-bg-1) 48%, var(--home-bg-2));
+  --color: var(--home-text);
   font-family: 'Outfit', 'Sora', 'Montserrat', 'Segoe UI', sans-serif;
   color: var(--home-text);
 }
@@ -68,6 +69,17 @@ ion-content {
 .ax-home > * {
   position: relative;
   z-index: 1;
+}
+
+.ax-home,
+.ax-home a,
+.ax-home p,
+.ax-home h1,
+.ax-home h2,
+.ax-home h3,
+.ax-home strong,
+.ax-home span {
+  color: var(--home-text);
 }
 
 .ax-home__top {
@@ -240,6 +252,7 @@ ion-content {
   margin: 8px 0 14px;
   font-size: 1.2rem;
   font-weight: 700;
+  color: var(--home-text);
 }
 
 .match-grid {

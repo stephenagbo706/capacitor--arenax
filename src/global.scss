@@ -57,6 +57,11 @@ body {
   background: linear-gradient(160deg, var(--ax-bg-0), var(--ax-bg-1));
 }
 
+ion-content {
+  --color: var(--ax-text);
+  color: var(--ax-text);
+}
+
 .ax-screen {
   min-height: 100%;
   background: linear-gradient(160deg, var(--ax-bg-0), var(--ax-bg-1));
