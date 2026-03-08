@@ -35,6 +35,16 @@
   margin: 16px 0 20px;
 }
 
+.ax-empty-chat {
+  margin: 16px 0 20px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--ax-card-border);
+  background: rgba(8, 14, 35, 0.75);
+  color: var(--ax-muted);
+  text-align: center;
+}
+
 .ax-message {
   max-width: 76%;
   background: rgba(8, 14, 35, 0.9);

@@ -43,13 +43,11 @@ export class ChatPage {
     if (!this.message.trim()) return;
     this.arena.sendMessage(this.chatId, { text: this.message });
     this.message = '';
-    setTimeout(() => this.arena.simulateReply(this.chatId), 800);
   }
 
   sendImage() {
     if (!this.imageUrl.trim()) return;
     this.arena.sendMessage(this.chatId, { image: this.imageUrl });
     this.imageUrl = '';
-    setTimeout(() => this.arena.simulateReply(this.chatId), 800);
   }
 }

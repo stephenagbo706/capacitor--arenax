@@ -13,7 +13,7 @@
       </div>
     </header>
 
-    <div class="ax-chat-thread" *ngIf="chat">
+    <div class="ax-chat-thread" *ngIf="chat && chat.messages.length; else emptyChat">
       <div
         class="ax-message"
         *ngFor="let msg of chat.messages"
@@ -24,6 +24,9 @@
         <span>{{ msg.sentAt | date:'shortTime' }}</span>
       </div>
     </div>
+    <ng-template #emptyChat>
+      <div class="ax-empty-chat">No messages yet. Start chatting freely.</div>
+    </ng-template>
 
     <div class="ax-chat-input">
       <input class="ax-input" placeholder="Type a message" [(ngModel)]="message" />

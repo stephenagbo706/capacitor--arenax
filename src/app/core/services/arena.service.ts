@@ -13,6 +13,11 @@ import {
 } from '../models/arena.models';
 
 const STORAGE_KEY = 'arenax_state_v2';
+const DEFAULT_CHAT_TEXTS = new Set([
+  'Hey! Ready to battle? I am online now.',
+  'Ready for the rematch tonight?',
+  'Challenge accepted. Meet you in the arena!',
+]);
 
 const now = () => new Date().toISOString();
 const uid = () => crypto.randomUUID();
@@ -646,14 +651,7 @@ export class ArenaService {
     this.state.chats.unshift({
       id: chatId,
       participantIds: [current.id, userId],
-      messages: [
-        {
-          id: uid(),
-          senderId: userId,
-          text: 'Hey! Ready to battle? I am online now.',
-          sentAt: now(),
-        },
-      ],
+      messages: [],
     });
     this.persist();
     this.hydrateSubjects();
@@ -901,7 +899,11 @@ export class ArenaService {
       })),
       tournaments: input.tournaments || seeded.tournaments,
       spotlightPosts: this.withRequiredSpotlightPosts(input.spotlightPosts || seeded.spotlightPosts),
-      chats: input.chats || seeded.chats,
+      chats: (input.chats || seeded.chats).map((chat) => ({
+        ...chat,
+        // Remove old seeded/auto bot-like messages from legacy builds.
+        messages: (chat.messages || []).filter((message) => !DEFAULT_CHAT_TEXTS.has((message.text || '').trim())),
+      })),
       notifications: input.notifications || seeded.notifications,
       transactions: input.transactions || seeded.transactions,
       commissionRate: typeof input.commissionRate === 'number' ? input.commissionRate : seeded.commissionRate,
@@ -1121,20 +1123,7 @@ export class ArenaService {
           comments: [],
         },
       ],
-      chats: [
-        {
-          id: uid(),
-          participantIds: [userId, players[1].id],
-          messages: [
-            {
-              id: uid(),
-              senderId: players[1].id,
-              text: 'Ready for the rematch tonight?',
-              sentAt: now(),
-            },
-          ],
-        },
-      ],
+      chats: [],
       notifications: [
         {
           id: uid(),
