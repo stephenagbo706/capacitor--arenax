@@ -1,5 +1,6 @@
 export type SupportedGame = 'eFootball' | 'Dream League Soccer' | 'FIFA' | 'Call of Duty Mobile';
 export type ChallengeStatus = 'pending' | 'accepted' | 'declined';
+export type FriendRequestStatus = 'pending' | 'accepted' | 'declined';
 export type MatchStatus =
   | 'waiting'
   | 'live'
@@ -8,7 +9,7 @@ export type MatchStatus =
   | 'verified'
   | 'rejected';
 export type TransactionType = 'deposit' | 'withdraw' | 'reward' | 'stake_lock' | 'entry_lock' | 'refund';
-export type NotificationType = 'challenge' | 'match' | 'payment' | 'system' | 'tournament' | 'spotlight' | 'chat';
+export type NotificationType = 'challenge' | 'match' | 'payment' | 'system' | 'tournament' | 'spotlight' | 'chat' | 'friend';
 export type TournamentStatus = 'live' | 'upcoming' | 'ended';
 
 export interface UserProfile {
@@ -115,12 +116,22 @@ export interface ChatThread {
   messages: ChatMessage[];
 }
 
+export interface FriendRequest {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  status: FriendRequestStatus;
+  createdAt: string;
+  respondedAt?: string;
+}
+
 export interface NotificationItem {
   id: string;
   type: NotificationType;
   message: string;
   createdAt: string;
   read: boolean;
+  userId?: string;
   chatId?: string;
 }
 
@@ -136,6 +147,7 @@ export interface TransactionItem {
 export interface ArenaState {
   users: UserProfile[];
   currentUserId?: string;
+  friendRequests: FriendRequest[];
   challenges: Challenge[];
   matches: Match[];
   tournaments: Tournament[];

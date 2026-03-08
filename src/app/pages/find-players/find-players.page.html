@@ -27,7 +27,13 @@
         </div>
         <div class="ax-row ax-player-actions">
           <span class="ax-muted">Win rate {{ (player.wins / (player.wins + player.losses) * 100) | number:'1.0-0' }}%</span>
-          <button class="ax-btn ax-btn-primary" (click)="openChallenge(player.id)">Challenge</button>
+          <div class="player-actions">
+            <button class="ax-btn" (click)="startChat(player.id)">Chat</button>
+            <button class="ax-btn" *ngIf="getFriendshipState(player.id) === 'none'" (click)="sendFriendRequest(player.id)">Add Friend</button>
+            <button class="ax-btn" *ngIf="getFriendshipState(player.id) === 'pending_out'" disabled>Requested</button>
+            <button class="ax-btn" *ngIf="getFriendshipState(player.id) === 'friends'" disabled>Friends</button>
+            <button class="ax-btn ax-btn-primary" (click)="openChallenge(player.id)">Challenge</button>
+          </div>
         </div>
       </div>
     </div>

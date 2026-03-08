@@ -4,6 +4,7 @@ import {
   ArenaState,
   ChatThread,
   Challenge,
+  FriendRequest,
   Match,
   NotificationItem,
   SpotlightPost,
@@ -34,6 +35,7 @@ export class ArenaService {
   tournaments$ = new BehaviorSubject<Tournament[]>([]);
   spotlightPosts$ = new BehaviorSubject<SpotlightPost[]>([]);
   chats$ = new BehaviorSubject<ArenaState['chats']>([]);
+  friendRequests$ = new BehaviorSubject<FriendRequest[]>([]);
   notifications$ = new BehaviorSubject<NotificationItem[]>([]);
   transactions$ = new BehaviorSubject<TransactionItem[]>([]);
 
@@ -641,10 +643,108 @@ export class ArenaService {
     return { ok: true };
   }
 
+  sendFriendRequest(toUserId: string) {
+    const current = this.getCurrentUser();
+    if (!current) return { ok: false, message: 'You must be logged in.' };
+    if (toUserId === current.id) return { ok: false, message: 'You cannot add yourself.' };
+    if (!this.getUser(toUserId)) return { ok: false, message: 'Player not found.' };
+
+    const existing = this.state.friendRequests.find(
+      (item) =>
+        ((item.fromUserId === current.id && item.toUserId === toUserId) ||
+          (item.fromUserId === toUserId && item.toUserId === current.id)) &&
+        item.status !== 'declined'
+    );
+    if (existing?.status === 'accepted') {
+      return { ok: false, message: 'You are already friends.' };
+    }
+    if (existing?.status === 'pending') {
+      return { ok: false, message: 'A pending request already exists.' };
+    }
+
+    this.state.friendRequests.unshift({
+      id: uid(),
+      fromUserId: current.id,
+      toUserId,
+      status: 'pending',
+      createdAt: now(),
+    });
+    this.state.notifications.unshift({
+      id: uid(),
+      type: 'friend',
+      userId: toUserId,
+      message: `${current.username} sent you a friend request.`,
+      createdAt: now(),
+      read: false,
+    });
+    this.persist();
+    this.hydrateSubjects();
+    return { ok: true };
+  }
+
+  respondToFriendRequest(requestId: string, status: 'accepted' | 'declined') {
+    const current = this.getCurrentUser();
+    if (!current) return { ok: false, message: 'You must be logged in.' };
+    const request = this.state.friendRequests.find((item) => item.id === requestId);
+    if (!request) return { ok: false, message: 'Request not found.' };
+    if (request.toUserId !== current.id) return { ok: false, message: 'You cannot respond to this request.' };
+    if (request.status !== 'pending') return { ok: false, message: 'Request already handled.' };
+
+    request.status = status;
+    request.respondedAt = now();
+    const fromUser = this.getUser(request.fromUserId);
+    this.state.notifications.unshift({
+      id: uid(),
+      type: 'friend',
+      userId: current.id,
+      message: `You ${status} ${fromUser?.username || 'player'}'s friend request.`,
+      createdAt: now(),
+      read: false,
+    });
+    if (status === 'accepted') {
+      this.state.notifications.unshift({
+        id: uid(),
+        type: 'friend',
+        userId: request.fromUserId,
+        message: `${current.username} accepted your friend request.`,
+        createdAt: now(),
+        read: false,
+      });
+      this.createChatWith(request.fromUserId);
+    }
+
+    this.persist();
+    this.hydrateSubjects();
+    return { ok: true };
+  }
+
+  getCurrentUserFriendRequests() {
+    const currentUserId = this.state.currentUserId;
+    if (!currentUserId) return [];
+    return this.state.friendRequests.filter(
+      (request) => request.toUserId === currentUserId && request.status === 'pending'
+    );
+  }
+
+  getFriendshipState(userId: string): 'none' | 'pending_in' | 'pending_out' | 'friends' {
+    const currentUserId = this.state.currentUserId;
+    if (!currentUserId || currentUserId === userId) return 'none';
+    const request = this.state.friendRequests.find(
+      (item) =>
+        (item.fromUserId === currentUserId && item.toUserId === userId) ||
+        (item.fromUserId === userId && item.toUserId === currentUserId)
+    );
+    if (!request) return 'none';
+    if (request.status === 'accepted') return 'friends';
+    if (request.status === 'pending') return request.toUserId === currentUserId ? 'pending_in' : 'pending_out';
+    return 'none';
+  }
+
   createChatWith(userId: string) {
     const current = this.getCurrentUser();
     if (!current) return '';
     if (userId === current.id) return '';
+    if (!this.getUser(userId)) return '';
     const existing = this.state.chats.find(
       (c) => c.participantIds.includes(userId) && c.participantIds.includes(current.id)
     );
@@ -666,13 +766,19 @@ export class ArenaService {
     const chat = this.state.chats.find((c) => c.id === chatId);
     if (!chat) return;
     if (!chat.participantIds.includes(current.id)) return;
+    const text = (message.text || '').trim();
+    if (!text && !message.image) return;
     chat.messages.push({
       id: uid(),
       senderId: current.id,
-      text: message.text,
+      text,
       image: message.image,
       sentAt: now(),
     });
+    for (const participantId of chat.participantIds) {
+      if (participantId === current.id) continue;
+      this.pushIncomingChatNotification(chat.id, current.id, text || 'Sent you a message.', participantId);
+    }
     this.persist();
     this.hydrateSubjects();
   }
@@ -689,7 +795,9 @@ export class ArenaService {
       text: 'Challenge accepted. Meet you in the arena!',
       sentAt: now(),
     });
-    this.pushIncomingChatNotification(chat.id, opponentId, 'Challenge accepted. Meet you in the arena!');
+    if (currentUserId) {
+      this.pushIncomingChatNotification(chat.id, opponentId, 'Challenge accepted. Meet you in the arena!', currentUserId);
+    }
     this.persist();
     this.hydrateSubjects();
   }
@@ -732,15 +840,29 @@ export class ArenaService {
   }
 
   markNotificationRead(id: string) {
-    this.state.notifications = this.state.notifications.map((n) =>
-      n.id === id ? { ...n, read: true } : n
-    );
+    const currentUserId = this.state.currentUserId;
+    this.state.notifications = this.state.notifications.map((n) => {
+      if (n.id !== id) return n;
+      if (n.userId && currentUserId && n.userId !== currentUserId) return n;
+      return { ...n, read: true };
+    });
     this.persist();
     this.hydrateSubjects();
   }
 
   getUser(id: string) {
     return this.state.users.find((u) => u.id === id);
+  }
+
+  findUserByGameId(gameId: string) {
+    const normalized = gameId.trim().toLowerCase();
+    if (!normalized) return undefined;
+    const currentUserId = this.state.currentUserId;
+    return this.state.users.find((user) => {
+      if (user.id === currentUserId) return false;
+      if (user.gameId.toLowerCase() === normalized) return true;
+      return Object.values(user.gameIds).some((id) => id.toLowerCase() === normalized);
+    });
   }
 
   getCurrentUser() {
@@ -777,12 +899,13 @@ export class ArenaService {
   private hydrateSubjects() {
     this.users$.next(this.state.users);
     this.currentUser$.next(this.getCurrentUser());
+    this.friendRequests$.next(this.getCurrentUserFriendRequests());
     this.challenges$.next(this.state.challenges);
     this.matches$.next(this.state.matches);
     this.tournaments$.next(this.state.tournaments);
     this.spotlightPosts$.next(this.state.spotlightPosts);
     this.chats$.next(this.getChatsForCurrentUser());
-    this.notifications$.next(this.state.notifications);
+    this.notifications$.next(this.getNotificationsForCurrentUser());
     this.transactions$.next(this.state.transactions);
   }
 
@@ -796,9 +919,8 @@ export class ArenaService {
     return Math.max(0, user.wins * 30 - user.losses * 8);
   }
 
-  private pushIncomingChatNotification(chatId: string, senderId: string, messageText: string) {
-    const currentUserId = this.state.currentUserId;
-    if (!currentUserId || senderId === currentUserId) return;
+  private pushIncomingChatNotification(chatId: string, senderId: string, messageText: string, recipientUserId: string) {
+    if (senderId === recipientUserId) return;
     const sender = this.getUser(senderId);
     const preview = messageText.trim() || 'Sent you a message.';
 
@@ -806,10 +928,17 @@ export class ArenaService {
       id: uid(),
       type: 'chat',
       chatId,
+      userId: recipientUserId,
       message: `${sender?.username || 'Player'}: ${preview}`,
       createdAt: now(),
       read: false,
     });
+  }
+
+  private getNotificationsForCurrentUser() {
+    const currentUserId = this.state.currentUserId;
+    if (!currentUserId) return [];
+    return this.state.notifications.filter((note) => !note.userId || note.userId === currentUserId);
   }
 
   private lockFunds(userId: string, amount: number, type: TransactionItem['type'], note: string) {
@@ -924,6 +1053,13 @@ export class ArenaService {
     return {
       users,
       currentUserId: input.currentUserId || users[0]?.id,
+      friendRequests: (input.friendRequests || seeded.friendRequests).map((request) => ({
+        ...request,
+        status:
+          request.status === 'accepted' || request.status === 'declined' || request.status === 'pending'
+            ? request.status
+            : 'pending',
+      })),
       challenges: input.challenges || [],
       matches: (input.matches || seeded.matches).map((match) => ({
         ...match,
@@ -1095,6 +1231,7 @@ export class ArenaService {
     return {
       users: players,
       currentUserId: userId,
+      friendRequests: [],
       challenges: [
         {
           id: uid(),

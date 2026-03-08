@@ -67,6 +67,13 @@
   gap: 10px;
 }
 
+.player-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .avatar-wrap {
   position: relative;
   width: 44px;

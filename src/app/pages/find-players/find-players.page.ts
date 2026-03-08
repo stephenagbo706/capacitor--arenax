@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { DecimalPipe, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { ArenaService } from '../../core/services/arena.service';
 import { BottomNavComponent } from '../../shared/bottom-nav.component';
@@ -25,7 +26,7 @@ export class FindPlayersPage {
   statusMessage = '';
   errorMessage = '';
 
-  constructor(private arena: ArenaService) {}
+  constructor(private arena: ArenaService, private router: Router) {}
 
   openChallenge(playerId: string) {
     this.selectedPlayerId = playerId;
@@ -63,5 +64,26 @@ export class FindPlayersPage {
     }
     this.errorMessage = '';
     this.statusMessage = 'Challenge sent and stake locked in escrow. Match is now waiting for join.';
+  }
+
+  startChat(playerId: string) {
+    const chatId = this.arena.createChatWith(playerId);
+    if (!chatId) return;
+    this.router.navigate(['/chat', chatId]);
+  }
+
+  sendFriendRequest(playerId: string) {
+    const result = this.arena.sendFriendRequest(playerId);
+    if (!result.ok) {
+      this.errorMessage = result.message || 'Unable to send friend request.';
+      this.statusMessage = '';
+      return;
+    }
+    this.errorMessage = '';
+    this.statusMessage = 'Friend request sent.';
+  }
+
+  getFriendshipState(playerId: string) {
+    return this.arena.getFriendshipState(playerId);
   }
 }

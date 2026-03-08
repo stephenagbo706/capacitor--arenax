@@ -15,6 +15,13 @@
   align-items: center;
 }
 
+.player-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .ax-modal {
   position: fixed;
   inset: 0;

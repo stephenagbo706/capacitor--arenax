@@ -57,10 +57,42 @@
                 <p class="ax-muted">{{ user.gameId }}</p>
               </div>
             </div>
-            <button class="ax-btn" (click)="startChat(user.id)">Chat</button>
+            <div class="player-actions">
+              <button class="ax-btn" (click)="startChat(user.id)">Chat</button>
+              <button class="ax-btn" *ngIf="getFriendshipState(user.id) === 'none'" (click)="sendFriendRequest(user.id)">Add Friend</button>
+              <button class="ax-btn" *ngIf="getFriendshipState(user.id) === 'pending_out'" disabled>Requested</button>
+              <button class="ax-btn" *ngIf="getFriendshipState(user.id) === 'friends'" disabled>Friends</button>
+            </div>
           </div>
         </article>
       </div>
+    </section>
+
+    <section class="ax-card discover-card" *ngIf="(friendRequests$ | async) as requests">
+      <strong>Friend Requests</strong>
+      <div class="ax-grid discover-grid" *ngIf="requests.length; else emptyRequests">
+        <article class="player-item" *ngFor="let request of requests">
+          <div class="ax-row" *ngIf="request.toUserId === currentUserId && getUser(request.fromUserId) as requester">
+            <div class="ax-row player-meta">
+              <div class="avatar-wrap">
+                <img class="ax-avatar" [src]="requester.avatar" alt="Player" />
+                <span class="status-dot" [class.offline]="!requester.online"></span>
+              </div>
+              <div>
+                <strong>{{ requester.username }}</strong>
+                <p class="ax-muted">Sent you a friend request</p>
+              </div>
+            </div>
+            <div class="player-actions">
+              <button class="ax-btn ax-btn-primary" (click)="respondFriendRequest(request, 'accepted')">Accept</button>
+              <button class="ax-btn" (click)="respondFriendRequest(request, 'declined')">Decline</button>
+            </div>
+          </div>
+        </article>
+      </div>
+      <ng-template #emptyRequests>
+        <p class="ax-muted">No pending friend requests.</p>
+      </ng-template>
     </section>
 
     <h3 class="ax-section-title">Recent Chats</h3>

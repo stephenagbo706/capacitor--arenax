@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { IonContent } from '@ionic/angular/standalone';
 import { ArenaService } from '../../core/services/arena.service';
 import { BottomNavComponent } from '../../shared/bottom-nav.component';
-import { ChatThread, SupportedGame, UserProfile } from '../../core/models/arena.models';
+import { ChatThread, FriendRequest, SupportedGame, UserProfile } from '../../core/models/arena.models';
 
 @Component({
   selector: 'app-chat-list',
@@ -17,6 +17,7 @@ import { ChatThread, SupportedGame, UserProfile } from '../../core/models/arena.
 export class ChatListPage {
   chats$ = this.arena.chats$;
   users$ = this.arena.users$;
+  friendRequests$ = this.arena.friendRequests$;
   currentUserId = this.arena.getCurrentUser()?.id || '';
   searchGameId = '';
   roomGameId = '';
@@ -90,9 +91,7 @@ export class ChatListPage {
       return;
     }
 
-    const target = this.users$.value.find(
-      (user) => user.id !== this.currentUserId && Object.values(user.gameIds).some((id) => id.toLowerCase() === roomId)
-    );
+    const target = this.arena.findUserByGameId(roomId);
 
     if (!target) {
       this.roomError = 'No active player room found for this Game ID.';
@@ -109,6 +108,32 @@ export class ChatListPage {
     const chatId = this.arena.createChatWith(userId);
     if (!chatId) return;
     this.router.navigate(['/chat', chatId]);
+  }
+
+  sendFriendRequest(userId: string) {
+    const result = this.arena.sendFriendRequest(userId);
+    if (!result.ok) {
+      this.roomError = result.message || 'Unable to send friend request.';
+      this.roomMessage = '';
+      return;
+    }
+    this.roomError = '';
+    this.roomMessage = 'Friend request sent.';
+  }
+
+  respondFriendRequest(request: FriendRequest, status: 'accepted' | 'declined') {
+    const result = this.arena.respondToFriendRequest(request.id, status);
+    if (!result.ok) {
+      this.roomError = result.message || 'Unable to respond to friend request.';
+      this.roomMessage = '';
+      return;
+    }
+    this.roomError = '';
+    this.roomMessage = status === 'accepted' ? 'Friend request accepted.' : 'Friend request declined.';
+  }
+
+  getFriendshipState(userId: string) {
+    return this.arena.getFriendshipState(userId);
   }
 
   trackByUserId(_index: number, user: UserProfile) {
