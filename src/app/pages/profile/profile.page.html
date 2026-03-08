@@ -1,86 +1,96 @@
 <ion-content [fullscreen]="true">
-  <div class="ax-screen ax-fade-in" *ngIf="user$ | async as user">
-    <section class="profile-hero esports-font">
-      <div class="profile-edit">
+  <div class="profile-page" *ngIf="user$ | async as user">
+    <section class="profile-hero">
+      <div class="hero-actions">
+        <button class="ax-btn ax-btn-light" type="button" (click)="cycleProfileIcon(user)">
+          <i class="fa-solid fa-rotate"></i>
+          Cycle Icon
+        </button>
         <a class="ax-btn" routerLink="/profile/edit">Edit</a>
       </div>
-      <div class="profile-avatar-wrap">
-        <img class="profile-avatar" [src]="user.avatar" alt="Profile" />
+
+      <div class="avatar-wrap">
+        <img class="avatar" [src]="user.avatar" alt="Profile" />
         <span class="status-dot" aria-hidden="true"></span>
       </div>
-      <span class="clan-pill">CLAN [ARX]</span>
+
       <h2 class="profile-name">{{ user.username }}</h2>
-      <p class="profile-subtitle">Pro Tactical League · Member since 2023</p>
+      <p class="profile-subtitle">Compete. Win. Progress.</p>
+
+      <div class="rank-chip">
+        <i class="fa-solid fa-medal"></i>
+        <span>{{ getRankDivision(user) }}</span>
+        <small>Global #{{ getGlobalRank(user.id) }}</small>
+      </div>
     </section>
 
-    <section class="profile-stats-grid esports-font">
+    <section class="stats-grid">
       <article class="stat-card ax-card">
         <p class="stat-label">Matches</p>
-        <strong class="stat-value">{{ user.wins + user.losses }}</strong>
-        <span class="stat-note">+12 this week</span>
+        <strong class="stat-value">{{ getTotalMatches(user) }}</strong>
       </article>
+
       <article class="stat-card ax-card">
-        <p class="stat-label">Win Rate</p>
-        <strong class="stat-value">
-          {{
-            (user.wins + user.losses)
-              ? (user.wins / (user.wins + user.losses) * 100 | number:'1.0-1')
-              : 0
-          }}%
-        </strong>
-        <div class="stat-bar">
-          <span
-            [style.--fill]="
-              (user.wins + user.losses)
-                ? (user.wins / (user.wins + user.losses) * 100) + '%'
-                : '0%'
-            "
-          ></span>
-        </div>
+        <p class="stat-label">Goal Rate</p>
+        <strong class="stat-value">{{ getGoalRate(user) | number:'1.0-1' }}%</strong>
+        <div class="stat-bar"><span [style.width.%]="getGoalRate(user)"></span></div>
       </article>
+
       <article class="stat-card ax-card">
-        <p class="stat-label">Current Rank</p>
-        <div class="rank-row">
-          <i class="fa-solid fa-gem"></i>
-          <strong class="stat-value">Gold Division</strong>
-        </div>
-        <span class="stat-note">Global Rank #12</span>
+        <p class="stat-label">Wins / Losses</p>
+        <strong class="stat-value">{{ user.wins }}W · {{ user.losses }}L</strong>
       </article>
+
       <article class="stat-card ax-card">
-        <p class="stat-label">Achievements</p>
-        <strong class="stat-value">{{ user.goals }}</strong>
-        <span class="stat-note">Top 5% Global</span>
+        <p class="stat-label">Rank Progress</p>
+        <strong class="stat-value">{{ getRankPoints(user) }} pts</strong>
+        <div class="stat-bar"><span [style.width.%]="getNextTierProgress(user)"></span></div>
       </article>
     </section>
 
-    <div class="ax-grid ax-stats">
-      <div class="ax-card">
+    <section class="wallet-grid">
+      <div class="ax-card wallet-card">
         <p class="ax-muted">Available Wallet</p>
         <h3>${{ user.walletBalance | number:'1.0-2' }}</h3>
       </div>
-      <div class="ax-card">
+      <div class="ax-card wallet-card">
         <p class="ax-muted">Locked in Escrow</p>
         <h3>${{ user.lockedBalance | number:'1.0-2' }}</h3>
       </div>
-      <div class="ax-card">
-        <p class="ax-muted">Wins</p>
-        <h3>{{ user.wins }}</h3>
-      </div>
-      <div class="ax-card">
-        <p class="ax-muted">Losses</p>
-        <h3>{{ user.losses }}</h3>
-      </div>
-    </div>
+    </section>
 
     <h3 class="ax-section-title">Game IDs</h3>
-    <div class="ax-grid">
+    <div class="ax-grid ids-grid">
       <div class="ax-card ax-row"><span>eFootball</span><strong>{{ user.gameIds.eFootball }}</strong></div>
       <div class="ax-card ax-row"><span>Dream League Soccer</span><strong>{{ user.gameIds['Dream League Soccer'] }}</strong></div>
       <div class="ax-card ax-row"><span>FIFA</span><strong>{{ user.gameIds.FIFA }}</strong></div>
       <div class="ax-card ax-row"><span>Call of Duty Mobile</span><strong>{{ user.gameIds['Call of Duty Mobile'] }}</strong></div>
     </div>
 
-    <div class="ax-grid" style="margin-top: 18px;">
+    <h3 class="ax-section-title">Recent Results</h3>
+    <ng-container *ngIf="getUserMatchResults(user.id) as results">
+    <div class="result-grid" *ngIf="results.length; else noResults">
+      <article class="ax-card result-card" *ngFor="let match of results">
+        <div class="result-head">
+          <div>
+            <strong>{{ match.game }}</strong>
+            <p class="ax-muted">vs {{ getOpponentName(match, user.id) }}</p>
+          </div>
+          <span class="result-pill" [ngClass]="getResultClass(match, user.id)">{{ getResultLabel(match, user.id) }}</span>
+        </div>
+        <div class="result-meta">
+          <span>Stake ${{ match.stake | number:'1.0-2' }}</span>
+          <a class="ax-btn" [routerLink]="['/matches', match.id]">Details</a>
+        </div>
+      </article>
+    </div>
+    </ng-container>
+
+    <ng-template #noResults>
+      <div class="ax-card empty-state">No wins or losses yet. Complete a match to start your progression.</div>
+    </ng-template>
+
+    <div class="ax-grid profile-links">
       <a class="ax-card ax-row" routerLink="/notifications">
         <strong>Notifications</strong>
         <i class="fa-solid fa-chevron-right"></i>
@@ -90,19 +100,7 @@
         <i class="fa-solid fa-chevron-right"></i>
       </a>
     </div>
-
-    <h3 class="ax-section-title">Match History</h3>
-    <div class="ax-grid">
-      <div class="ax-card" *ngFor="let match of (matches$ | async)">
-        <div class="ax-row">
-          <div>
-            <strong>{{ match.game }}</strong>
-            <p class="ax-muted">Stake ${{ match.stake }} · {{ match.status | uppercase }}</p>
-          </div>
-          <a class="ax-btn" [routerLink]="['/matches', match.id]">Details</a>
-        </div>
-      </div>
-    </div>
   </div>
+
   <ax-bottom-nav></ax-bottom-nav>
 </ion-content>

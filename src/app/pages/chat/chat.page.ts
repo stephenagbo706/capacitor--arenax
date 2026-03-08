@@ -35,6 +35,10 @@ export class ChatPage {
     return chat.participantIds.find((id) => id !== this.currentUserId) || chat.participantIds[0];
   }
 
+  isOpponentOnline(chat: ChatThread) {
+    return !!this.getUser(this.getOpponentId(chat))?.online;
+  }
+
   send() {
     if (!this.message.trim()) return;
     this.arena.sendMessage(this.chatId, { text: this.message });

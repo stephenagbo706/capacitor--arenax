@@ -5,13 +5,35 @@
       <p class="ax-muted">Manage your ArenaX balance.</p>
     </header>
 
-    <div class="ax-card ax-balance">
-      <p class="ax-muted">Available Balance</p>
-      <h2>${{ (user$ | async)?.walletBalance | number:'1.0-2' }}</h2>
+    <div class="ax-card ax-balance atm-card">
+      <div class="atm-card__topline">
+        <p class="atm-card__label">ArenaX Wallet Card</p>
+        <span class="atm-card__brand">AX PAY</span>
+      </div>
+
+      <div class="atm-card__chip-wrap">
+        <img class="atm-card__logo" src="assets/ax-ui/logo.png" alt="AX logo" />
+        <span class="atm-card__signal" aria-hidden="true"><i class="fa-solid fa-wifi"></i></span>
+      </div>
+
+      <div class="atm-card__number">{{ (user$ | async)?.gameId || 'AX-000000' }}</div>
+
+      <div class="atm-card__balance-row">
+        <p class="atm-card__balance-label">Available Balance</p>
+        <h2>${{ (user$ | async)?.walletBalance | number:'1.0-2' }}</h2>
+      </div>
+
       <p class="ax-muted">Locked in Escrow: ${{ (user$ | async)?.lockedBalance | number:'1.0-2' }}</p>
-      <div class="ax-row">
-        <a class="ax-btn ax-btn-primary" routerLink="/wallet/deposit">Deposit</a>
-        <a class="ax-btn" routerLink="/wallet/withdraw">Withdraw</a>
+
+      <div class="ax-row atm-card__actions">
+        <a class="ax-btn atm-btn atm-btn--deposit" routerLink="/wallet/deposit">
+          <i class="fa-solid fa-arrow-down"></i>
+          Deposit
+        </a>
+        <a class="ax-btn atm-btn atm-btn--withdraw" routerLink="/wallet/withdraw">
+          <i class="fa-solid fa-arrow-up"></i>
+          Withdraw
+        </a>
       </div>
     </div>
 

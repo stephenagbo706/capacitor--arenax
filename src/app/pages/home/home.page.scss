@@ -72,10 +72,16 @@ ion-content {
 
 .ax-home__top {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
   margin-bottom: 10px;
+}
+
+.ax-home__top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .wallet-chip {
@@ -105,7 +111,8 @@ ion-content {
   box-shadow: 0 8px 16px rgba(136, 79, 255, 0.35);
 }
 
-.notify-btn {
+.notify-btn,
+.chat-btn {
   display: grid;
   place-items: center;
   position: relative;

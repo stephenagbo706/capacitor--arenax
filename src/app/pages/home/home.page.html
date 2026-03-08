@@ -3,14 +3,19 @@
     <div class="ax-home__grid" aria-hidden="true"></div>
 
     <header class="ax-home__top">
-      <a class="wallet-chip" routerLink="/wallet">
-        <span class="wallet-icon"><i class="fa-solid fa-dollar-sign"></i></span>
-        ${{ user.walletBalance | number : '1.0-2' }}
+      <a class="chat-btn" routerLink="/chat" aria-label="Chat">
+        <i class="fa-regular fa-comments"></i>
       </a>
-      <a class="notify-btn" routerLink="/notifications" aria-label="Notifications">
-        <i class="fa-regular fa-bell"></i>
-        <span class="notify-dot" *ngIf="hasUnreadNotifications"></span>
-      </a>
+      <div class="ax-home__top-right">
+        <a class="wallet-chip" routerLink="/wallet">
+          <span class="wallet-icon"><i class="fa-solid fa-dollar-sign"></i></span>
+          ${{ user.walletBalance | number : '1.0-2' }}
+        </a>
+        <a class="notify-btn" routerLink="/notifications" aria-label="Notifications">
+          <i class="fa-regular fa-bell"></i>
+          <span class="notify-dot" *ngIf="hasUnreadNotifications"></span>
+        </a>
+      </div>
     </header>
 
     <h1 class="ax-home__title">Ready to compete?</h1>

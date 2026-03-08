@@ -2,10 +2,13 @@
   <div class="ax-screen ax-fade-in">
     <header class="ax-row" *ngIf="chat">
       <div class="ax-row">
-        <img class="ax-avatar" [src]="getUser(getOpponentId(chat))?.avatar" alt="Player" />
+        <div class="avatar-wrap">
+          <img class="ax-avatar" [src]="getUser(getOpponentId(chat))?.avatar" alt="Player" />
+          <span class="status-dot" [class.offline]="!isOpponentOnline(chat)"></span>
+        </div>
         <div>
           <strong>{{ getUser(getOpponentId(chat))?.username }}</strong>
-          <p class="ax-muted">Online now</p>
+          <p class="ax-muted">{{ isOpponentOnline(chat) ? 'Online now' : 'Offline' }}</p>
         </div>
       </div>
     </header>

@@ -15,6 +15,7 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
 export class FindPlayersPage {
   players$ = this.arena.users$;
   currentUserId = this.arena.getCurrentUser()?.id || '';
+  searchTerm = '';
   modalOpen = false;
   selectedPlayerId = '';
   supportedGames = ['eFootball', 'Dream League Soccer', 'FIFA', 'Call of Duty Mobile'];
@@ -40,7 +41,13 @@ export class FindPlayersPage {
   }
 
   get listedPlayers() {
-    return this.players$.value.filter((player) => player.id !== this.currentUserId);
+    const query = this.searchTerm.trim().toLowerCase();
+    return this.players$.value.filter((player) => {
+      if (player.id === this.currentUserId) return false;
+      if (!query) return true;
+      const ids = `${player.gameId} ${Object.values(player.gameIds).join(' ')}`.toLowerCase();
+      return player.username.toLowerCase().includes(query) || ids.includes(query);
+    });
   }
 
   sendChallenge() {

@@ -7,6 +7,10 @@
   gap: 12px;
 }
 
+.ax-card + .ax-grid {
+  margin-top: 12px;
+}
+
 .ax-player-actions {
   align-items: center;
 }

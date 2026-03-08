@@ -2,6 +2,97 @@
   color: var(--ax-muted);
 }
 
+.ax-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--ax-muted);
+}
+
+.room-card,
+.join-card,
+.discover-card {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.room-topline {
+  align-items: center;
+}
+
+.room-actions {
+  gap: 8px;
+  align-items: center;
+}
+
+.room-actions .ax-input {
+  flex: 1;
+}
+
+.room-id {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(6, 16, 48, 0.6);
+  border: 1px solid rgba(96, 238, 253, 0.24);
+}
+
+.ax-status {
+  color: var(--ax-neon);
+  font-weight: 600;
+  margin: 0;
+}
+
+.ax-error {
+  color: var(--ax-danger);
+  font-weight: 600;
+  margin: 0;
+}
+
+.discover-grid {
+  gap: 8px;
+}
+
+.player-item {
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(8, 14, 43, 0.64);
+  border: 1px solid rgba(106, 149, 227, 0.2);
+}
+
+.player-meta {
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.avatar-wrap .ax-avatar {
+  width: 44px;
+  height: 44px;
+}
+
+.status-dot {
+  position: absolute;
+  right: 1px;
+  bottom: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #081231;
+  background: #1ee08a;
+}
+
+.status-dot.offline {
+  background: #ff4f6d;
+}
+
 .ax-chat {
   text-decoration: none;
   color: var(--ax-text);
@@ -11,4 +102,16 @@
   margin-left: auto;
   font-size: 0.75rem;
   color: var(--ax-muted);
+}
+
+@media (max-width: 390px) {
+  .room-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .room-actions .ax-btn,
+  .room-actions .ax-input {
+    width: 100%;
+  }
 }

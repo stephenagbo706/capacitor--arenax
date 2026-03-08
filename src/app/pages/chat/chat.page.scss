@@ -2,6 +2,33 @@
   color: var(--ax-muted);
 }
 
+.avatar-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin-right: 10px;
+}
+
+.avatar-wrap .ax-avatar {
+  width: 44px;
+  height: 44px;
+}
+
+.status-dot {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #081231;
+  background: #1ee08a;
+}
+
+.status-dot.offline {
+  background: #ff4f6d;
+}
+
 .ax-chat-thread {
   display: grid;
   gap: 10px;

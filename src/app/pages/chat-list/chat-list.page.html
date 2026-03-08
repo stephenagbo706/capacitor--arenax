@@ -1,17 +1,79 @@
 <ion-content [fullscreen]="true">
   <div class="ax-screen ax-fade-in">
     <header>
-      <h2>Chats</h2>
-      <p class="ax-muted">Stay connected with your opponents.</p>
+      <h2>Chats & Rooms</h2>
+      <p class="ax-muted">Find players by Game ID, create a room, and chat before matches.</p>
     </header>
 
+    <section class="ax-card room-card" *ngIf="currentUser as user">
+      <div class="ax-row room-topline">
+        <strong>Create Room with your Game ID</strong>
+        <span class="ax-badge online">Live</span>
+      </div>
+
+      <label class="ax-field">
+        Select Game
+        <select class="ax-input" [(ngModel)]="selectedRoomGame">
+          <option *ngFor="let game of supportedGames" [value]="game">{{ game }}</option>
+        </select>
+      </label>
+
+      <div class="ax-row room-actions">
+        <button class="ax-btn ax-btn-primary" (click)="createRoom()">Create Room</button>
+        <button class="ax-btn" (click)="copyRoomId()" [disabled]="!roomCreatedGameId">Copy ID</button>
+      </div>
+
+      <div class="room-id" *ngIf="roomCreatedGameId">
+        <span class="ax-muted">Room Game ID</span>
+        <strong>{{ roomCreatedGameId }}</strong>
+      </div>
+
+      <p class="ax-status" *ngIf="roomMessage">{{ roomMessage }}</p>
+      <p class="ax-error" *ngIf="roomError">{{ roomError }}</p>
+    </section>
+
+    <section class="ax-card join-card">
+      <strong>Join Room by Game ID</strong>
+      <div class="ax-row room-actions">
+        <input class="ax-input" placeholder="Enter player Game ID" [(ngModel)]="roomGameId" />
+        <button class="ax-btn ax-btn-primary" (click)="joinRoomByGameId()">Join</button>
+      </div>
+    </section>
+
+    <section class="ax-card discover-card">
+      <strong>Find Friends</strong>
+      <input class="ax-input" placeholder="Search by username or Game ID" [(ngModel)]="searchGameId" />
+
+      <div class="ax-grid discover-grid">
+        <article class="player-item" *ngFor="let user of filteredUsers; trackBy: trackByUserId">
+          <div class="ax-row">
+            <div class="ax-row player-meta">
+              <div class="avatar-wrap">
+                <img class="ax-avatar" [src]="user.avatar" alt="Player" />
+                <span class="status-dot" [class.offline]="!user.online"></span>
+              </div>
+              <div>
+                <strong>{{ user.username }}</strong>
+                <p class="ax-muted">{{ user.gameId }}</p>
+              </div>
+            </div>
+            <button class="ax-btn" (click)="startChat(user.id)">Chat</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <h3 class="ax-section-title">Recent Chats</h3>
     <div class="ax-grid">
       <a class="ax-card ax-chat" *ngFor="let chat of (chats$ | async)" [routerLink]="['/chat', chat.id]">
         <div class="ax-row">
-          <img class="ax-avatar" [src]="getUser(getOpponentId(chat))?.avatar" alt="Player" />
+          <div class="avatar-wrap">
+            <img class="ax-avatar" [src]="getUser(getOpponentId(chat))?.avatar" alt="Player" />
+            <span class="status-dot" [class.offline]="!getUser(getOpponentId(chat))?.online"></span>
+          </div>
           <div>
             <strong>{{ getUser(getOpponentId(chat))?.username }}</strong>
-            <p class="ax-muted">{{ chat.messages[chat.messages.length - 1]?.text }}</p>
+            <p class="ax-muted">{{ chat.messages[chat.messages.length - 1]?.text || 'Shared an image' }}</p>
           </div>
           <span class="ax-time">Now</span>
         </div>

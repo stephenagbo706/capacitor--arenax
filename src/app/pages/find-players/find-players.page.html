@@ -7,6 +7,10 @@
       </div>
     </header>
 
+    <div class="ax-card">
+      <input class="ax-input" placeholder="Find by username or Game ID" [(ngModel)]="searchTerm" />
+    </div>
+
     <div class="ax-grid">
       <div class="ax-card ax-player" *ngFor="let player of listedPlayers">
         <div class="ax-row">
