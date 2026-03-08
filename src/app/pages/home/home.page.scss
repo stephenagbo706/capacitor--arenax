@@ -301,6 +301,13 @@ ion-content {
   box-shadow: 0 0 10px rgba(120, 154, 217, 0.22);
 }
 
+.live-pill.waiting {
+  color: #ffe08b;
+  border-color: rgba(255, 212, 103, 0.65);
+  background: rgba(53, 39, 7, 0.6);
+  box-shadow: 0 0 10px rgba(255, 206, 85, 0.2);
+}
+
 .match-game {
   font-size: 0.8rem;
   color: rgba(220, 232, 255, 0.9);

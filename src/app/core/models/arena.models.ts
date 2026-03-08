@@ -41,6 +41,7 @@ export interface Challenge {
 
 export interface Match {
   id: string;
+  roomCode?: string;
   player1Id: string;
   player2Id?: string;
   player1GameId: string;

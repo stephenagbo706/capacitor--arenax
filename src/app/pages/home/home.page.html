@@ -50,7 +50,9 @@
     <div class="match-grid">
       <article class="match-card" *ngFor="let match of activeMatches">
         <div class="match-topline">
-          <span class="live-pill" [class.ended]="isEnded(match.status)">{{ getMatchStateLabel(match.status) }}</span>
+          <span class="live-pill" [class.waiting]="isWaiting(match.status)" [class.ended]="isEnded(match.status)">
+            {{ getMatchStateLabel(match.status) }}
+          </span>
           <span class="match-game">{{ match.game }}</span>
         </div>
         <div class="match-avatars">
@@ -62,7 +64,10 @@
           <div class="avatar-group right"></div>
         </div>
         <div class="match-stake">WIN: ${{ match.escrowTotal | number : '1.0-2' }}</div>
-        <a class="match-btn" [routerLink]="['/matches', match.id]"><span>Open Live Match</span></a>
+        <div class="ax-muted" *ngIf="match.roomCode">Room ID: {{ match.roomCode }}</div>
+        <a class="match-btn" [routerLink]="['/matches', match.id]">
+          <span>{{ isWaiting(match.status) ? 'Open Match Room' : 'Open Live Match' }}</span>
+        </a>
       </article>
       <p class="ax-muted" *ngIf="!activeMatches.length">No LIVE matches. Create one now.</p>
     </div>

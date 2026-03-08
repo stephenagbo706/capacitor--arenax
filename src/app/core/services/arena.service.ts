@@ -123,6 +123,7 @@ export class ArenaService {
     duration: number;
     extraTime: boolean;
     penalties: boolean;
+    roomCode?: string;
   }) {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in to create a match.' };
@@ -132,9 +133,14 @@ export class ArenaService {
     const lockResult = this.lockFunds(current.id, payload.stake, 'stake_lock', `Stake lock for ${payload.game}`);
     if (!lockResult.ok) return lockResult;
 
+    const roomCode = (payload.roomCode || this.createRoomCode()).trim().toUpperCase();
+    const roomCodeInUse = this.state.matches.some((item) => item.roomCode === roomCode);
+    if (roomCodeInUse) return { ok: false, message: 'Room ID already exists. Generate a new room.' };
+
     const currentGameId = this.resolveGameId(current, payload.game);
     const match: Match = {
       id: uid(),
+      roomCode,
       player1Id: current.id,
       player1GameId: currentGameId,
       game: payload.game,
@@ -156,14 +162,14 @@ export class ArenaService {
     this.state.notifications.unshift({
       id: uid(),
       type: 'match',
-      message: `Stake match created (${payload.game}) · $${payload.stake} locked in escrow.`,
+      message: `Stake match created (${payload.game}) · Room ${roomCode} · $${payload.stake} locked in escrow.`,
       createdAt: now(),
       read: false,
     });
     this.state.spotlightPosts.unshift({
       id: uid(),
       title: `${payload.game} Stake Match Open`,
-      body: `${current.username} opened a ${payload.matchType} match on ${payload.platform} for $${payload.stake}.`,
+      body: `${current.username} opened room ${roomCode} (${payload.matchType}) on ${payload.platform} for $${payload.stake}.`,
       tag: 'Community',
       createdAt: now(),
       image: 'assets/FIFA.jpeg',
@@ -173,7 +179,7 @@ export class ArenaService {
 
     this.persist();
     this.hydrateSubjects();
-    return { ok: true, matchId: match.id };
+    return { ok: true, matchId: match.id, roomCode };
   }
 
   joinStakeMatch(matchId: string) {
@@ -198,7 +204,7 @@ export class ArenaService {
     this.state.notifications.unshift({
       id: uid(),
       type: 'match',
-      message: `${current.username} joined your ${match.game} stake match. Match is now LIVE.`,
+      message: `${current.username} joined room ${match.roomCode || 'N/A'} (${match.game}). Match is now LIVE.`,
       createdAt: now(),
       read: false,
     });
@@ -206,6 +212,18 @@ export class ArenaService {
     this.persist();
     this.hydrateSubjects();
     return { ok: true };
+  }
+
+  joinStakeMatchByRoomCode(roomCode: string) {
+    const normalized = roomCode.trim().toUpperCase();
+    if (!normalized) return { ok: false, message: 'Enter a valid room ID.' };
+
+    const waitingMatch = this.state.matches.find((item) => item.roomCode === normalized && item.status === 'waiting');
+    if (waitingMatch) return this.joinStakeMatch(waitingMatch.id);
+
+    const existingMatch = this.state.matches.find((item) => item.roomCode === normalized);
+    if (existingMatch) return { ok: false, message: 'Room found, but it is no longer waiting for an opponent.' };
+    return { ok: false, message: 'Room ID not found.' };
   }
 
   sendChallenge(toUserId: string, game: string, stake: number, matchTime: string) {
@@ -1020,6 +1038,25 @@ export class ArenaService {
     return user.gameIds.FIFA;
   }
 
+  private createRoomCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    do {
+      const token = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      code = `RM-${token}`;
+    } while (this.state.matches.some((item) => item.roomCode === code));
+    return code;
+  }
+
+  private buildFallbackRoomCode(matchId: string) {
+    const condensed = (matchId || '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase()
+      .slice(0, 6)
+      .padEnd(6, 'X');
+    return `RM-${condensed}`;
+  }
+
   private persist() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
   }
@@ -1063,6 +1100,7 @@ export class ArenaService {
       challenges: input.challenges || [],
       matches: (input.matches || seeded.matches).map((match) => ({
         ...match,
+        roomCode: (match.roomCode || this.buildFallbackRoomCode(match.id)).trim().toUpperCase(),
         status: this.normalizeMatchStatus(match.status),
         platform: match.platform || 'Cross-platform',
         matchType: match.matchType || '1v1',

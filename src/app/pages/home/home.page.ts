@@ -24,9 +24,13 @@ export class HomePage {
   get activeMatches() {
     const nowMs = Date.now();
     const graceWindowMs = 3 * 60 * 1000;
+    const currentUserId = this.user$.value?.id;
 
     return this.matches$.value
       .filter((match) => {
+        if (match.status === 'waiting') {
+          return !!currentUserId && (match.player1Id === currentUserId || match.player2Id === currentUserId);
+        }
         if (match.status === 'live') return true;
         if (match.status !== 'verified' && match.status !== 'finished') return false;
 
@@ -46,10 +50,16 @@ export class HomePage {
   }
 
   getMatchStateLabel(status: string) {
-    return status === 'live' ? 'LIVE' : 'ENDED';
+    if (status === 'waiting') return 'WAITING';
+    if (status === 'live') return 'LIVE';
+    return 'ENDED';
   }
 
   isEnded(status: string) {
-    return status !== 'live';
+    return status === 'verified' || status === 'finished';
+  }
+
+  isWaiting(status: string) {
+    return status === 'waiting';
   }
 }
