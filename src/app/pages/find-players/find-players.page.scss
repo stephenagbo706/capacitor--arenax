@@ -1,0 +1,46 @@
+.ax-muted {
+  color: var(--ax-muted);
+}
+
+.ax-player {
+  display: grid;
+  gap: 12px;
+}
+
+.ax-player-actions {
+  align-items: center;
+}
+
+.ax-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 25, 0.75);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 20;
+}
+
+.ax-modal-card {
+  width: min(420px, 100%);
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.ax-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--ax-muted);
+}
+
+.ax-status {
+  color: var(--ax-neon);
+  font-weight: 600;
+}
+
+.ax-error {
+  color: var(--ax-danger);
+  font-weight: 600;
+}

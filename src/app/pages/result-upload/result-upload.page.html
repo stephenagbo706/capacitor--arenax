@@ -1,0 +1,41 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header>
+      <h2>Submit Result</h2>
+      <p class="ax-muted">Upload screenshot proof to verify the winner.</p>
+    </header>
+
+    <div class="ax-card ax-grid" *ngIf="match; else noMatch">
+      <div class="match-game-chip">
+        <img [src]="getMatchIconPath(match.game)" [alt]="match.game + ' icon'" />
+        <div>
+          <strong>{{ match.game }}</strong>
+          <small>Match result upload</small>
+        </div>
+      </div>
+      <p class="ax-muted" *ngIf="clock$ | async">
+        Upload unlocks when match time ends.
+        <strong *ngIf="isUploadLocked"> Time left: {{ uploadLockTimeLeft }}</strong>
+        <strong *ngIf="!isUploadLocked"> You can upload now.</strong>
+      </p>
+      <label class="ax-field">Winner
+        <select class="ax-input" [(ngModel)]="winnerId">
+          <option *ngFor="let player of matchPlayers" [value]="player.id">
+            {{ player.username }} ({{ getPlayerGameId(player.id) }})
+          </option>
+        </select>
+      </label>
+      <label class="ax-field">Match Screenshot
+        <input class="ax-input" type="file" accept="image/png,image/jpeg" (change)="onScreenshotSelected($event)" [disabled]="isUploadLocked" />
+      </label>
+      <img *ngIf="screenshotDataUrl" class="proof-preview" [src]="screenshotDataUrl" alt="Screenshot preview" />
+      <p class="ax-error" *ngIf="error">{{ error }}</p>
+      <button class="ax-btn ax-btn-primary" [disabled]="isUploadLocked" (click)="submit()">Submit Result</button>
+    </div>
+    <ng-template #noMatch>
+      <div class="ax-card">
+        <p class="ax-error">Match not found.</p>
+      </div>
+    </ng-template>
+  </div>
+</ion-content>

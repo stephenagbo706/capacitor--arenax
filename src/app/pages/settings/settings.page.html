@@ -1,0 +1,20 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header>
+      <h2>Settings</h2>
+      <p class="ax-muted">Secure your ArenaX account.</p>
+    </header>
+
+    <div class="ax-grid">
+      <a class="ax-card ax-row" routerLink="/profile/edit">
+        <strong>Edit Profile</strong>
+        <i class="fa-solid fa-chevron-right"></i>
+      </a>
+      <a class="ax-card ax-row" routerLink="/auth/forgot">
+        <strong>Change Password</strong>
+        <i class="fa-solid fa-chevron-right"></i>
+      </a>
+      <button class="ax-btn" (click)="logout()">Logout</button>
+    </div>
+  </div>
+</ion-content>

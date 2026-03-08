@@ -1,0 +1,34 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header>
+      <h2>Wallet</h2>
+      <p class="ax-muted">Manage your ArenaX balance.</p>
+    </header>
+
+    <div class="ax-card ax-balance">
+      <p class="ax-muted">Available Balance</p>
+      <h2>${{ (user$ | async)?.walletBalance | number:'1.0-2' }}</h2>
+      <p class="ax-muted">Locked in Escrow: ${{ (user$ | async)?.lockedBalance | number:'1.0-2' }}</p>
+      <div class="ax-row">
+        <a class="ax-btn ax-btn-primary" routerLink="/wallet/deposit">Deposit</a>
+        <a class="ax-btn" routerLink="/wallet/withdraw">Withdraw</a>
+      </div>
+    </div>
+
+    <h3 class="ax-section-title">Transaction History</h3>
+    <div class="ax-grid">
+      <div class="ax-card" *ngFor="let tx of (transactions$ | async)">
+        <div class="ax-row">
+          <div>
+            <strong>{{ tx.type | titlecase }}</strong>
+            <p class="ax-muted">{{ tx.createdAt | date:'mediumDate' }}</p>
+            <p class="ax-muted" *ngIf="tx.note">{{ tx.note }}</p>
+          </div>
+          <span>${{ tx.amount }}</span>
+        </div>
+        <span class="ax-badge" [class.online]="tx.status === 'completed'">{{ tx.status }}</span>
+      </div>
+    </div>
+  </div>
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

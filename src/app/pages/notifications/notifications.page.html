@@ -1,0 +1,22 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header>
+      <h2>Notifications</h2>
+      <p class="ax-muted">Latest updates from your arena.</p>
+    </header>
+
+    <div class="ax-grid">
+      <div class="ax-card" *ngFor="let note of (notifications$ | async)">
+        <div class="ax-row">
+          <div>
+            <strong>{{ note.message }}</strong>
+            <p class="ax-muted">{{ note.createdAt | date:'short' }}</p>
+          </div>
+          <button class="ax-btn" [disabled]="note.read" (click)="markRead(note.id)">
+            {{ note.read ? 'Read' : 'Mark' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

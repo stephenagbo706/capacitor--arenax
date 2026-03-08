@@ -1,0 +1,51 @@
+@import '../home/home.page.scss';
+
+.spot-card {
+  display: grid;
+  gap: 10px;
+}
+
+.spot-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.spot-head {
+  display: grid;
+  gap: 6px;
+}
+
+.spot-tag {
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: rgba(143, 84, 255, 0.25);
+  color: #e8d7ff;
+}
+
+.spot-actions .ax-btn.active {
+  color: #f472b6;
+}
+
+.spot-comment {
+  align-items: stretch;
+}
+
+.spot-comment .ax-input {
+  flex: 1;
+}
+
+.spot-reply {
+  border: 1px solid var(--ax-card-border);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(8, 14, 35, 0.65);
+}
+
+.spot-reply p {
+  margin: 4px 0 0;
+  color: var(--ax-muted);
+}

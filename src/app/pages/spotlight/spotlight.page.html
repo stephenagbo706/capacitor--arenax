@@ -1,0 +1,41 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header>
+      <h2>Spotlight</h2>
+      <p class="ax-muted">News, tournament lists, match results and community updates.</p>
+    </header>
+
+    <div class="ax-grid">
+      <article class="ax-card spot-card" *ngFor="let post of (spotlightPosts$ | async)">
+        <img *ngIf="post.image" [src]="post.image" [alt]="post.title" />
+
+        <div class="spot-head">
+          <span class="spot-tag">{{ post.tag }}</span>
+          <strong>{{ post.title }}</strong>
+          <p class="ax-muted">{{ post.body }}</p>
+        </div>
+
+        <div class="spot-actions ax-row">
+          <button class="ax-btn" type="button" [class.active]="hasLiked(post.id)" (click)="toggleLike(post.id)">
+            <i class="fa-regular fa-heart"></i> {{ post.likeUserIds.length }}
+          </button>
+          <span class="ax-muted"><i class="fa-regular fa-comment"></i> {{ post.comments.length }}</span>
+        </div>
+
+        <div class="spot-comment ax-row">
+          <input class="ax-input" placeholder="Write a comment" [(ngModel)]="comments[post.id]" />
+          <button class="ax-btn ax-btn-primary" type="button" (click)="submitComment(post.id)">Post</button>
+        </div>
+
+        <div class="ax-grid" *ngIf="post.comments.length">
+          <div class="spot-reply" *ngFor="let comment of post.comments | slice:0:2">
+            <strong>{{ getUserName(comment.userId) }}</strong>
+            <p>{{ comment.text }}</p>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

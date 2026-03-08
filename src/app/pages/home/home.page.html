@@ -1,0 +1,79 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-home" *ngIf="user$ | async as user">
+    <div class="ax-home__grid" aria-hidden="true"></div>
+
+    <header class="ax-home__top">
+      <a class="wallet-chip" routerLink="/wallet">
+        <span class="wallet-icon"><i class="fa-solid fa-dollar-sign"></i></span>
+        ${{ user.walletBalance | number : '1.0-2' }}
+      </a>
+      <a class="notify-btn" routerLink="/notifications" aria-label="Notifications">
+        <i class="fa-regular fa-bell"></i>
+        <span class="notify-dot" *ngIf="hasUnreadNotifications"></span>
+      </a>
+    </header>
+
+    <h1 class="ax-home__title">Ready to compete?</h1>
+
+    <section class="game-carousel">
+      <article class="game-card fifa">
+        <img src="assets/FIFA.jpeg" alt="FIFA" />
+        <div class="game-label">FIFA</div>
+      </article>
+      <article class="game-card cod active">
+        <img src="assets/Call-of-Duty-Mobile-groupe-de-guerriers.jpg" alt="Call of Duty Mobile" />
+        <div class="game-label">Call of Duty Mobile</div>
+      </article>
+      <article class="game-card nba">
+        <img src="assets/Efootball.jpeg" alt="eFootball" />
+        <div class="game-label">eFootball</div>
+      </article>
+      <article class="game-card dls">
+        <img src="assets/Dls%2026.jpeg" alt="DLS 26" />
+        <div class="game-label">Dream League Soccer 26</div>
+      </article>
+    </section>
+
+    <div class="carousel-dots" aria-hidden="true">
+      <span></span>
+      <span class="active"></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <h2 class="section-title">Active Matches</h2>
+    <div class="match-grid">
+      <article class="match-card" *ngFor="let match of activeMatches">
+        <div class="match-topline">
+          <span class="live-pill" [class.ended]="isEnded(match.status)">{{ getMatchStateLabel(match.status) }}</span>
+          <span class="match-game">{{ match.game }}</span>
+        </div>
+        <div class="match-avatars">
+          <div class="avatar-group">
+            <img [src]="getUser(match.player1Id)?.avatar" alt="Player" />
+            <img [src]="getUser(match.player2Id || '')?.avatar" alt="Player" />
+          </div>
+          <i class="fa-solid fa-gamepad"></i>
+          <div class="avatar-group right"></div>
+        </div>
+        <div class="match-stake">WIN: ${{ match.escrowTotal | number : '1.0-2' }}</div>
+        <a class="match-btn" [routerLink]="['/matches', match.id]"><span>Open Live Match</span></a>
+      </article>
+      <p class="ax-muted" *ngIf="!activeMatches.length">No LIVE matches. Create one now.</p>
+    </div>
+
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="quick-actions">
+      <a class="action-btn" routerLink="/matches">
+        <i class="fa-solid fa-bolt"></i>
+        Create Match
+      </a>
+      <a class="action-btn ghost" routerLink="/tournaments">
+        <i class="fa-solid fa-trophy"></i>
+        Join Tournament
+      </a>
+    </div>
+
+  </div>
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

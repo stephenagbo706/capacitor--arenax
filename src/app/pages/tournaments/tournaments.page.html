@@ -1,0 +1,92 @@
+<ion-content [fullscreen]="true">
+  <div class="tourney">
+    <header class="tourney__head">
+      <h1>Tournaments</h1>
+    </header>
+
+    <div class="tourney__tabs">
+      <button
+        class="tab-pill"
+        *ngFor="let tab of tabs"
+        [class.active]="activeTab === tab"
+        (click)="setTab(tab)"
+        type="button"
+      >
+        <span *ngIf="tab === 'Live'" class="dot"></span>
+        <i *ngIf="tab === 'Upcoming'" class="fa-regular fa-calendar"></i>
+        <i *ngIf="tab === 'Ended'" class="fa-regular fa-clock"></i>
+        {{ tab }}
+      </button>
+    </div>
+
+    <section class="featured" *ngIf="featured">
+      <div class="featured__glow"></div>
+      <div class="featured__card">
+        <div class="featured__top">
+          <div class="featured__logo">
+            <img [src]="featured.image" [alt]="featured.title" />
+            <span>{{ featured.game }}</span>
+          </div>
+          <div class="featured__title">
+            <h2>{{ featured.title }}</h2>
+          </div>
+        </div>
+        <div class="featured__stats">
+          <div>
+            <p>PRIZE POOL</p>
+            <strong>${{ featured.prizePool }}</strong>
+          </div>
+          <div>
+            <p>Entry Fee</p>
+            <strong>${{ featured.entryFee }}</strong>
+            <p class="muted">Participants: {{ featured.participants.length }}/{{ featured.maxPlayers }}</p>
+          </div>
+          <div class="starts">
+            <p>Starts</p>
+            <strong>{{ featured.startsAt | date:'MMM d, h:mm a' }}</strong>
+          </div>
+        </div>
+        <div class="featured__footer">
+          <div class="round">
+            <i class="fa-solid fa-diagram-project"></i>
+            <div>
+              <p>Tournament</p>
+              <strong>{{ statusLabel(featured.status) }}</strong>
+            </div>
+          </div>
+          <button type="button" [disabled]="isJoined(featured.participants) || featured.status === 'ended'" (click)="joinFeaturedTournament()">
+            {{ isJoined(featured.participants) ? 'Joined' : featured.status === 'ended' ? 'Closed' : 'Join Now' }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <p class="status-message" *ngIf="statusMessage">{{ statusMessage }}</p>
+    <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <section class="list">
+      <article class="mini-card" *ngFor="let item of filteredTournaments">
+        <img [src]="item.image" [alt]="item.title" />
+        <div class="mini-card__content">
+          <div class="mini-card__head">
+            <h3>{{ item.title }}</h3>
+            <span class="badge" [class.live]="item.status === 'live'" [class.upcoming]="item.status === 'upcoming'" [class.full]="item.status === 'ended'">
+              {{ statusLabel(item.status) }}
+            </span>
+          </div>
+          <div class="mini-card__row">
+            <span><i class="fa-solid fa-gamepad"></i> {{ item.game }}</span>
+            <span><i class="fa-solid fa-dollar-sign"></i> ${{ item.entryFee }}</span>
+          </div>
+          <div class="mini-card__row">
+            <span><i class="fa-solid fa-user-group"></i> {{ item.participants.length }} / {{ item.maxPlayers }}</span>
+            <button class="mini-join-btn" type="button" [disabled]="isJoined(item.participants) || item.status === 'ended'" (click)="joinTournament(item.id)">
+              {{ isJoined(item.participants) ? 'Joined' : item.status === 'ended' ? 'Closed' : 'Join' }}
+            </button>
+          </div>
+        </div>
+      </article>
+    </section>
+  </div>
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

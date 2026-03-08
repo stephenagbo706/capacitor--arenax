@@ -1,0 +1,38 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header>
+      <h2>Edit Profile</h2>
+      <p class="ax-muted">Update your public ArenaX identity and game IDs.</p>
+    </header>
+
+    <div class="ax-card ax-grid">
+      <div class="ax-field">
+        <span>Profile Image</span>
+        <div class="profile-upload-row">
+          <img class="profile-preview" [src]="avatarPreview" alt="Profile preview" />
+          <label class="ax-btn">
+            Upload Image
+            <input type="file" accept="image/*" (change)="onAvatarSelected($event)" />
+          </label>
+        </div>
+        <small class="ax-muted">PNG or JPG, max 2 MB.</small>
+      </div>
+      <label class="ax-field">Username
+        <input class="ax-input" [(ngModel)]="username" />
+      </label>
+      <label class="ax-field">eFootball ID
+        <input class="ax-input" [(ngModel)]="efootballId" />
+      </label>
+      <label class="ax-field">Dream League Soccer ID
+        <input class="ax-input" [(ngModel)]="dlsId" />
+      </label>
+      <label class="ax-field">FIFA ID
+        <input class="ax-input" [(ngModel)]="fifaId" />
+      </label>
+      <label class="ax-field">Call of Duty Mobile ID
+        <input class="ax-input" [(ngModel)]="codmId" />
+      </label>
+      <button class="ax-btn ax-btn-primary" (click)="save()">Save Changes</button>
+    </div>
+  </div>
+</ion-content>

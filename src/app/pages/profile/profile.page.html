@@ -1,0 +1,108 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in" *ngIf="user$ | async as user">
+    <section class="profile-hero esports-font">
+      <div class="profile-edit">
+        <a class="ax-btn" routerLink="/profile/edit">Edit</a>
+      </div>
+      <div class="profile-avatar-wrap">
+        <img class="profile-avatar" [src]="user.avatar" alt="Profile" />
+        <span class="status-dot" aria-hidden="true"></span>
+      </div>
+      <span class="clan-pill">CLAN [ARX]</span>
+      <h2 class="profile-name">{{ user.username }}</h2>
+      <p class="profile-subtitle">Pro Tactical League · Member since 2023</p>
+    </section>
+
+    <section class="profile-stats-grid esports-font">
+      <article class="stat-card ax-card">
+        <p class="stat-label">Matches</p>
+        <strong class="stat-value">{{ user.wins + user.losses }}</strong>
+        <span class="stat-note">+12 this week</span>
+      </article>
+      <article class="stat-card ax-card">
+        <p class="stat-label">Win Rate</p>
+        <strong class="stat-value">
+          {{
+            (user.wins + user.losses)
+              ? (user.wins / (user.wins + user.losses) * 100 | number:'1.0-1')
+              : 0
+          }}%
+        </strong>
+        <div class="stat-bar">
+          <span
+            [style.--fill]="
+              (user.wins + user.losses)
+                ? (user.wins / (user.wins + user.losses) * 100) + '%'
+                : '0%'
+            "
+          ></span>
+        </div>
+      </article>
+      <article class="stat-card ax-card">
+        <p class="stat-label">Current Rank</p>
+        <div class="rank-row">
+          <i class="fa-solid fa-gem"></i>
+          <strong class="stat-value">Gold Division</strong>
+        </div>
+        <span class="stat-note">Global Rank #12</span>
+      </article>
+      <article class="stat-card ax-card">
+        <p class="stat-label">Achievements</p>
+        <strong class="stat-value">{{ user.goals }}</strong>
+        <span class="stat-note">Top 5% Global</span>
+      </article>
+    </section>
+
+    <div class="ax-grid ax-stats">
+      <div class="ax-card">
+        <p class="ax-muted">Available Wallet</p>
+        <h3>${{ user.walletBalance | number:'1.0-2' }}</h3>
+      </div>
+      <div class="ax-card">
+        <p class="ax-muted">Locked in Escrow</p>
+        <h3>${{ user.lockedBalance | number:'1.0-2' }}</h3>
+      </div>
+      <div class="ax-card">
+        <p class="ax-muted">Wins</p>
+        <h3>{{ user.wins }}</h3>
+      </div>
+      <div class="ax-card">
+        <p class="ax-muted">Losses</p>
+        <h3>{{ user.losses }}</h3>
+      </div>
+    </div>
+
+    <h3 class="ax-section-title">Game IDs</h3>
+    <div class="ax-grid">
+      <div class="ax-card ax-row"><span>eFootball</span><strong>{{ user.gameIds.eFootball }}</strong></div>
+      <div class="ax-card ax-row"><span>Dream League Soccer</span><strong>{{ user.gameIds['Dream League Soccer'] }}</strong></div>
+      <div class="ax-card ax-row"><span>FIFA</span><strong>{{ user.gameIds.FIFA }}</strong></div>
+      <div class="ax-card ax-row"><span>Call of Duty Mobile</span><strong>{{ user.gameIds['Call of Duty Mobile'] }}</strong></div>
+    </div>
+
+    <div class="ax-grid" style="margin-top: 18px;">
+      <a class="ax-card ax-row" routerLink="/notifications">
+        <strong>Notifications</strong>
+        <i class="fa-solid fa-chevron-right"></i>
+      </a>
+      <a class="ax-card ax-row" routerLink="/settings">
+        <strong>Settings</strong>
+        <i class="fa-solid fa-chevron-right"></i>
+      </a>
+    </div>
+
+    <h3 class="ax-section-title">Match History</h3>
+    <div class="ax-grid">
+      <div class="ax-card" *ngFor="let match of (matches$ | async)">
+        <div class="ax-row">
+          <div>
+            <strong>{{ match.game }}</strong>
+            <p class="ax-muted">Stake ${{ match.stake }} · {{ match.status | uppercase }}</p>
+          </div>
+          <a class="ax-btn" [routerLink]="['/matches', match.id]">Details</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

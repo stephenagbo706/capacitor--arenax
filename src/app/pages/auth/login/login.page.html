@@ -1,0 +1,23 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-auth">
+    <div class="ax-auth-card ax-glass ax-fade-in">
+      <div class="ax-auth-brand">
+        <img class="ax-logo" src="assets/ax-ui/logo.png" alt="ArenaX logo" />
+        <h1>ARENA<span>X</span></h1>
+        <p>Enter the Arena. Prove Your Worth.</p>
+      </div>
+
+      <div class="ax-grid">
+        <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
+        <input class="ax-input" type="password" placeholder="Password" [(ngModel)]="password" />
+        <button class="ax-btn ax-btn-primary" (click)="submit()">Login</button>
+        <p class="ax-error" *ngIf="error">{{ error }}</p>
+      </div>
+
+      <div class="ax-auth-links">
+        <a routerLink="/auth/forgot">Forgot Password?</a>
+        <span>New here? <a routerLink="/auth/register">Create account</a></span>
+      </div>
+    </div>
+  </div>
+</ion-content>

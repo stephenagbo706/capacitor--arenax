@@ -1,0 +1,34 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header class="ax-row" *ngIf="chat">
+      <div class="ax-row">
+        <img class="ax-avatar" [src]="getUser(getOpponentId(chat))?.avatar" alt="Player" />
+        <div>
+          <strong>{{ getUser(getOpponentId(chat))?.username }}</strong>
+          <p class="ax-muted">Online now</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="ax-chat-thread" *ngIf="chat">
+      <div
+        class="ax-message"
+        *ngFor="let msg of chat.messages"
+        [class.self]="msg.senderId === currentUserId"
+      >
+        <p *ngIf="msg.text">{{ msg.text }}</p>
+        <img *ngIf="msg.image" [src]="msg.image" alt="Shared image" />
+        <span>{{ msg.sentAt | date:'shortTime' }}</span>
+      </div>
+    </div>
+
+    <div class="ax-chat-input">
+      <input class="ax-input" placeholder="Type a message" [(ngModel)]="message" />
+      <button class="ax-btn ax-btn-primary" (click)="send()">Send</button>
+    </div>
+    <div class="ax-chat-input secondary">
+      <input class="ax-input" placeholder="Paste image URL" [(ngModel)]="imageUrl" />
+      <button class="ax-btn" (click)="sendImage()">Send Image</button>
+    </div>
+  </div>
+</ion-content>

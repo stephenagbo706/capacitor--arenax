@@ -1,0 +1,22 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header>
+      <h2>Chats</h2>
+      <p class="ax-muted">Stay connected with your opponents.</p>
+    </header>
+
+    <div class="ax-grid">
+      <a class="ax-card ax-chat" *ngFor="let chat of (chats$ | async)" [routerLink]="['/chat', chat.id]">
+        <div class="ax-row">
+          <img class="ax-avatar" [src]="getUser(getOpponentId(chat))?.avatar" alt="Player" />
+          <div>
+            <strong>{{ getUser(getOpponentId(chat))?.username }}</strong>
+            <p class="ax-muted">{{ chat.messages[chat.messages.length - 1]?.text }}</p>
+          </div>
+          <span class="ax-time">Now</span>
+        </div>
+      </a>
+    </div>
+  </div>
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

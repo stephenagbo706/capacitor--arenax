@@ -1,0 +1,60 @@
+.ax-auth {
+  display: grid;
+  place-items: center;
+  padding-top: 60px;
+}
+
+.ax-auth-card {
+  width: min(420px, 100%);
+  padding: 26px;
+}
+
+.ax-auth-brand {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.ax-auth-brand h1 {
+  margin: 0;
+  letter-spacing: 0.08em;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.ax-auth-brand span {
+  color: var(--ax-neon);
+}
+
+.ax-auth-brand p {
+  margin-top: 8px;
+  color: var(--ax-muted);
+}
+
+.ax-logo {
+  width: 78px;
+  height: 78px;
+  margin: 0 auto 12px;
+  display: block;
+  border-radius: 50%;
+  border: 2px solid rgba(59, 130, 246, 0.45);
+  box-shadow: 0 0 22px rgba(59, 130, 246, 0.35);
+}
+
+.ax-auth-links {
+  margin-top: 18px;
+  display: grid;
+  gap: 8px;
+  text-align: center;
+  color: var(--ax-muted);
+}
+
+.ax-auth-links a {
+  color: var(--ax-neon);
+  text-decoration: none;
+}
+
+.ax-error {
+  color: var(--ax-danger);
+  margin: 4px 0 0;
+  font-weight: 600;
+}

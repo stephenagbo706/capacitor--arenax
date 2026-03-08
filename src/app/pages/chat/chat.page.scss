@@ -1,0 +1,46 @@
+.ax-muted {
+  color: var(--ax-muted);
+}
+
+.ax-chat-thread {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 20px;
+}
+
+.ax-message {
+  max-width: 76%;
+  background: rgba(8, 14, 35, 0.9);
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--ax-card-border);
+}
+
+.ax-message.self {
+  margin-left: auto;
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.ax-message span {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.7rem;
+  color: var(--ax-muted);
+}
+
+.ax-chat-input {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.ax-chat-input.secondary {
+  margin-top: 10px;
+}
+
+.ax-message img {
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 6px;
+}

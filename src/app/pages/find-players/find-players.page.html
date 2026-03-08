@@ -1,0 +1,53 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header class="ax-row">
+      <div>
+        <h2>Find Players</h2>
+        <p class="ax-muted">Challenge verified players instantly.</p>
+      </div>
+    </header>
+
+    <div class="ax-grid">
+      <div class="ax-card ax-player" *ngFor="let player of listedPlayers">
+        <div class="ax-row">
+          <div class="ax-row">
+            <img class="ax-avatar" [src]="player.avatar" alt="Player" />
+            <div>
+              <strong>{{ player.username }}</strong>
+              <p class="ax-muted">FIFA: {{ player.gameIds.FIFA }} · {{ player.wins }}W / {{ player.losses }}L</p>
+            </div>
+          </div>
+          <span class="ax-badge" [class.online]="player.online" [class.offline]="!player.online">
+            {{ player.online ? 'Online' : 'Offline' }}
+          </span>
+        </div>
+        <div class="ax-row ax-player-actions">
+          <span class="ax-muted">Win rate {{ (player.wins / (player.wins + player.losses) * 100) | number:'1.0-0' }}%</span>
+          <button class="ax-btn ax-btn-primary" (click)="openChallenge(player.id)">Challenge</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ax-modal" *ngIf="modalOpen">
+      <div class="ax-modal-card ax-glass">
+        <h3>Confirm Challenge</h3>
+        <label class="ax-field">Game
+          <select class="ax-input" [(ngModel)]="game">
+            <option *ngFor="let item of supportedGames" [value]="item">{{ item }}</option>
+          </select>
+        </label>
+        <label class="ax-field">Stake Amount
+          <input class="ax-input" type="number" [(ngModel)]="stake" />
+        </label>
+        <label class="ax-field">Match Time
+          <input class="ax-input" [(ngModel)]="matchTime" />
+        </label>
+        <button class="ax-btn ax-btn-primary" (click)="sendChallenge()">Send Challenge</button>
+        <p class="ax-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        <p class="ax-status" *ngIf="statusMessage">{{ statusMessage }}</p>
+        <button class="ax-btn" (click)="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

@@ -1,0 +1,22 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-auth">
+    <div class="ax-auth-card ax-glass ax-fade-in">
+      <div class="ax-auth-brand">
+        <img class="ax-logo" src="assets/ax-ui/logo.png" alt="ArenaX logo" />
+        <h1>Reset Password</h1>
+        <p>We'll send a secure reset link to your email.</p>
+      </div>
+
+      <div class="ax-grid">
+        <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
+        <button class="ax-btn ax-btn-primary" (click)="submit()">Send Reset Link</button>
+      </div>
+
+      <p class="ax-success" *ngIf="sent">Reset link sent! Check your inbox.</p>
+
+      <div class="ax-auth-links">
+        <a routerLink="/auth/login">Back to login</a>
+      </div>
+    </div>
+  </div>
+</ion-content>

@@ -1,0 +1,417 @@
+<ion-content [fullscreen]="true">
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <main class="phone-frame">
+    <div class="phone-notch" aria-hidden="true"></div>
+
+    <section class="screen" [class.active]="activeScreen === 'scr-login'" id="scr-login">
+      <header class="login-brand">
+        <img src="assets/ax-ui/logo.png" alt="ArenaX logo" class="logo-mark" />
+        <h1>ARENA<span>X</span></h1>
+        <p>Enter the Arena. Prove Your Worth.</p>
+      </header>
+
+      <form class="form" (submit)="$event.preventDefault()">
+        <label class="field input-pill">
+          <i class="fa-solid fa-envelope"></i>
+          <input type="email" placeholder="Email" autocomplete="email" />
+        </label>
+
+        <label class="field input-pill">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" placeholder="Password" autocomplete="current-password" />
+        </label>
+
+        <button class="btn btn-primary" type="button" (click)="setScreen('scr-home')">LOGIN</button>
+      </form>
+
+      <button class="link-btn" type="button">Forgot Password?</button>
+
+      <div class="auth-footer">
+        <p>Don't have an account? <strong>Sign Up</strong></p>
+        <div class="social-row">
+          <button class="social-btn" type="button" aria-label="Google"><i class="fa-brands fa-google"></i></button>
+          <button class="social-btn" type="button" aria-label="Apple"><i class="fa-brands fa-apple"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" [class.active]="activeScreen === 'scr-home'" id="scr-home">
+      <header class="top-row">
+        <div class="home-top-right">
+          <button class="wallet-chip" type="button"><i class="fa-solid fa-dollar-sign"></i> $245.00</button>
+          <button class="notify-btn" type="button" aria-label="Notifications">
+            <i class="fa-regular fa-bell"></i>
+            <span></span>
+          </button>
+        </div>
+      </header>
+      <h2 class="home-title">Ready to compete?</h2>
+
+      <div class="games-strip">
+        <button
+          class="game-tile"
+          [class.active]="activeGameIndex === 0"
+          (click)="selectGame(0)"
+          type="button"
+        >
+          <img src="assets/ax-ui/tournament-area.jpg" alt="FIFA 24" />
+          <span>FIFA 24</span>
+        </button>
+        <button
+          class="game-tile"
+          [class.active]="activeGameIndex === 1"
+          (click)="selectGame(1)"
+          type="button"
+        >
+          <img src="assets/ax-ui/summit-section.jpg" alt="Call of Duty" />
+          <span>Call of Duty</span>
+        </button>
+        <button
+          class="game-tile"
+          [class.active]="activeGameIndex === 2"
+          (click)="selectGame(2)"
+          type="button"
+        >
+          <img src="assets/ax-ui/wel.jpg" alt="NBA 2K24" />
+          <span>NBA 2K24</span>
+        </button>
+      </div>
+      <div class="carousel-dots" aria-hidden="true">
+        <span [class.active]="activeGameIndex === 0"></span>
+        <span [class.active]="activeGameIndex === 1"></span>
+        <span [class.active]="activeGameIndex === 2"></span>
+      </div>
+
+      <h3>Active Matches</h3>
+      <div class="match-grid">
+        <article class="match-card" *ngFor="let match of activeMatches">
+          <div class="match-head">
+            <div class="avatars">
+              <img src="assets/ax-ui/logo.png" alt="Player" />
+              <img src="assets/ax-ui/logo.png" alt="Player" />
+            </div>
+            <i [class]="match.icon"></i>
+            <div class="avatars right">
+              <img src="assets/ax-ui/logo.png" alt="Player" />
+            </div>
+          </div>
+          <strong>${{ match.stake.toFixed(2) }}</strong>
+          <button type="button">View {{ match.label }} - {{ match.timer }}</button>
+        </article>
+      </div>
+
+      <h3>Quick Actions</h3>
+      <div class="quick-row">
+        <button class="action-btn" type="button" (click)="setScreen('scr-create')">
+          <i class="fa-solid fa-bolt"></i> Create Match
+        </button>
+        <button class="action-btn ghost" type="button" (click)="setScreen('scr-tournaments')">
+          <i class="fa-solid fa-trophy"></i> Join Tournament
+        </button>
+      </div>
+    </section>
+
+    <section class="screen" [class.active]="activeScreen === 'scr-create'" id="scr-create">
+      <p class="step-copy">Step 2 of 4</p>
+      <div class="progress-track" aria-hidden="true">
+        <span></span>
+      </div>
+
+      <h2 class="centered">Arena<span>X</span></h2>
+
+      <article class="selected-game">
+        <img class="selected-thumb" [src]="selectedGameImage" [alt]="selectedGameTitle" />
+        <div class="selected-copy">
+          <h3>{{ selectedGameTitle }}</h3>
+          <p>Selected game</p>
+        </div>
+        <i class="fa-solid fa-circle-check selected-check" aria-hidden="true"></i>
+      </article>
+
+      <article class="config-card">
+        <label>
+          Match Type
+          <select>
+            <option>1v1</option>
+            <option>2v2</option>
+          </select>
+        </label>
+
+        <div class="switch-row">
+          <span>Extra Time</span>
+          <button class="switch" [class.on]="extraTime" type="button" (click)="toggleExtraTime()">
+            {{ extraTime ? 'ON' : 'OFF' }}
+          </button>
+        </div>
+        <div class="switch-row">
+          <span>Penalties</span>
+          <button class="switch" [class.on]="penalties" type="button" (click)="togglePenalties()">
+            {{ penalties ? 'ON' : 'OFF' }}
+          </button>
+        </div>
+
+        <div class="range-row">
+          <span>Match Duration</span>
+          <strong>{{ matchDuration }} min</strong>
+        </div>
+        <input type="range" min="5" max="30" step="5" [value]="matchDuration" (input)="setMatchDuration($event)" />
+
+        <div class="stake-card">
+          <label for="stake-amount">Stake Amount</label>
+          <div class="stake-input">
+            <span>$</span>
+            <input
+              id="stake-amount"
+              type="number"
+              min="1"
+              step="1"
+              [value]="stakeAmount"
+              (input)="setStakeAmount($event)"
+              aria-label="Stake amount"
+            />
+          </div>
+        </div>
+      </article>
+
+      <div class="platform-row">
+        <button
+          class="platform"
+          [class.active]="selectedPlatform === 'PlayStation'"
+          type="button"
+          (click)="selectPlatform('PlayStation')"
+        >
+          <i class="fa-brands fa-playstation"></i> PlayStation
+        </button>
+        <button
+          class="platform"
+          [class.active]="selectedPlatform === 'Xbox'"
+          type="button"
+          (click)="selectPlatform('Xbox')"
+        >
+          <i class="fa-brands fa-xbox"></i> Xbox
+        </button>
+        <button
+          class="platform"
+          [class.active]="selectedPlatform === 'PC'"
+          type="button"
+          (click)="selectPlatform('PC')"
+        >
+          <i class="fa-solid fa-desktop"></i> PC
+        </button>
+      </div>
+
+      <button class="btn btn-primary" type="button" (click)="createStakeMatch()">Continue</button>
+      <p class="form-error" *ngIf="createError">{{ createError }}</p>
+    </section>
+
+    <section class="screen" [class.active]="activeScreen === 'scr-tournaments'" id="scr-tournaments">
+      <header class="top-row">
+        <h2>Tournaments</h2>
+      </header>
+      <div class="chip-row tournament-filters">
+        <button class="chip" [class.active]="activeTournamentFilter === 'All'" type="button" (click)="setTournamentFilter('All')">All</button>
+        <button class="chip" [class.active]="activeTournamentFilter === 'Live'" type="button" (click)="setTournamentFilter('Live')">
+          <i class="fa-solid fa-circle"></i> Live
+        </button>
+        <button class="chip" [class.active]="activeTournamentFilter === 'Upcoming'" type="button" (click)="setTournamentFilter('Upcoming')">
+          <i class="fa-regular fa-calendar"></i> Upcoming
+        </button>
+        <button class="chip" [class.active]="activeTournamentFilter === 'Ended'" type="button" (click)="setTournamentFilter('Ended')">
+          <i class="fa-regular fa-clock"></i> Ended
+        </button>
+      </div>
+
+      <article class="featured-tournament">
+        <div class="featured-head">
+          <img src="assets/ax-ui/tournament-area.jpg" alt="FIFA 24" />
+          <h3>Winter Championship 2026</h3>
+        </div>
+        <div class="featured-stats">
+          <div>
+            <p>PRIZE POOL</p>
+            <strong>$5,000</strong>
+          </div>
+          <div>
+            <p>Entry Fee: <strong>$10</strong></p>
+            <p>Participants: <strong>128/256</strong></p>
+          </div>
+          <div class="starts-in">
+            <p>Starts in</p>
+            <strong>2d 14h</strong>
+          </div>
+        </div>
+        <div class="featured-footer">
+          <div>
+            <p>Tournament</p>
+            <strong>Round of 16</strong>
+          </div>
+          <button type="button">Join Now</button>
+        </div>
+      </article>
+
+      <div class="tournament-stack">
+        <article class="tournament-row">
+          <img src="assets/ax-ui/summit-section.jpg" alt="Warzone Weekly Clash" />
+          <div class="row-copy">
+            <div class="row-title">
+              <h4>Warzone Weekly Clash</h4>
+              <span class="state-pill live">LIVE</span>
+            </div>
+            <p><i class="fa-solid fa-trophy"></i> $1,000 Prize Pool</p>
+            <p><i class="fa-solid fa-ticket"></i> Free Entry</p>
+            <p><i class="fa-solid fa-users"></i> 64 / 100 Participants</p>
+          </div>
+        </article>
+
+        <article class="tournament-row">
+          <img src="assets/ax-ui/wel.jpg" alt="Tip-Off Challenge" />
+          <div class="row-copy">
+            <div class="row-title">
+              <h4>Tip-Off Challenge</h4>
+              <span class="state-pill upcoming">UPCOMING</span>
+            </div>
+            <p><i class="fa-solid fa-trophy"></i> $500 Prize Pool</p>
+            <p><i class="fa-solid fa-dollar-sign"></i> $5 Entry</p>
+            <p><i class="fa-solid fa-users"></i> 32 / 64 Participants</p>
+          </div>
+        </article>
+
+        <article class="tournament-row">
+          <img src="assets/ax-ui/tournament-area.jpg" alt="Battle Royale Solo" />
+          <div class="row-copy">
+            <div class="row-title">
+              <h4>Battle Royale Solo</h4>
+              <span class="state-pill full">FULL</span>
+            </div>
+            <p><i class="fa-solid fa-trophy"></i> $2,500 Prize Pool</p>
+            <p><i class="fa-solid fa-dollar-sign"></i> $2 Entry</p>
+            <p><i class="fa-solid fa-users"></i> 100 / 100 Participants</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="screen" [class.active]="activeScreen === 'scr-wallet'" id="scr-wallet">
+      <header class="top-row">
+        <h2>Wallet</h2>
+      </header>
+      <article class="balance-card">
+        <p>Available Balance</p>
+        <strong>$245.00</strong>
+        <small>+$42.50 this week</small>
+      </article>
+      <div class="quick-row">
+        <button class="action-btn" type="button">Add Funds</button>
+        <button class="action-btn ghost" type="button">Withdraw</button>
+      </div>
+      <div class="card-list">
+        <article class="line-card"><h4>Winnings</h4><p>+$32.00 · Today</p></article>
+        <article class="line-card"><h4>Entry Fee</h4><p>-$10.00 · Yesterday</p></article>
+      </div>
+    </section>
+
+    <section class="screen profile-screen" [class.active]="activeScreen === 'scr-profile'" id="scr-profile">
+      <header class="profile-top">
+        <button class="icon-orb" type="button" (click)="setScreen('scr-home')" aria-label="Back">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <div class="profile-brand">ARENA<span>X</span></div>
+        <button class="icon-orb" type="button" aria-label="Settings">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </header>
+
+      <article class="profile-hero">
+        <button class="profile-avatar-btn" type="button" (click)="openEditProfile()">
+          <span class="profile-avatar-ring">
+            <span class="profile-avatar-shell">
+              <img class="profile-avatar" [src]="profileImageSrc" alt="Profile image" />
+            </span>
+            <span class="status-dot" aria-hidden="true"></span>
+          </span>
+        </button>
+        <span class="team-pill esports-font">STARK ESPORTS</span>
+        <h2 class="profile-name esports-font">StephenAgbo</h2>
+        <p class="profile-id">ArenaX ID: AX472910</p>
+        <p class="profile-subtitle">Member since 2024</p>
+      </article>
+
+      <div class="profile-stats-grid">
+        <article class="profile-stat-card matches-card">
+          <div>
+            <p class="stat-label">Matches</p>
+            <div class="stat-value">1,482</div>
+          </div>
+          <div class="stat-note green"><i class="fa-solid fa-arrow-trend-up"></i> +12 this week</div>
+        </article>
+        <article class="profile-stat-card winrate-card">
+          <div class="ring-wrap" aria-hidden="true">
+            <svg viewBox="0 0 72 72" class="progress-ring">
+              <circle class="ring-track" cx="36" cy="36" r="30"></circle>
+              <circle class="ring-fill" cx="36" cy="36" r="30"></circle>
+            </svg>
+            <span class="ring-value">64%</span>
+          </div>
+          <p class="stat-label">Win Rate</p>
+        </article>
+        <article class="profile-stat-card rank-card">
+          <span class="rank-watermark"><i class="fa-solid fa-gem"></i></span>
+          <p class="stat-label">Current Rank</p>
+          <button class="rank-row" type="button" (click)="openRankingLeaderboard()">
+            <i class="fa-solid fa-gem"></i>
+            <span class="stat-value">Diamond II</span>
+          </button>
+        </article>
+        <article class="profile-stat-card achievements-card">
+          <div>
+            <p class="stat-label">Achievements</p>
+            <div class="stat-value">142</div>
+          </div>
+          <div class="stat-note">Top 5% Global</div>
+        </article>
+      </div>
+
+      <div class="badge-head">
+        <h3>Achievement Badges</h3>
+        <button class="badge-link" type="button">View All</button>
+      </div>
+      <div class="badge-scroll">
+        <button class="badge-card" type="button" (click)="openBadgeDetails('Tournament Winner')">
+          <span class="badge-ring violet"><i class="fa-solid fa-trophy"></i></span>
+          <p>Tournament Winner</p>
+        </button>
+        <button class="badge-card" type="button" (click)="openBadgeDetails('MVP Streak')">
+          <span class="badge-ring gold"><i class="fa-solid fa-bolt"></i></span>
+          <p>MVP Streak</p>
+        </button>
+        <button class="badge-card" type="button" (click)="openBadgeDetails('Champion')">
+          <span class="badge-ring electric"><i class="fa-solid fa-medal"></i></span>
+          <p>Champion</p>
+        </button>
+        <button class="badge-card muted" type="button" (click)="openBadgeDetails('Veteran')">
+          <span class="badge-ring muted"><i class="fa-solid fa-star"></i></span>
+          <p>Veteran</p>
+        </button>
+      </div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Primary">
+      <button class="nav-item" [class.active]="activeScreen === 'scr-home'" type="button" (click)="setScreen('scr-home')" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </button>
+      <button class="nav-item" [class.active]="activeScreen === 'scr-tournaments'" type="button" (click)="setScreen('scr-tournaments')" aria-label="Tournaments">
+        <i class="fa-solid fa-trophy"></i>
+      </button>
+      <button class="nav-item plus" [class.active]="activeScreen === 'scr-create'" type="button" (click)="setScreen('scr-create')" aria-label="Create">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+      <button class="nav-item" [class.active]="activeScreen === 'scr-wallet'" type="button" (click)="setScreen('scr-wallet')" aria-label="Wallet">
+        <i class="fa-solid fa-wallet"></i>
+      </button>
+      <button class="nav-item" [class.active]="activeScreen === 'scr-profile'" type="button" (click)="setScreen('scr-profile')" aria-label="Profile">
+        <i class="fa-solid fa-user"></i>
+      </button>
+    </nav>
+  </main>
+</ion-content>

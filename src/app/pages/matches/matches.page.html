@@ -1,0 +1,144 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen create-screen ax-fade-in">
+    <p class="step-label">Step {{ activeStep }} of {{ totalSteps }}</p>
+
+    <div class="stepper" role="tablist" aria-label="Match setup steps">
+      <div class="step-track"></div>
+      <div class="step-progress" [style.width]="progressWidth"></div>
+      <button
+        *ngFor="let step of [1, 2, 3, 4]"
+        type="button"
+        class="step-dot"
+        [class.active]="step <= activeStep"
+        [class.current]="step === activeStep"
+        (click)="setStep(step)"
+        [attr.aria-label]="'Go to step ' + step"
+      ></button>
+    </div>
+
+    <h1 class="brand">Arena<span>X</span></h1>
+
+    <p class="label">Choose Game</p>
+    <section class="game-picker">
+      <button
+        *ngFor="let game of gameOptions"
+        type="button"
+        class="game-pick-card"
+        [class.active]="selectedGame === game.title"
+        (click)="setGame(game.title)"
+      >
+        <img [src]="game.image" [alt]="game.title" />
+        <span>{{ game.title }}</span>
+      </button>
+    </section>
+
+    <article class="game-card">
+      <img [src]="selectedGameImage" [alt]="selectedGame" />
+      <div class="game-copy">
+        <h2>{{ selectedGame }}</h2>
+        <p>SELECTED GAME</p>
+      </div>
+      <i class="fa-solid fa-check"></i>
+    </article>
+
+    <section class="config-card">
+      <label class="label">Match Type</label>
+      <div class="select-wrap">
+        <select [value]="matchType" (change)="setMatchType($event)" class="type-select" aria-label="Match type">
+          <option value="1v1">1v1</option>
+          <option value="2v2">2v2</option>
+        </select>
+        <i class="fa-solid fa-chevron-down"></i>
+      </div>
+
+      <div class="toggle-row">
+        <span>Extra Time</span>
+        <button type="button" class="toggle" [class.on]="extraTime" (click)="toggleExtraTime()">
+          <span>{{ extraTime ? 'ON' : 'OFF' }}</span>
+          <b></b>
+        </button>
+      </div>
+
+      <div class="toggle-row">
+        <span>Penalties</span>
+        <button type="button" class="toggle" [class.on]="penalties" (click)="togglePenalties()">
+          <span>{{ penalties ? 'ON' : 'OFF' }}</span>
+          <b></b>
+        </button>
+      </div>
+
+      <div class="duration-row">
+        <span>Match Duration</span>
+        <strong>{{ duration }} min</strong>
+      </div>
+
+      <input
+        class="duration-slider"
+        type="range"
+        min="5"
+        max="30"
+        step="5"
+        [value]="duration"
+        (input)="setDuration($event)"
+        aria-label="Match duration"
+      />
+
+      <div class="stake-card">
+        <label for="stake-amount">Stake Amount</label>
+        <div class="stake-input-wrap">
+          <span>$</span>
+          <input
+            id="stake-amount"
+            type="number"
+            min="1"
+            step="1"
+            [value]="stake"
+            (input)="setStake($event)"
+            aria-label="Stake amount"
+          />
+        </div>
+      </div>
+    </section>
+
+    <div class="platform-row">
+      <button
+        class="platform"
+        type="button"
+        [class.active]="selectedPlatform === 'PlayStation'"
+        (click)="setPlatform('PlayStation')"
+      >
+        <i class="fa-brands fa-playstation"></i>
+        PlayStation
+      </button>
+      <button class="platform" type="button" [class.active]="selectedPlatform === 'Xbox'" (click)="setPlatform('Xbox')">
+        <i class="fa-brands fa-xbox"></i>
+        Xbox
+      </button>
+      <button class="platform" type="button" [class.active]="selectedPlatform === 'PC'" (click)="setPlatform('PC')">
+        <i class="fa-solid fa-desktop"></i>
+        PC
+      </button>
+    </div>
+
+    <button class="continue-btn" type="button" (click)="continueSetup()">Continue</button>
+    <p class="ax-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="ax-status" *ngIf="statusMessage">{{ statusMessage }}</p>
+
+    <section class="open-stakes">
+      <div class="open-stakes__head">
+        <h3>LIVE STAKE MATCHES</h3>
+        <small>Join and play outside ArenaX</small>
+      </div>
+      <article class="open-stake-card" *ngFor="let match of openStakeMatches">
+        <div>
+          <strong>{{ match.game }}</strong>
+          <p>WAITING · Stake ${{ match.stake }} · {{ match.scheduledAt }}</p>
+        </div>
+        <button type="button" class="ax-btn ax-btn-primary" (click)="joinMatch(match.id)">Join</button>
+      </article>
+      <p class="ax-muted" *ngIf="!openStakeMatches.length">No waiting stake matches right now.</p>
+    </section>
+  </div>
+
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

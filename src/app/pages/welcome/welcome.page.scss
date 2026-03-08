@@ -1,0 +1,217 @@
+:host {
+  --wel-bg-0: #04071b;
+  --wel-bg-1: #08133b;
+  --wel-bg-2: #0b1d50;
+  --wel-cyan: #38dff8;
+  --wel-violet: #a436ff;
+  --wel-text: #f3f6ff;
+  --wel-muted: rgba(229, 237, 255, 0.86);
+}
+
+ion-content {
+  --background: linear-gradient(170deg, var(--wel-bg-0) 2%, var(--wel-bg-1) 46%, var(--wel-bg-2) 100%);
+  color: var(--wel-text);
+  font-family: 'Outfit', 'Sora', 'Montserrat', 'Segoe UI', sans-serif;
+}
+
+.ax-welcome {
+  position: relative;
+  min-height: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 28px 22px 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.ax-welcome__bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(87, 122, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(87, 122, 255, 0.08) 1px, transparent 1px);
+  background-size: 34px 34px;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.ax-welcome__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+.ax-welcome__glow--top {
+  width: 320px;
+  height: 320px;
+  top: -100px;
+  right: -120px;
+  background: radial-gradient(circle, rgba(86, 238, 255, 0.3), transparent 65%);
+}
+
+.ax-welcome__glow--mid {
+  width: 380px;
+  height: 380px;
+  left: -170px;
+  top: 220px;
+  background: radial-gradient(circle, rgba(163, 66, 255, 0.26), transparent 67%);
+}
+
+.hero,
+.cta-stack {
+  position: relative;
+  z-index: 1;
+}
+
+.hero {
+  text-align: center;
+  padding-top: 16px;
+}
+
+.hero-icons {
+  height: 170px;
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.float-icon {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.35);
+  background: linear-gradient(135deg, rgba(170, 70, 255, 0.55), rgba(66, 229, 255, 0.5));
+  border: 1px solid rgba(131, 227, 255, 0.45);
+  box-shadow: 0 10px 30px rgba(34, 20, 93, 0.55), inset 0 0 18px rgba(158, 96, 255, 0.2);
+}
+
+.float-icon i {
+  filter: drop-shadow(0 3px 12px rgba(66, 227, 255, 0.45));
+}
+
+.float-icon.gamepad {
+  width: 110px;
+  height: 78px;
+  font-size: 2rem;
+  left: 38px;
+  top: 76px;
+  transform: rotate(-15deg);
+}
+
+.float-icon.trophy {
+  width: 110px;
+  height: 120px;
+  font-size: 3rem;
+  right: 30px;
+  top: 24px;
+  transform: rotate(13deg);
+}
+
+.float-icon.star {
+  width: 58px;
+  height: 58px;
+  font-size: 1.5rem;
+  left: 50%;
+  top: 6px;
+  transform: translateX(-50%);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 10vw, 3.5rem);
+  line-height: 1.06;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-shadow: 0 12px 32px rgba(15, 10, 58, 0.7);
+}
+
+.tagline {
+  margin: 16px 0 26px;
+  font-size: clamp(1.2rem, 4.8vw, 1.9rem);
+  color: var(--wel-muted);
+  font-weight: 500;
+}
+
+.value-props {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.value-props article {
+  padding: 10px 4px;
+  border-radius: 16px;
+  background: rgba(8, 19, 58, 0.48);
+  border: 1px solid rgba(132, 156, 255, 0.24);
+  backdrop-filter: blur(4px);
+}
+
+.value-props i {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  background: linear-gradient(125deg, var(--wel-violet), var(--wel-cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.value-props h2 {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.cta-stack {
+  display: grid;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: 16px;
+  min-height: 58px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary {
+  color: #ffffff;
+  background: linear-gradient(92deg, #b220ff, #31dff7);
+  box-shadow: 0 14px 26px rgba(44, 223, 248, 0.28);
+}
+
+.btn-outline {
+  color: var(--wel-text);
+  border: 2px solid rgba(62, 214, 248, 0.75);
+  background: rgba(6, 18, 57, 0.36);
+}
+
+@media (max-width: 390px) {
+  .ax-welcome {
+    padding: 22px 16px 28px;
+  }
+
+  .hero-icons {
+    transform: scale(0.88);
+    margin-bottom: -2px;
+  }
+
+  .value-props h2 {
+    font-size: 0.92rem;
+  }
+
+  .btn {
+    min-height: 54px;
+    font-size: 1.05rem;
+  }
+}

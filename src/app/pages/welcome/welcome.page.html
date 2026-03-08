@@ -1,0 +1,38 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-welcome">
+    <div class="ax-welcome__bg-grid" aria-hidden="true"></div>
+    <div class="ax-welcome__glow ax-welcome__glow--top" aria-hidden="true"></div>
+    <div class="ax-welcome__glow ax-welcome__glow--mid" aria-hidden="true"></div>
+
+    <section class="hero" aria-label="ArenaX welcome">
+      <div class="hero-icons" aria-hidden="true">
+        <span class="float-icon gamepad"><i class="fa-solid fa-gamepad"></i></span>
+        <span class="float-icon trophy"><i class="fa-solid fa-trophy"></i></span>
+        <span class="float-icon star"><i class="fa-solid fa-star"></i></span>
+      </div>
+
+      <h1>Welcome<br />to ArenaX</h1>
+      <p class="tagline">Compete. Win. Earn.</p>
+
+      <div class="value-props">
+        <article>
+          <i class="fa-solid fa-shield-halved"></i>
+          <h2>Fair Play<br />Verified</h2>
+        </article>
+        <article>
+          <i class="fa-solid fa-trophy"></i>
+          <h2>Real<br />Rewards</h2>
+        </article>
+        <article>
+          <i class="fa-solid fa-users"></i>
+          <h2>Live<br />Tournaments</h2>
+        </article>
+      </div>
+    </section>
+
+    <div class="cta-stack">
+      <a class="btn btn-primary" routerLink="/auth/register">Get Started</a>
+      <a class="btn btn-outline" routerLink="/auth/login">Sign In</a>
+    </div>
+  </div>
+</ion-content>

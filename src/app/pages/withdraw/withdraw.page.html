@@ -1,0 +1,16 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-fade-in">
+    <header>
+      <h2>Withdraw</h2>
+      <p class="ax-muted">Move winnings to your bank securely.</p>
+    </header>
+
+    <div class="ax-card ax-grid">
+      <label class="ax-field">Amount
+        <input class="ax-input" type="number" [(ngModel)]="amount" />
+      </label>
+      <p class="ax-error" *ngIf="error">{{ error }}</p>
+      <button class="ax-btn ax-btn-primary" (click)="submit()">Confirm Withdraw</button>
+    </div>
+  </div>
+</ion-content>
