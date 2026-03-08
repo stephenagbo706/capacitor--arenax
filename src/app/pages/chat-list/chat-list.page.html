@@ -66,14 +66,15 @@
     <h3 class="ax-section-title">Recent Chats</h3>
     <div class="ax-grid">
       <a class="ax-card ax-chat" *ngFor="let chat of (chats$ | async)" [routerLink]="['/chat', chat.id]">
-        <div class="ax-row">
+        <div class="ax-row" *ngIf="getUser(getOpponentId(chat)) as opponent">
           <div class="avatar-wrap">
-            <img class="ax-avatar" [src]="getUser(getOpponentId(chat))?.avatar" alt="Player" />
-            <span class="status-dot" [class.offline]="!getUser(getOpponentId(chat))?.online"></span>
+            <img class="ax-avatar" [src]="opponent.avatar" alt="Player" />
+            <span class="status-dot" [class.offline]="!opponent.online"></span>
           </div>
           <div>
-            <strong>{{ getUser(getOpponentId(chat))?.username }}</strong>
+            <strong>{{ opponent.username }}</strong>
             <p class="ax-muted">{{ chat.messages[chat.messages.length - 1]?.text || 'No messages yet' }}</p>
+            <p class="ax-muted">{{ opponent.wins }}W / {{ opponent.losses }}L · {{ opponent.goals }} Goals · {{ getGoalRate(opponent) }}% Goal Rate · Rank #{{ getGlobalRank(opponent) }}</p>
           </div>
           <span class="ax-time">Now</span>
         </div>

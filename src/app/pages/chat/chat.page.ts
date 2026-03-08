@@ -4,7 +4,7 @@ import { DatePipe, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent } from '@ionic/angular/standalone';
 import { ArenaService } from '../../core/services/arena.service';
-import { ChatThread } from '../../core/models/arena.models';
+import { ChatThread, UserProfile } from '../../core/models/arena.models';
 
 @Component({
   selector: 'app-chat',
@@ -16,15 +16,15 @@ import { ChatThread } from '../../core/models/arena.models';
 export class ChatPage {
   chatId = '';
   message = '';
-  imageUrl = '';
   currentUserId = this.arena.getCurrentUser()?.id || '';
+  showProfileCard = false;
 
   constructor(private route: ActivatedRoute, private arena: ArenaService) {
     this.chatId = this.route.snapshot.paramMap.get('id') || '';
   }
 
   get chat() {
-    return this.arena.chats$.value.find((c) => c.id === this.chatId);
+    return this.arena.getChatForCurrentUser(this.chatId);
   }
 
   getUser(id: string) {
@@ -39,15 +39,32 @@ export class ChatPage {
     return !!this.getUser(this.getOpponentId(chat))?.online;
   }
 
-  send() {
-    if (!this.message.trim()) return;
-    this.arena.sendMessage(this.chatId, { text: this.message });
-    this.message = '';
+  toggleOpponentProfile() {
+    this.showProfileCard = !this.showProfileCard;
   }
 
-  sendImage() {
-    if (!this.imageUrl.trim()) return;
-    this.arena.sendMessage(this.chatId, { image: this.imageUrl });
-    this.imageUrl = '';
+  getOpponent(chat: ChatThread) {
+    return this.getUser(this.getOpponentId(chat));
+  }
+
+  getTotalMatches(user: UserProfile) {
+    return user.wins + user.losses;
+  }
+
+  getGoalRate(user: UserProfile) {
+    const total = this.getTotalMatches(user);
+    if (!total) return 0;
+    return Math.round((user.wins / total) * 100);
+  }
+
+  getGlobalRank(user: UserProfile) {
+    return this.arena.getGlobalRank(user.id);
+  }
+
+  send() {
+    if (!this.message.trim()) return;
+    if (!this.chat) return;
+    this.arena.sendMessage(this.chatId, { text: this.message });
+    this.message = '';
   }
 }

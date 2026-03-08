@@ -1,40 +1,56 @@
 <ion-content [fullscreen]="true">
   <div class="ax-screen ax-fade-in">
-    <header class="ax-row" *ngIf="chat">
-      <div class="ax-row">
-        <div class="avatar-wrap">
-          <img class="ax-avatar" [src]="getUser(getOpponentId(chat))?.avatar" alt="Player" />
-          <span class="status-dot" [class.offline]="!isOpponentOnline(chat)"></span>
+    <ng-container *ngIf="chat as activeChat; else privateOnly">
+      <header class="ax-row">
+        <div class="ax-row">
+          <button class="avatar-button" type="button" (click)="toggleOpponentProfile()">
+            <div class="avatar-wrap">
+              <img class="ax-avatar" [src]="getOpponent(activeChat)?.avatar" alt="Player" />
+              <span class="status-dot" [class.offline]="!isOpponentOnline(activeChat)"></span>
+            </div>
+          </button>
+          <div>
+            <strong>{{ getOpponent(activeChat)?.username }}</strong>
+            <p class="ax-muted">{{ isOpponentOnline(activeChat) ? 'Online now' : 'Offline' }}</p>
+          </div>
         </div>
-        <div>
-          <strong>{{ getUser(getOpponentId(chat))?.username }}</strong>
-          <p class="ax-muted">{{ isOpponentOnline(chat) ? 'Online now' : 'Offline' }}</p>
-        </div>
-      </div>
-    </header>
+      </header>
 
-    <div class="ax-chat-thread" *ngIf="chat && chat.messages.length; else emptyChat">
-      <div
-        class="ax-message"
-        *ngFor="let msg of chat.messages"
-        [class.self]="msg.senderId === currentUserId"
-      >
-        <p *ngIf="msg.text">{{ msg.text }}</p>
-        <img *ngIf="msg.image" [src]="msg.image" alt="Shared image" />
-        <span>{{ msg.sentAt | date:'shortTime' }}</span>
+      <section class="ax-card profile-card">
+        <div *ngIf="showProfileCard && getOpponent(activeChat) as opponent; else tapAvatarTip">
+          <div class="ax-row profile-card-head">
+            <strong>{{ opponent.username }}</strong>
+            <span class="ax-badge">{{ getGoalRate(opponent) }}% Goal Rate</span>
+          </div>
+          <p class="ax-muted">Rank #{{ getGlobalRank(opponent) }} · {{ opponent.wins }}W / {{ opponent.losses }}L · {{ opponent.goals }} Goals</p>
+        </div>
+        <ng-template #tapAvatarTip>
+          <p class="ax-muted">Tap the avatar to view this player stats.</p>
+        </ng-template>
+      </section>
+
+      <div class="ax-chat-thread" *ngIf="activeChat.messages.length; else emptyChat">
+        <div
+          class="ax-message"
+          *ngFor="let msg of activeChat.messages"
+          [class.self]="msg.senderId === currentUserId"
+        >
+          <p *ngIf="msg.text">{{ msg.text }}</p>
+          <span>{{ msg.sentAt | date:'shortTime' }}</span>
+        </div>
       </div>
-    </div>
-    <ng-template #emptyChat>
-      <div class="ax-empty-chat">No messages yet. Start chatting freely.</div>
+      <ng-template #emptyChat>
+        <div class="ax-empty-chat">No messages yet. Start chatting freely.</div>
+      </ng-template>
+
+      <div class="ax-chat-input">
+        <input class="ax-input" placeholder="Type a message" [(ngModel)]="message" />
+        <button class="ax-btn ax-btn-primary" (click)="send()">Send</button>
+      </div>
+    </ng-container>
+
+    <ng-template #privateOnly>
+      <div class="ax-empty-chat">This chat is private. Only participants can view messages.</div>
     </ng-template>
-
-    <div class="ax-chat-input">
-      <input class="ax-input" placeholder="Type a message" [(ngModel)]="message" />
-      <button class="ax-btn ax-btn-primary" (click)="send()">Send</button>
-    </div>
-    <div class="ax-chat-input secondary">
-      <input class="ax-input" placeholder="Paste image URL" [(ngModel)]="imageUrl" />
-      <button class="ax-btn" (click)="sendImage()">Send Image</button>
-    </div>
   </div>
 </ion-content>

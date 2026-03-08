@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import {
   ArenaState,
+  ChatThread,
   Challenge,
   Match,
   NotificationItem,
@@ -643,6 +644,7 @@ export class ArenaService {
   createChatWith(userId: string) {
     const current = this.getCurrentUser();
     if (!current) return '';
+    if (userId === current.id) return '';
     const existing = this.state.chats.find(
       (c) => c.participantIds.includes(userId) && c.participantIds.includes(current.id)
     );
@@ -663,6 +665,7 @@ export class ArenaService {
     if (!current) return;
     const chat = this.state.chats.find((c) => c.id === chatId);
     if (!chat) return;
+    if (!chat.participantIds.includes(current.id)) return;
     chat.messages.push({
       id: uid(),
       senderId: current.id,
@@ -678,6 +681,7 @@ export class ArenaService {
     const chat = this.state.chats.find((c) => c.id === chatId);
     if (!chat) return;
     const currentUserId = this.getCurrentUser()?.id;
+    if (currentUserId && !chat.participantIds.includes(currentUserId)) return;
     const opponentId = chat.participantIds.find((id) => id !== currentUserId) || chat.participantIds[0];
     chat.messages.push({
       id: uid(),
@@ -742,6 +746,18 @@ export class ArenaService {
     return this.state.users.find((u) => u.id === this.state.currentUserId) || null;
   }
 
+  getChatForCurrentUser(chatId: string) {
+    const currentUserId = this.state.currentUserId;
+    if (!currentUserId) return undefined;
+    return this.state.chats.find((chat) => chat.id === chatId && chat.participantIds.includes(currentUserId));
+  }
+
+  getGlobalRank(userId: string) {
+    const ranked = [...this.state.users].sort((a, b) => this.getRankPoints(b) - this.getRankPoints(a));
+    const index = ranked.findIndex((user) => user.id === userId);
+    return index >= 0 ? index + 1 : ranked.length;
+  }
+
   getAvailableMatches(game?: string) {
     return this.state.matches.filter((match) => match.status === 'waiting' && (!game || match.game === game));
   }
@@ -764,9 +780,19 @@ export class ArenaService {
     this.matches$.next(this.state.matches);
     this.tournaments$.next(this.state.tournaments);
     this.spotlightPosts$.next(this.state.spotlightPosts);
-    this.chats$.next(this.state.chats);
+    this.chats$.next(this.getChatsForCurrentUser());
     this.notifications$.next(this.state.notifications);
     this.transactions$.next(this.state.transactions);
+  }
+
+  private getChatsForCurrentUser() {
+    const currentUserId = this.state.currentUserId;
+    if (!currentUserId) return [] as ChatThread[];
+    return this.state.chats.filter((chat) => chat.participantIds.includes(currentUserId));
+  }
+
+  private getRankPoints(user: UserProfile) {
+    return Math.max(0, user.wins * 30 - user.losses * 8);
   }
 
   private lockFunds(userId: string, amount: number, type: TransactionItem['type'], note: string) {
@@ -902,7 +928,17 @@ export class ArenaService {
       chats: (input.chats || seeded.chats).map((chat) => ({
         ...chat,
         // Remove old seeded/auto bot-like messages from legacy builds.
-        messages: (chat.messages || []).filter((message) => !DEFAULT_CHAT_TEXTS.has((message.text || '').trim())),
+        messages: (chat.messages || [])
+          .filter((message) => !DEFAULT_CHAT_TEXTS.has((message.text || '').trim()))
+          .map((message) => ({
+            ...message,
+            // Remove legacy pasted image URLs from older chat builds.
+            image:
+              typeof message.image === 'string' &&
+              (message.image.startsWith('http://') || message.image.startsWith('https://'))
+                ? undefined
+                : message.image,
+          })),
       })),
       notifications: input.notifications || seeded.notifications,
       transactions: input.transactions || seeded.transactions,

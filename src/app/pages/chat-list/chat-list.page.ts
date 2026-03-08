@@ -32,6 +32,16 @@ export class ChatListPage {
     return this.arena.getUser(id);
   }
 
+  getGoalRate(user: UserProfile) {
+    const total = user.wins + user.losses;
+    if (!total) return 0;
+    return Math.round((user.wins / total) * 100);
+  }
+
+  getGlobalRank(user: UserProfile) {
+    return this.arena.getGlobalRank(user.id);
+  }
+
   getOpponentId(chat: ChatThread) {
     return chat.participantIds.find((id) => id !== this.currentUserId) || chat.participantIds[0];
   }
