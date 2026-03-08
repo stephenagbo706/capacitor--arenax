@@ -1,0 +1,48 @@
+.chat-popup {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 96px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(88, 222, 255, 0.45);
+  border-radius: 14px;
+  background: rgba(8, 16, 45, 0.95);
+  color: #eef4ff;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+  text-align: left;
+}
+
+.chat-popup__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #5f5dff, #33d8ff);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.chat-popup__copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chat-popup__copy small {
+  color: #b9c6ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-popup__close {
+  margin-left: auto;
+  color: #c7d4ff;
+  font-size: 1.1rem;
+  line-height: 1;
+}

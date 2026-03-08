@@ -8,7 +8,7 @@ export type MatchStatus =
   | 'verified'
   | 'rejected';
 export type TransactionType = 'deposit' | 'withdraw' | 'reward' | 'stake_lock' | 'entry_lock' | 'refund';
-export type NotificationType = 'challenge' | 'match' | 'payment' | 'system' | 'tournament' | 'spotlight';
+export type NotificationType = 'challenge' | 'match' | 'payment' | 'system' | 'tournament' | 'spotlight' | 'chat';
 export type TournamentStatus = 'live' | 'upcoming' | 'ended';
 
 export interface UserProfile {
@@ -121,6 +121,7 @@ export interface NotificationItem {
   message: string;
   createdAt: string;
   read: boolean;
+  chatId?: string;
 }
 
 export interface TransactionItem {

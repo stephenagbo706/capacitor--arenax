@@ -689,6 +689,7 @@ export class ArenaService {
       text: 'Challenge accepted. Meet you in the arena!',
       sentAt: now(),
     });
+    this.pushIncomingChatNotification(chat.id, opponentId, 'Challenge accepted. Meet you in the arena!');
     this.persist();
     this.hydrateSubjects();
   }
@@ -793,6 +794,22 @@ export class ArenaService {
 
   private getRankPoints(user: UserProfile) {
     return Math.max(0, user.wins * 30 - user.losses * 8);
+  }
+
+  private pushIncomingChatNotification(chatId: string, senderId: string, messageText: string) {
+    const currentUserId = this.state.currentUserId;
+    if (!currentUserId || senderId === currentUserId) return;
+    const sender = this.getUser(senderId);
+    const preview = messageText.trim() || 'Sent you a message.';
+
+    this.state.notifications.unshift({
+      id: uid(),
+      type: 'chat',
+      chatId,
+      message: `${sender?.username || 'Player'}: ${preview}`,
+      createdAt: now(),
+      read: false,
+    });
   }
 
   private lockFunds(userId: string, amount: number, type: TransactionItem['type'], note: string) {

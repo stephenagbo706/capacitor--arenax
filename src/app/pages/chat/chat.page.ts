@@ -66,5 +66,6 @@ export class ChatPage {
     if (!this.chat) return;
     this.arena.sendMessage(this.chatId, { text: this.message });
     this.message = '';
+    setTimeout(() => this.arena.simulateReply(this.chatId), 1200);
   }
 }

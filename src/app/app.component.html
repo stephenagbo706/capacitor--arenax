@@ -1,3 +1,14 @@
 <ion-app>
   <ion-router-outlet></ion-router-outlet>
+
+  <button class="chat-popup" *ngIf="chatPopup as popup" type="button" (click)="openChatNotification()">
+    <span class="chat-popup__icon">
+      <i class="fa-regular fa-message"></i>
+    </span>
+    <span class="chat-popup__copy">
+      <strong>New Message</strong>
+      <small>{{ popup.message }}</small>
+    </span>
+    <span class="chat-popup__close" (click)="$event.stopPropagation(); dismissChatPopup()">×</span>
+  </button>
 </ion-app>
