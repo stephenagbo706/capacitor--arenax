@@ -124,6 +124,27 @@
     <p class="ax-error" *ngIf="errorMessage">{{ errorMessage }}</p>
     <p class="ax-status" *ngIf="statusMessage">{{ statusMessage }}</p>
 
+    <section class="room-card">
+      <h3>Room Game ID</h3>
+      <p>After creating a match, copy the room ID and send it to your opponent. They can paste it below to auto-join and start.</p>
+
+      <div class="room-created" *ngIf="createdRoomGameId">
+        <span>{{ createdRoomGameId }}</span>
+        <button type="button" class="ax-btn ax-btn-primary" (click)="copyRoomGameId()">Copy</button>
+      </div>
+
+      <div class="room-join">
+        <input
+          type="text"
+          placeholder="Paste room game ID (e.g. RM-AB12CD)"
+          [value]="roomGameIdToJoin"
+          (input)="setJoinRoomGameId($event)"
+          aria-label="Join with room game ID"
+        />
+        <button type="button" class="ax-btn ax-btn-primary" (click)="joinByRoomGameId()">Join Game</button>
+      </div>
+    </section>
+
     <section class="open-stakes">
       <div class="open-stakes__head">
         <h3>LIVE STAKE MATCHES</h3>

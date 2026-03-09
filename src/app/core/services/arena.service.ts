@@ -54,14 +54,25 @@ export class ArenaService {
   }
 
   register(payload: { username: string; email: string; password: string }) {
-    const exists = this.state.users.some((u) => u.email.toLowerCase() === payload.email.toLowerCase());
+    const username = payload.username.trim();
+    const email = payload.email.trim().toLowerCase();
+    const password = payload.password.trim();
+
+    if (!username) return { ok: false, message: 'Username is required.' };
+    if (!email) return { ok: false, message: 'Email is required.' };
+    if (!password) return { ok: false, message: 'Password is required.' };
+
+    const usernameExists = this.state.users.some((u) => u.username.toLowerCase() === username.toLowerCase());
+    if (usernameExists) return { ok: false, message: 'Username is already taken.' };
+
+    const exists = this.state.users.some((u) => u.email.toLowerCase() === email);
     if (exists) return { ok: false, message: 'Email is already registered.' };
 
     const profileId = `AX-${Math.floor(100000 + Math.random() * 900000)}`;
     const newUser: UserProfile = {
       id: uid(),
-      username: payload.username,
-      email: payload.email,
+      username,
+      email,
       gameId: profileId,
       gameIds: {
         eFootball: `EFB-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -200,6 +211,17 @@ export class ArenaService {
     match.status = 'live';
     match.startedAt = now();
     match.escrowTotal = match.stake * 2;
+
+    const existingChat = this.state.chats.find(
+      (chat) => chat.participantIds.includes(match.player1Id) && chat.participantIds.includes(current.id)
+    );
+    if (!existingChat) {
+      this.state.chats.unshift({
+        id: uid(),
+        participantIds: [match.player1Id, current.id],
+        messages: [],
+      });
+    }
 
     this.state.notifications.unshift({
       id: uid(),
