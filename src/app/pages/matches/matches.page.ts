@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { BottomNavComponent } from '../../shared/bottom-nav.component';
 import { ArenaService } from '../../core/services/arena.service';
@@ -35,13 +35,20 @@ export class MatchesPage {
   selectedPlatform: 'PlayStation' | 'Xbox' | 'PC' = 'PlayStation';
   roomGameIdToJoin = '';
   createdRoomGameId = '';
+  showJoinGameSection = false;
 
   matches$ = this.arena.matches$;
   currentUserId = this.arena.getCurrentUser()?.id || '';
   statusMessage = '';
   errorMessage = '';
 
-  constructor(private router: Router, private arena: ArenaService) {}
+  constructor(private router: Router, private route: ActivatedRoute, private arena: ArenaService) {
+    this.route.queryParamMap.subscribe((params) => {
+      if (params.get('join') === '1') {
+        this.openJoinGameSection();
+      }
+    });
+  }
 
   get progressWidth() {
     if (this.totalSteps <= 1) return '0%';
@@ -131,6 +138,13 @@ export class MatchesPage {
 
     this.statusMessage = `Connected successfully. Room ${roomCode.toUpperCase()} is now LIVE.`;
     this.roomGameIdToJoin = '';
+  }
+
+  openJoinGameSection() {
+    this.showJoinGameSection = true;
+    setTimeout(() => {
+      document.getElementById('join-game-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 
   copyRoomGameId() {

@@ -126,13 +126,32 @@
 
     <section class="room-card">
       <h3>Room Game ID</h3>
-      <p>After creating a match, copy the room ID and send it to your opponent. They can paste it below to auto-join and start.</p>
+      <p>After creating a match, copy the room ID and send it to your opponent.</p>
 
       <div class="room-created" *ngIf="createdRoomGameId">
         <span>{{ createdRoomGameId }}</span>
         <button type="button" class="ax-btn ax-btn-primary" (click)="copyRoomGameId()">Copy</button>
       </div>
+    </section>
 
+    <section class="open-stakes">
+      <div class="open-stakes__head">
+        <h3>Active Matches</h3>
+        <button type="button" class="join-shortcut-btn" (click)="openJoinGameSection()">Join</button>
+      </div>
+      <article class="open-stake-card" *ngFor="let match of openStakeMatches">
+        <div>
+          <strong>{{ match.game }}</strong>
+          <p>WAITING · Stake ${{ match.stake }} · {{ match.scheduledAt }}</p>
+        </div>
+        <button type="button" class="ax-btn ax-btn-primary" (click)="joinMatch(match.id)">Join</button>
+      </article>
+      <p class="ax-muted" *ngIf="!openStakeMatches.length">No waiting stake matches right now.</p>
+    </section>
+
+    <section class="room-card join-game-card" id="join-game-section" *ngIf="showJoinGameSection">
+      <h3>Join Game</h3>
+      <p>Paste the Room Game ID shared by your opponent.</p>
       <div class="room-join">
         <input
           type="text"
@@ -143,21 +162,6 @@
         />
         <button type="button" class="ax-btn ax-btn-primary" (click)="joinByRoomGameId()">Join Game</button>
       </div>
-    </section>
-
-    <section class="open-stakes">
-      <div class="open-stakes__head">
-        <h3>LIVE STAKE MATCHES</h3>
-        <small>Join and play outside ArenaX</small>
-      </div>
-      <article class="open-stake-card" *ngFor="let match of openStakeMatches">
-        <div>
-          <strong>{{ match.game }}</strong>
-          <p>WAITING · Stake ${{ match.stake }} · {{ match.scheduledAt }}</p>
-        </div>
-        <button type="button" class="ax-btn ax-btn-primary" (click)="joinMatch(match.id)">Join</button>
-      </article>
-      <p class="ax-muted" *ngIf="!openStakeMatches.length">No waiting stake matches right now.</p>
     </section>
   </div>
 

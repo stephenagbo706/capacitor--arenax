@@ -46,7 +46,10 @@
       <span></span>
     </div>
 
-    <h2 class="section-title">Active Matches</h2>
+    <div class="section-head">
+      <h2 class="section-title">Active Matches</h2>
+      <a class="section-join-btn" [routerLink]="['/matches']" [queryParams]="{ join: 1 }">Join</a>
+    </div>
     <div class="match-grid">
       <article class="match-card" *ngFor="let match of activeMatches">
         <div class="match-topline">
