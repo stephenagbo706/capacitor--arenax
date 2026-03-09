@@ -33,8 +33,6 @@ export class MatchesPage {
   duration = 10;
   stake = 25;
   selectedPlatform: 'PlayStation' | 'Xbox' | 'PC' = 'PlayStation';
-  roomGameIdToJoin = '';
-  createdRoomGameId = '';
 
   matches$ = this.arena.matches$;
   currentUserId = this.arena.getCurrentUser()?.id || '';
@@ -109,41 +107,6 @@ export class MatchesPage {
     this.statusMessage = 'Joined stake match. Status changed to LIVE.';
   }
 
-  setJoinRoomGameId(event: Event) {
-    this.roomGameIdToJoin = (event.target as HTMLInputElement).value.toUpperCase();
-  }
-
-  joinByRoomGameId() {
-    this.errorMessage = '';
-    this.statusMessage = '';
-
-    const roomCode = this.roomGameIdToJoin.trim();
-    if (!roomCode) {
-      this.errorMessage = 'Enter a room game ID to join.';
-      return;
-    }
-
-    const result = this.arena.joinStakeMatchByRoomCode(roomCode);
-    if (!result?.ok) {
-      this.errorMessage = result?.message || 'Unable to join room.';
-      return;
-    }
-
-    this.statusMessage = `Joined room ${roomCode}. Match is now LIVE.`;
-    this.roomGameIdToJoin = '';
-  }
-
-  copyRoomGameId() {
-    if (!this.createdRoomGameId) return;
-    if (!navigator.clipboard?.writeText) {
-      this.statusMessage = `Room game ID: ${this.createdRoomGameId}`;
-      return;
-    }
-    navigator.clipboard.writeText(this.createdRoomGameId).then(() => {
-      this.statusMessage = `Room game ID copied: ${this.createdRoomGameId}`;
-    });
-  }
-
   continueSetup() {
     this.errorMessage = '';
     this.statusMessage = '';
@@ -174,8 +137,7 @@ export class MatchesPage {
       return;
     }
 
-    this.createdRoomGameId = 'roomCode' in result ? result.roomCode || '' : '';
-    this.statusMessage = `Stake match created. Share room game ID ${this.createdRoomGameId} so opponent can join.`;
+    this.statusMessage = 'Stake match created successfully.';
     this.activeStep = 2;
   }
 
