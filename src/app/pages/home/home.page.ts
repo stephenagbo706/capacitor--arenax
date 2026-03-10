@@ -49,6 +49,11 @@ export class HomePage {
     return this.arena.getUser(id);
   }
 
+  getPlayerName(id?: string) {
+    if (!id) return 'Awaiting opponent';
+    return this.getUser(id)?.username || 'Player';
+  }
+
   getMatchStateLabel(status: string) {
     if (status === 'waiting') return 'WAITING';
     if (status === 'live') return 'LIVE';

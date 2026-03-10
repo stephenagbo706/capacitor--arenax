@@ -137,7 +137,6 @@
     <section class="open-stakes">
       <div class="open-stakes__head">
         <h3>Active Matches</h3>
-        <button type="button" class="join-shortcut-btn" (click)="openJoinGameSection()">Join</button>
       </div>
       <article class="open-stake-card" *ngFor="let match of openStakeMatches">
         <div>
@@ -147,21 +146,6 @@
         <button type="button" class="ax-btn ax-btn-primary" (click)="joinMatch(match.id)">Join</button>
       </article>
       <p class="ax-muted" *ngIf="!openStakeMatches.length">No waiting stake matches right now.</p>
-    </section>
-
-    <section class="room-card join-game-card" id="join-game-section" *ngIf="showJoinGameSection">
-      <h3>Join Game</h3>
-      <p>Paste the Room Game ID shared by your opponent.</p>
-      <div class="room-join">
-        <input
-          type="text"
-          placeholder="Paste room game ID (e.g. RM-AB12CD)"
-          [value]="roomGameIdToJoin"
-          (input)="setJoinRoomGameId($event)"
-          aria-label="Join with room game ID"
-        />
-        <button type="button" class="ax-btn ax-btn-primary" (click)="joinByRoomGameId()">Join Game</button>
-      </div>
     </section>
   </div>
 

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { BottomNavComponent } from '../../shared/bottom-nav.component';
 import { ArenaService } from '../../core/services/arena.service';
@@ -33,22 +33,14 @@ export class MatchesPage {
   duration = 10;
   stake = 25;
   selectedPlatform: 'PlayStation' | 'Xbox' | 'PC' = 'PlayStation';
-  roomGameIdToJoin = '';
   createdRoomGameId = '';
-  showJoinGameSection = false;
 
   matches$ = this.arena.matches$;
   currentUserId = this.arena.getCurrentUser()?.id || '';
   statusMessage = '';
   errorMessage = '';
 
-  constructor(private router: Router, private route: ActivatedRoute, private arena: ArenaService) {
-    this.route.queryParamMap.subscribe((params) => {
-      if (params.get('join') === '1') {
-        this.openJoinGameSection();
-      }
-    });
-  }
+  constructor(private router: Router, private arena: ArenaService) {}
 
   get progressWidth() {
     if (this.totalSteps <= 1) return '0%';
@@ -114,37 +106,6 @@ export class MatchesPage {
     }
     this.errorMessage = '';
     this.statusMessage = 'Joined stake match. Status changed to LIVE.';
-  }
-
-  setJoinRoomGameId(event: Event) {
-    this.roomGameIdToJoin = (event.target as HTMLInputElement).value.toUpperCase();
-  }
-
-  joinByRoomGameId() {
-    this.errorMessage = '';
-    this.statusMessage = '';
-
-    const roomCode = this.roomGameIdToJoin.trim();
-    if (!roomCode) {
-      this.errorMessage = 'Paste a room game ID to join.';
-      return;
-    }
-
-    const result = this.arena.joinStakeMatchByRoomCode(roomCode);
-    if (!result?.ok) {
-      this.errorMessage = result?.message || 'Unable to join room.';
-      return;
-    }
-
-    this.statusMessage = `Connected successfully. Room ${roomCode.toUpperCase()} is now LIVE.`;
-    this.roomGameIdToJoin = '';
-  }
-
-  openJoinGameSection() {
-    this.showJoinGameSection = true;
-    setTimeout(() => {
-      document.getElementById('join-game-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 0);
   }
 
   copyRoomGameId() {

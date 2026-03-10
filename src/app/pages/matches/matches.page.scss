@@ -391,23 +391,6 @@ ion-content {
   letter-spacing: 0.08em;
 }
 
-.room-join {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-}
-
-.room-join input {
-  min-height: 40px;
-  border-radius: 10px;
-  border: 1px solid rgba(131, 161, 218, 0.45);
-  background: rgba(18, 29, 66, 0.75);
-  color: #fff;
-  padding: 0 10px;
-  text-transform: uppercase;
-}
-
 .open-stakes {
   margin-top: 18px;
   padding-top: 12px;
@@ -425,23 +408,6 @@ ion-content {
   margin: 0;
   font-size: 0.95rem;
   letter-spacing: 0.06em;
-}
-
-.join-shortcut-btn {
-  height: 28px;
-  min-width: 58px;
-  border: 1px solid rgba(140, 114, 255, 0.9);
-  border-radius: 999px;
-  background: rgba(60, 54, 108, 0.7);
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 0 10px;
-}
-
-.join-game-card {
-  margin-top: 10px;
 }
 
 .open-stake-card {
@@ -521,9 +487,6 @@ ion-content {
     align-items: flex-start;
   }
 
-  .room-join {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 420px) {

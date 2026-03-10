@@ -15,7 +15,6 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
 })
 export class FindPlayersPage {
   players$ = this.arena.users$;
-  currentUserId = this.arena.getCurrentUser()?.id || '';
   searchTerm = '';
   modalOpen = false;
   selectedPlayerId = '';
@@ -27,6 +26,10 @@ export class FindPlayersPage {
   errorMessage = '';
 
   constructor(private arena: ArenaService, private router: Router) {}
+
+  get currentUserId() {
+    return this.arena.getCurrentUser()?.id || '';
+  }
 
   openChallenge(playerId: string) {
     this.selectedPlayerId = playerId;

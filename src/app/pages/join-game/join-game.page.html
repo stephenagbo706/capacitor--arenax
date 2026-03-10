@@ -1,0 +1,26 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen join-game-screen ax-fade-in">
+    <h1 class="brand">Join Game</h1>
+    <p class="ax-muted intro">Paste the Room Game ID shared by your opponent.</p>
+
+    <section class="join-card">
+      <label for="room-game-id">Room Game ID</label>
+      <input
+        id="room-game-id"
+        type="text"
+        placeholder="RM-AB12CD"
+        [value]="roomGameId"
+        (input)="setRoomGameId($event)"
+        aria-label="Room game ID"
+      />
+      <button type="button" class="ax-btn ax-btn-primary join-btn" (click)="joinGame()">Join Game</button>
+    </section>
+
+    <p class="ax-status" *ngIf="statusMessage">{{ statusMessage }}</p>
+    <p class="ax-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <button type="button" class="ax-btn ax-btn-light create-btn" (click)="openCreateMatch()">Create Match Instead</button>
+  </div>
+
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

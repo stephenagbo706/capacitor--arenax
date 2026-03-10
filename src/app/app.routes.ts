@@ -34,6 +34,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/matches/matches.page').then((m) => m.MatchesPage),
   },
   {
+    path: 'join-game',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/join-game/join-game.page').then((m) => m.JoinGamePage),
+  },
+  {
     path: 'matches/:id',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/match-details/match-details.page').then((m) => m.MatchDetailsPage),

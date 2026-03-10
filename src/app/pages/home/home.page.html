@@ -48,7 +48,7 @@
 
     <div class="section-head">
       <h2 class="section-title">Active Matches</h2>
-      <a class="section-join-btn" [routerLink]="['/matches']" [queryParams]="{ join: 1 }">Join</a>
+      <a class="section-join-btn" [routerLink]="['/join-game']">Join Game</a>
     </div>
     <div class="match-grid">
       <article class="match-card" *ngFor="let match of activeMatches">
@@ -67,7 +67,7 @@
           <div class="avatar-group right"></div>
         </div>
         <div class="match-stake">WIN: ${{ match.escrowTotal | number : '1.0-2' }}</div>
-        <div class="ax-muted" *ngIf="match.roomCode">Room ID: {{ match.roomCode }}</div>
+        <div class="ax-muted" style="text-align: center">{{ getPlayerName(match.player1Id) }} vs {{ getPlayerName(match.player2Id) }}</div>
         <a class="match-btn" [routerLink]="['/matches', match.id]">
           <span>{{ isWaiting(match.status) ? 'Open Match Room' : 'Open Live Match' }}</span>
         </a>

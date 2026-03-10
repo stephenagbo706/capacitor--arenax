@@ -18,12 +18,15 @@ export class ChatListPage {
   chats$ = this.arena.chats$;
   users$ = this.arena.users$;
   friendRequests$ = this.arena.friendRequests$;
-  currentUserId = this.arena.getCurrentUser()?.id || '';
   searchTerm = '';
   statusMessage = '';
   errorMessage = '';
 
   constructor(private arena: ArenaService, private router: Router) {}
+
+  get currentUserId() {
+    return this.arena.getCurrentUser()?.id || '';
+  }
 
   getUser(id: string) {
     return this.arena.getUser(id);
