@@ -111,6 +111,7 @@ export interface ChatMessage {
   sentAt: string;
   status?: 'sent' | 'delivered' | 'seen';
   replyToId?: string;
+  reaction?: string;
 }
 
 export interface ChatThread {

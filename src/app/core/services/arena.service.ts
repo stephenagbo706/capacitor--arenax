@@ -828,6 +828,29 @@ export class ArenaService {
     return newMessage.id;
   }
 
+  deleteMessage(chatId: string, messageId: string) {
+    const current = this.getCurrentUser();
+    if (!current) return;
+    const chat = this.state.chats.find((c) => c.id === chatId);
+    if (!chat) return;
+    const message = chat.messages.find((m) => m.id === messageId);
+    if (!message) return;
+    if (message.senderId !== current.id) return; // only allow author to delete
+    chat.messages = chat.messages.filter((m) => m.id !== messageId);
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  reactToMessage(chatId: string, messageId: string, reaction: string) {
+    const chat = this.state.chats.find((c) => c.id === chatId);
+    if (!chat) return;
+    const message = chat.messages.find((m) => m.id === messageId);
+    if (!message) return;
+    message.reaction = message.reaction === reaction ? undefined : reaction;
+    this.persist();
+    this.hydrateSubjects();
+  }
+
   simulateReply(chatId: string) {
     const chat = this.state.chats.find((c) => c.id === chatId);
     if (!chat) return;

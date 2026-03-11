@@ -22,6 +22,8 @@ export class ChatPage implements OnInit {
   replyingTo?: ChatMessage | null;
   attachmentData?: string;
   swipeStart?: { x: number; y: number };
+  longPressTimer?: any;
+  toast?: string;
 
   constructor(private route: ActivatedRoute, private arena: ArenaService) {
     this.chatId = this.route.snapshot.paramMap.get('id') || '';
@@ -109,12 +111,29 @@ export class ChatPage implements OnInit {
     this.attachmentData = undefined;
   }
 
-  startSwipe(event: TouchEvent) {
-    const touch = event.changedTouches[0];
-    this.swipeStart = { x: touch.clientX, y: touch.clientY };
+  clearReply() {
+    this.replyingTo = null;
   }
 
-  endSwipe(message: ChatMessage, event: TouchEvent) {
+  onPressStart(message: ChatMessage, event: TouchEvent | MouseEvent) {
+    if (event instanceof TouchEvent) {
+      const touch = event.changedTouches[0];
+      this.swipeStart = { x: touch.clientX, y: touch.clientY };
+    }
+    this.longPressTimer = setTimeout(() => this.handleLongPress(message), 550);
+  }
+
+  onPressEnd(message: ChatMessage, event: TouchEvent | MouseEvent) {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = undefined;
+    }
+    if (event instanceof TouchEvent) {
+      this.detectSwipeForReply(message, event);
+    }
+  }
+
+  private detectSwipeForReply(message: ChatMessage, event: TouchEvent) {
     if (!this.swipeStart) return;
     const touch = event.changedTouches[0];
     const deltaX = touch.clientX - this.swipeStart.x;
@@ -125,8 +144,40 @@ export class ChatPage implements OnInit {
     }
   }
 
-  clearReply() {
-    this.replyingTo = null;
+  private handleLongPress(message: ChatMessage) {
+    this.copyMessage(message, true);
+  }
+
+  copyMessage(message: ChatMessage, preferGameId = false) {
+    const textToCopy = preferGameId ? this.extractGameId(message.text) || message.text : message.text;
+    if (!textToCopy) return;
+    navigator.clipboard?.writeText(textToCopy);
+    this.showToast(preferGameId ? 'Game ID copied' : 'Message copied');
+  }
+
+  extractGameId(text?: string) {
+    if (!text) return '';
+    const match = text.match(/([A-Z]{2,5}-?\d{4,8})/);
+    return match ? match[1] : '';
+  }
+
+  replyTo(message: ChatMessage) {
+    this.replyingTo = message;
+  }
+
+  deleteMessage(message: ChatMessage) {
+    if (message.senderId !== this.currentUserId) return;
+    this.arena.deleteMessage(this.chatId, message.id);
+    this.showToast('Message deleted');
+  }
+
+  react(message: ChatMessage, emoji: string) {
+    this.arena.reactToMessage(this.chatId, message.id, emoji);
+  }
+
+  private showToast(text: string) {
+    this.toast = text;
+    setTimeout(() => (this.toast = undefined), 1500);
   }
 
   markThreadSeen() {

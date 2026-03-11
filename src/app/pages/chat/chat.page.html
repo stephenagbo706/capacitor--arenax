@@ -34,8 +34,6 @@
           class="ax-message-row"
           *ngFor="let msg of activeChat.messages"
           [class.self]="msg.senderId === currentUserId"
-          (touchstart)="startSwipe($event)"
-          (touchend)="endSwipe(msg, $event)"
         >
           <img
             *ngIf="msg.senderId !== currentUserId"
@@ -44,7 +42,14 @@
             alt="Avatar"
           />
 
-          <div class="ax-message" [class.self]="msg.senderId === currentUserId">
+          <div
+            class="ax-message"
+            [class.self]="msg.senderId === currentUserId"
+            (touchstart)="onPressStart(msg, $event)"
+            (touchend)="onPressEnd(msg, $event)"
+            (mousedown)="onPressStart(msg, $event)"
+            (mouseup)="onPressEnd(msg, $event)"
+          >
             <div class="reply-chip" *ngIf="getRepliedMessage(activeChat, msg) as replied">
               <small>{{ replied.senderId === currentUserId ? 'You' : getUser(replied.senderId)?.username || 'Player' }}</small>
               <p>{{ replied.text || 'Image' }}</p>
@@ -52,9 +57,25 @@
 
             <p *ngIf="msg.text">{{ msg.text }}</p>
             <img *ngIf="msg.image" [src]="msg.image" class="ax-chat-image" alt="Attachment" />
+            <div class="reaction-pill" *ngIf="msg.reaction">{{ msg.reaction }}</div>
             <div class="meta">
               <span>{{ msg.sentAt | date:'shortTime' }}</span>
               <span *ngIf="msg.senderId === currentUserId" class="status">{{ msg.status || 'delivered' }}</span>
+            </div>
+            <div class="message-actions">
+              <button type="button" class="pill-btn" (click)="copyMessage(msg)">Copy</button>
+              <button type="button" class="pill-btn" (click)="replyTo(msg)">Reply</button>
+              <button type="button" class="pill-btn" (click)="react(msg, '❤️')">
+                {{ msg.reaction === '❤️' ? 'Unreact' : 'React' }}
+              </button>
+              <button
+                type="button"
+                class="pill-btn danger"
+                *ngIf="msg.senderId === currentUserId"
+                (click)="deleteMessage(msg)"
+              >
+                Delete
+              </button>
             </div>
           </div>
 
@@ -91,11 +112,15 @@
       </div>
 
       <div class="ax-chat-input">
-        <button class="ax-icon-btn" type="button" (click)="fileInput.click()">Img</button>
+        <button class="ax-icon-btn upload-btn" type="button" (click)="fileInput.click()" aria-label="Add image">
+          <span class="icon-photo" aria-hidden="true"></span>
+        </button>
         <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
         <input class="ax-input" placeholder="Type a message" [(ngModel)]="message" />
         <button class="ax-btn ax-btn-primary" (click)="send()">Send</button>
       </div>
+
+      <div class="ax-toast" *ngIf="toast">{{ toast }}</div>
     </ng-container>
 
     <ng-template #privateOnly>
