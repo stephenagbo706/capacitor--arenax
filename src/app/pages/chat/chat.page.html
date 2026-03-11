@@ -31,19 +31,68 @@
 
       <div class="ax-chat-thread" *ngIf="activeChat.messages.length; else emptyChat">
         <div
-          class="ax-message"
+          class="ax-message-row"
           *ngFor="let msg of activeChat.messages"
           [class.self]="msg.senderId === currentUserId"
+          (touchstart)="startSwipe($event)"
+          (touchend)="endSwipe(msg, $event)"
         >
-          <p *ngIf="msg.text">{{ msg.text }}</p>
-          <span>{{ msg.sentAt | date:'shortTime' }}</span>
+          <img
+            *ngIf="msg.senderId !== currentUserId"
+            class="avatar-small"
+            [src]="getUser(msg.senderId)?.avatar"
+            alt="Avatar"
+          />
+
+          <div class="ax-message" [class.self]="msg.senderId === currentUserId">
+            <div class="reply-chip" *ngIf="getRepliedMessage(activeChat, msg) as replied">
+              <small>{{ replied.senderId === currentUserId ? 'You' : getUser(replied.senderId)?.username || 'Player' }}</small>
+              <p>{{ replied.text || 'Image' }}</p>
+            </div>
+
+            <p *ngIf="msg.text">{{ msg.text }}</p>
+            <img *ngIf="msg.image" [src]="msg.image" class="ax-chat-image" alt="Attachment" />
+            <div class="meta">
+              <span>{{ msg.sentAt | date:'shortTime' }}</span>
+              <span *ngIf="msg.senderId === currentUserId" class="status">{{ msg.status || 'delivered' }}</span>
+            </div>
+          </div>
+
+          <img
+            *ngIf="msg.senderId === currentUserId"
+            class="avatar-small"
+            [src]="getUser(msg.senderId)?.avatar"
+            alt="Avatar"
+          />
         </div>
       </div>
       <ng-template #emptyChat>
         <div class="ax-empty-chat">No messages yet. Start chatting freely.</div>
       </ng-template>
 
+      <div class="typing-row" *ngIf="typing">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <small>Typing…</small>
+      </div>
+
+      <div class="replying-to" *ngIf="replyingTo">
+        <div>
+          <small>Replying to {{ replyingTo.senderId === currentUserId ? 'you' : getUser(replyingTo.senderId)?.username }}</small>
+          <p>{{ replyingTo.text || 'Image message' }}</p>
+        </div>
+        <button type="button" class="ax-icon-btn" (click)="clearReply()">✕</button>
+      </div>
+
+      <div class="attachment-preview" *ngIf="attachmentData">
+        <img [src]="attachmentData" alt="Preview" />
+        <button type="button" class="ax-icon-btn" (click)="clearAttachment()">Remove</button>
+      </div>
+
       <div class="ax-chat-input">
+        <button class="ax-icon-btn" type="button" (click)="fileInput.click()">Img</button>
+        <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
         <input class="ax-input" placeholder="Type a message" [(ngModel)]="message" />
         <button class="ax-btn ax-btn-primary" (click)="send()">Send</button>
       </div>

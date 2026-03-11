@@ -18,7 +18,7 @@ const STORAGE_KEY = 'arenax_state_v2';
 const DEFAULT_CHAT_TEXTS = new Set([
   'Hey! Ready to battle? I am online now.',
   'Ready for the rematch tonight?',
-  'Challenge accepted. Meet you in the arena!',
+  'Let me wrap this match and I will join.',
 ]);
 
 const now = () => new Date().toISOString();
@@ -800,7 +800,7 @@ export class ArenaService {
     return chatId;
   }
 
-  sendMessage(chatId: string, message: { text?: string; image?: string }) {
+  sendMessage(chatId: string, message: { text?: string; image?: string; replyToId?: string }) {
     const current = this.getCurrentUser();
     if (!current) return;
     const chat = this.state.chats.find((c) => c.id === chatId);
@@ -808,19 +808,24 @@ export class ArenaService {
     if (!chat.participantIds.includes(current.id)) return;
     const text = (message.text || '').trim();
     if (!text && !message.image) return;
-    chat.messages.push({
+    const newMessage = {
       id: uid(),
       senderId: current.id,
       text,
       image: message.image,
       sentAt: now(),
-    });
+      status: 'sent' as const,
+      replyToId: message.replyToId,
+    };
+    chat.messages.push(newMessage);
     for (const participantId of chat.participantIds) {
       if (participantId === current.id) continue;
       this.pushIncomingChatNotification(chat.id, current.id, text || 'Sent you a message.', participantId);
     }
+    setTimeout(() => this.markDelivered(chatId, newMessage.id), 400);
     this.persist();
     this.hydrateSubjects();
+    return newMessage.id;
   }
 
   simulateReply(chatId: string) {
@@ -829,17 +834,61 @@ export class ArenaService {
     const currentUserId = this.getCurrentUser()?.id;
     if (currentUserId && !chat.participantIds.includes(currentUserId)) return;
     const opponentId = chat.participantIds.find((id) => id !== currentUserId) || chat.participantIds[0];
+    const sampleReplies = [
+      'On my way. Warming up the squad.',
+      'Give me two mins, finishing a match.',
+      'Send the lobby code when ready.',
+    ];
+    const replyText = sampleReplies[Math.floor(Math.random() * sampleReplies.length)];
     chat.messages.push({
       id: uid(),
       senderId: opponentId,
-      text: 'Challenge accepted. Meet you in the arena!',
+      text: replyText,
       sentAt: now(),
+      status: 'delivered',
     });
     if (currentUserId) {
-      this.pushIncomingChatNotification(chat.id, opponentId, 'Challenge accepted. Meet you in the arena!', currentUserId);
+      this.markAllUserMessagesSeen(chatId, currentUserId);
+      this.pushIncomingChatNotification(chat.id, opponentId, replyText, currentUserId);
     }
     this.persist();
     this.hydrateSubjects();
+  }
+
+  markDelivered(chatId: string, messageId: string) {
+    const chat = this.state.chats.find((c) => c.id === chatId);
+    if (!chat) return;
+    const msg = chat.messages.find((m) => m.id === messageId);
+    if (!msg || msg.status === 'seen') return;
+    msg.status = 'delivered';
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  markSeen(chatId: string, messageId: string) {
+    const chat = this.state.chats.find((c) => c.id === chatId);
+    if (!chat) return;
+    const msg = chat.messages.find((m) => m.id === messageId);
+    if (!msg) return;
+    msg.status = 'seen';
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  markAllUserMessagesSeen(chatId: string, recipientId: string) {
+    const chat = this.state.chats.find((c) => c.id === chatId);
+    if (!chat) return;
+    let updated = false;
+    for (const msg of chat.messages) {
+      if (msg.senderId === recipientId && msg.status !== 'seen') {
+        msg.status = 'seen';
+        updated = true;
+      }
+    }
+    if (updated) {
+      this.persist();
+      this.hydrateSubjects();
+    }
   }
 
   deposit(amount: number) {

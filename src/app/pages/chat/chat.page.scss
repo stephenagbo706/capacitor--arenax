@@ -36,9 +36,35 @@
 }
 
 .ax-chat-thread {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin: 16px 0 20px;
+}
+
+.ax-message-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.ax-message-row.self {
+  grid-template-columns: 1fr auto;
+  justify-content: flex-end;
+}
+
+.ax-message-row.self .ax-message {
+  margin-left: auto;
+  text-align: right;
+}
+
+.avatar-small {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--ax-card-border);
 }
 
 .profile-card {
@@ -82,8 +108,116 @@
   color: var(--ax-muted);
 }
 
+.ax-message .meta {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  font-size: 0.7rem;
+  color: var(--ax-muted);
+}
+
+.ax-message .status {
+  text-transform: capitalize;
+}
+
+.reply-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--ax-card-border);
+  border-radius: 10px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+}
+
+.reply-chip p {
+  margin: 2px 0 0;
+  color: #fff;
+}
+
+.ax-chat-image {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-top: 6px;
+  border: 1px solid var(--ax-card-border);
+}
+
 .ax-chat-input {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   gap: 8px;
+}
+
+.ax-icon-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--ax-card-border);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0 12px;
+  height: 44px;
+}
+
+.typing-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ax-muted);
+  margin-bottom: 12px;
+}
+
+.typing-row .dot {
+  width: 8px;
+  height: 8px;
+  background: var(--ax-muted);
+  border-radius: 50%;
+  animation: pulse 1s infinite ease-in-out;
+}
+
+.typing-row .dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-row .dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+.replying-to {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--ax-card-border);
+  background: rgba(8, 14, 35, 0.65);
+}
+
+.replying-to p {
+  margin: 4px 0 0;
+}
+
+.attachment-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.attachment-preview img {
+  max-height: 68px;
+  border-radius: 8px;
+  border: 1px solid var(--ax-card-border);
 }

@@ -109,6 +109,8 @@ export interface ChatMessage {
   text?: string;
   image?: string;
   sentAt: string;
+  status?: 'sent' | 'delivered' | 'seen';
+  replyToId?: string;
 }
 
 export interface ChatThread {
