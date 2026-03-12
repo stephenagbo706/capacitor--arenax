@@ -51,6 +51,45 @@
   margin: 0;
 }
 
+.chat-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 18px;
+}
+
+.community-card {
+  background: rgba(9, 13, 38, 0.85);
+  border-radius: 18px;
+  padding: 18px;
+  border: 1px solid rgba(126, 244, 255, 0.25);
+  display: grid;
+  gap: 12px;
+}
+
+.community-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.community-card ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 10px;
+  color: rgba(233, 243, 255, 0.9);
+}
+
+.community-card li {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.community-card strong {
+  font-weight: 700;
+}
+
 .discover-grid {
   gap: 8px;
 }
@@ -120,5 +159,15 @@
   .room-actions .ax-btn,
   .room-actions .ax-input {
     width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .community-card {
+    order: -1;
   }
 }

@@ -5,84 +5,110 @@
       <p class="ax-muted">Find friends by username or Game ID, then add and chat.</p>
     </header>
 
-    <section class="ax-card discover-card">
-      <strong>Find Friends</strong>
-      <input class="ax-input" placeholder="Search username or Game ID" [(ngModel)]="searchTerm" />
+    <div class="chat-layout">
+      <div class="chat-left">
+        <section class="ax-card discover-card">
+          <strong>Find Friends</strong>
+          <input class="ax-input" placeholder="Search username or Game ID" [(ngModel)]="searchTerm" />
+          <div class="ax-grid discover-grid" *ngIf="filteredUsers.length; else emptyFindFriends">
+            <article class="player-item" *ngFor="let user of filteredUsers; trackBy: trackByUserId">
+              <div class="ax-row">
+                <div class="ax-row player-meta">
+                  <div class="avatar-wrap">
+                    <img class="ax-avatar" [src]="user.avatar" alt="Player" />
+                    <span class="status-dot" [class.offline]="!user.online"></span>
+                  </div>
+                  <div>
+                    <strong>{{ user.username }}</strong>
+                    <p class="ax-muted">{{ user.gameId }}</p>
+                  </div>
+                </div>
+                <div class="player-actions">
+                  <button class="ax-btn" (click)="startChat(user.id)">Chat</button>
+                  <button class="ax-btn" *ngIf="getFriendshipState(user.id) === 'none'" (click)="sendFriendRequest(user.id)">Add Friend</button>
+                  <button class="ax-btn" *ngIf="getFriendshipState(user.id) === 'pending_out'" disabled>Requested</button>
+                  <button class="ax-btn" *ngIf="getFriendshipState(user.id) === 'friends'" disabled>Friends</button>
+                </div>
+              </div>
+            </article>
+          </div>
 
-      <div class="ax-grid discover-grid" *ngIf="filteredUsers.length; else emptyFindFriends">
-        <article class="player-item" *ngFor="let user of filteredUsers; trackBy: trackByUserId">
-          <div class="ax-row">
-            <div class="ax-row player-meta">
+          <ng-template #emptyFindFriends>
+            <p class="ax-muted">No users found for this search.</p>
+          </ng-template>
+          <p class="ax-status" *ngIf="statusMessage">{{ statusMessage }}</p>
+          <p class="ax-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        </section>
+
+        <section class="ax-card discover-card" *ngIf="(friendRequests$ | async) as requests">
+          <strong>Friend Requests</strong>
+          <div class="ax-grid discover-grid" *ngIf="requests.length; else emptyRequests">
+            <article class="player-item" *ngFor="let request of requests">
+              <div class="ax-row" *ngIf="request.toUserId === currentUserId && getUser(request.fromUserId) as requester">
+                <div class="ax-row player-meta">
+                  <div class="avatar-wrap">
+                    <img class="ax-avatar" [src]="requester.avatar" alt="Player" />
+                    <span class="status-dot" [class.offline]="!requester.online"></span>
+                  </div>
+                  <div>
+                    <strong>{{ requester.username }}</strong>
+                    <p class="ax-muted">Sent you a friend request</p>
+                  </div>
+                </div>
+                <div class="player-actions">
+                  <button class="ax-btn ax-btn-primary" (click)="respondFriendRequest(request, 'accepted')">Accept</button>
+                  <button class="ax-btn" (click)="respondFriendRequest(request, 'declined')">Decline</button>
+                </div>
+              </div>
+            </article>
+          </div>
+          <ng-template #emptyRequests>
+            <p class="ax-muted">No pending friend requests.</p>
+          </ng-template>
+        </section>
+
+        <h3 class="ax-section-title">Recent Chats</h3>
+        <div class="ax-grid" *ngIf="(chats$ | async) as chats">
+          <p class="ax-muted" *ngIf="!chats.length">No chats yet. Start a chat from Find Friends.</p>
+          <a class="ax-card ax-chat" *ngFor="let chat of chats" [routerLink]="['/chat', chat.id]">
+            <div class="ax-row" *ngIf="getUser(getOpponentId(chat)) as opponent">
               <div class="avatar-wrap">
-                <img class="ax-avatar" [src]="user.avatar" alt="Player" />
-                <span class="status-dot" [class.offline]="!user.online"></span>
+                <img class="ax-avatar" [src]="opponent.avatar" alt="Player" />
+                <span class="status-dot" [class.offline]="!opponent.online"></span>
               </div>
               <div>
-                <strong>{{ user.username }}</strong>
-                <p class="ax-muted">{{ user.gameId }}</p>
+                <strong>{{ opponent.username }}</strong>
+                <p class="ax-muted">{{ chat.messages[chat.messages.length - 1]?.text || 'No messages yet' }}</p>
+                <p class="ax-muted">{{ opponent.wins }}W / {{ opponent.losses }}L · {{ opponent.goals }} Goals · {{ getGoalRate(opponent) }}% Goal Rate · Rank #{{ getGlobalRank(opponent) }}</p>
               </div>
+              <span class="ax-time">Now</span>
             </div>
-            <div class="player-actions">
-              <button class="ax-btn" (click)="startChat(user.id)">Chat</button>
-              <button class="ax-btn" *ngIf="getFriendshipState(user.id) === 'none'" (click)="sendFriendRequest(user.id)">Add Friend</button>
-              <button class="ax-btn" *ngIf="getFriendshipState(user.id) === 'pending_out'" disabled>Requested</button>
-              <button class="ax-btn" *ngIf="getFriendshipState(user.id) === 'friends'" disabled>Friends</button>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      <ng-template #emptyFindFriends>
-        <p class="ax-muted">No users found for this search.</p>
-      </ng-template>
-      <p class="ax-status" *ngIf="statusMessage">{{ statusMessage }}</p>
-      <p class="ax-error" *ngIf="errorMessage">{{ errorMessage }}</p>
-    </section>
-
-    <section class="ax-card discover-card" *ngIf="(friendRequests$ | async) as requests">
-      <strong>Friend Requests</strong>
-      <div class="ax-grid discover-grid" *ngIf="requests.length; else emptyRequests">
-        <article class="player-item" *ngFor="let request of requests">
-          <div class="ax-row" *ngIf="request.toUserId === currentUserId && getUser(request.fromUserId) as requester">
-            <div class="ax-row player-meta">
-              <div class="avatar-wrap">
-                <img class="ax-avatar" [src]="requester.avatar" alt="Player" />
-                <span class="status-dot" [class.offline]="!requester.online"></span>
-              </div>
-              <div>
-                <strong>{{ requester.username }}</strong>
-                <p class="ax-muted">Sent you a friend request</p>
-              </div>
-            </div>
-            <div class="player-actions">
-              <button class="ax-btn ax-btn-primary" (click)="respondFriendRequest(request, 'accepted')">Accept</button>
-              <button class="ax-btn" (click)="respondFriendRequest(request, 'declined')">Decline</button>
-            </div>
-          </div>
-        </article>
-      </div>
-      <ng-template #emptyRequests>
-        <p class="ax-muted">No pending friend requests.</p>
-      </ng-template>
-    </section>
-
-    <h3 class="ax-section-title">Recent Chats</h3>
-    <div class="ax-grid" *ngIf="(chats$ | async) as chats">
-      <p class="ax-muted" *ngIf="!chats.length">No chats yet. Start a chat from Find Friends.</p>
-      <a class="ax-card ax-chat" *ngFor="let chat of chats" [routerLink]="['/chat', chat.id]">
-        <div class="ax-row" *ngIf="getUser(getOpponentId(chat)) as opponent">
-          <div class="avatar-wrap">
-            <img class="ax-avatar" [src]="opponent.avatar" alt="Player" />
-            <span class="status-dot" [class.offline]="!opponent.online"></span>
-          </div>
-          <div>
-            <strong>{{ opponent.username }}</strong>
-            <p class="ax-muted">{{ chat.messages[chat.messages.length - 1]?.text || 'No messages yet' }}</p>
-            <p class="ax-muted">{{ opponent.wins }}W / {{ opponent.losses }}L · {{ opponent.goals }} Goals · {{ getGoalRate(opponent) }}% Goal Rate · Rank #{{ getGlobalRank(opponent) }}</p>
-          </div>
-          <span class="ax-time">Now</span>
+          </a>
         </div>
-      </a>
+      </div>
+      <aside class="community-card">
+        <h3>ArenaX Community Chat – Features</h3>
+        <ul>
+          <li>
+            <strong>General Chat Room:</strong> Global room plus optional FIFA/eFootball/DLS/COD subrooms supporting text, emojis, and formatting.
+          </li>
+          <li>
+            <strong>Player Profiles & Mentions:</strong> Tap a username to view profile, mention @players, follow them, or start private chats.
+          </li>
+          <li>
+            <strong>Real-Time Messaging:</strong> Messages, typing indicators, and online/offline status update instantly (via WebSockets/Firebase).
+          </li>
+          <li>
+            <strong>Admin & Moderation Tools:</strong> Admins can pin/delete/ban and auto-moderation filters block spam/offensive links.
+          </li>
+          <li>
+            <strong>Chat Features:</strong> Copy, reply, edit/delete your own messages, and optionally share images/screenshots.
+          </li>
+          <li>
+            <strong>Notifications:</strong> Alerts for new community chat messages plus optional game or tournament updates.
+          </li>
+        </ul>
+      </aside>
     </div>
   </div>
   <ax-bottom-nav></ax-bottom-nav>
