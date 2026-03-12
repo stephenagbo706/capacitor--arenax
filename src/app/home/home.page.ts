@@ -18,6 +18,7 @@ export class HomePage {
   stakeAmount = 25;
   selectedPlatform: 'PlayStation' | 'Xbox' | 'PC' = 'PlayStation';
   activeTournamentFilter: 'All' | 'Live' | 'Upcoming' | 'Ended' = 'All';
+  stakeCurrency: 'NGN' | 'USD' = 'USD';
   profileImageSrc = this.loadProfileImage();
   createError = '';
   nairaBalance = 0;
@@ -60,6 +61,10 @@ export class HomePage {
 
   selectPlatform(platform: HomePage['selectedPlatform']) {
     this.selectedPlatform = platform;
+  }
+
+  setStakeCurrency(currency: HomePage['stakeCurrency']) {
+    this.stakeCurrency = currency;
   }
 
   setTournamentFilter(filter: HomePage['activeTournamentFilter']) {

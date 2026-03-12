@@ -158,9 +158,25 @@
         <input type="range" min="5" max="30" step="5" [value]="matchDuration" (input)="setMatchDuration($event)" />
 
         <div class="stake-card">
+          <div class="stake-currency">
+            <button
+              type="button"
+              [class.active]="stakeCurrency === 'USD'"
+              (click)="setStakeCurrency('USD')"
+            >
+              $ Dollar
+            </button>
+            <button
+              type="button"
+              [class.active]="stakeCurrency === 'NGN'"
+              (click)="setStakeCurrency('NGN')"
+            >
+              ₦ Naira
+            </button>
+          </div>
           <label for="stake-amount">Stake Amount</label>
           <div class="stake-input">
-            <span>$</span>
+            <span>{{ stakeCurrency === 'USD' ? '$' : '₦' }}</span>
             <input
               id="stake-amount"
               type="number"

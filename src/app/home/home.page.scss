@@ -510,6 +510,28 @@ ion-content {
   margin-top: 6px;
   display: grid;
   gap: 8px;
+  padding: 8px 0;
+}
+
+.stake-currency {
+  display: flex;
+  gap: 8px;
+}
+
+.stake-currency button {
+  flex: 1;
+  border: 1px solid rgba(111, 169, 255, 0.25);
+  border-radius: 12px;
+  padding: 6px 0;
+  background: rgba(7, 12, 33, 0.7);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stake-currency button.active {
+  background: linear-gradient(120deg, rgba(126, 244, 255, 0.15), rgba(148, 99, 255, 0.25));
+  border-color: rgba(126, 244, 255, 0.4);
 }
 
 .stake-card label {
