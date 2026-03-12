@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe, CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -9,7 +9,7 @@ import { ArenaService } from '../../core/services/arena.service';
 @Component({
   selector: 'app-result-upload',
   standalone: true,
-  imports: [IonContent, FormsModule, NgIf, NgForOf, AsyncPipe],
+  imports: [IonContent, FormsModule, NgIf, NgForOf, AsyncPipe, CommonModule],
   templateUrl: './result-upload.page.html',
   styleUrls: ['./result-upload.page.scss'],
 })
@@ -22,11 +22,26 @@ export class ResultUploadPage {
   screenshotSize = 0;
   error = '';
   clock$ = timer(0, 1000);
+  currentUserId = this.arena.getCurrentUser()?.id || '';
 
   constructor(private route: ActivatedRoute, private arena: ArenaService, private router: Router) {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
     const match = this.match;
-    this.winnerId = match?.player1Id || this.arena.getCurrentUser()?.id || '';
+    const currentId = this.arena.getCurrentUser()?.id || '';
+    this.currentUserId = currentId;
+    if (match && !this.isParticipant(currentId)) {
+      this.error = 'You are not part of this match.';
+    }
+    if (match && (match.player1Id === currentId || match.player2Id === currentId)) {
+      this.winnerId = currentId;
+    } else {
+      this.winnerId = match?.player1Id || currentId;
+    }
+  }
+
+  isParticipant(userId: string | undefined) {
+    if (!userId || !this.match) return false;
+    return this.match.player1Id === userId || this.match.player2Id === userId;
   }
 
   get match() {
@@ -49,6 +64,13 @@ export class ResultUploadPage {
     if (game.includes('call of duty') || game.includes('cod')) return player.gameIds['Call of Duty Mobile'];
     if (game.includes('efootball')) return player.gameIds.eFootball;
     return player.gameIds.FIFA;
+  }
+
+  getPlayerInfo(playerId: string | undefined) {
+    if (!playerId) return '';
+    const player = this.arena.getUser(playerId);
+    if (!player) return '';
+    return `${player.username} · ${player.gameId}`;
   }
 
   getMatchIconPath(gameName: string | undefined) {
@@ -74,6 +96,11 @@ export class ResultUploadPage {
     }
     if (!this.screenshotDataUrl || !this.screenshotFileName || !this.screenshotMimeType || !this.screenshotSize) {
       this.error = 'Please choose a screenshot from your device.';
+      return;
+    }
+
+    if (this.currentUserId !== this.winnerId) {
+      this.error = 'You can only submit results for your own Game ID.';
       return;
     }
 

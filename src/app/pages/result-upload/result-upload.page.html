@@ -18,19 +18,21 @@
         <strong *ngIf="isUploadLocked"> Time left: {{ uploadLockTimeLeft }}</strong>
         <strong *ngIf="!isUploadLocked"> You can upload now.</strong>
       </p>
-      <label class="ax-field">Winner
-        <select class="ax-input" [(ngModel)]="winnerId">
-          <option *ngFor="let player of matchPlayers" [value]="player.id">
-            {{ player.username }} ({{ getPlayerGameId(player.id) }})
-          </option>
-        </select>
-      </label>
+      <div class="ax-field winner-field">
+        <p>You can only submit results for your match ID.</p>
+        <p class="ax-muted">
+          Upload tied to Game ID: <strong>{{ getPlayerGameId(currentUserId || '') }}</strong>
+        </p>
+        <p *ngIf="matchPlayers.length" class="ax-sub">
+          {{ getPlayerInfo(currentUserId) }}
+        </p>
+      </div>
       <label class="ax-field">Match Screenshot
         <input class="ax-input" type="file" accept="image/png,image/jpeg" (change)="onScreenshotSelected($event)" [disabled]="isUploadLocked" />
       </label>
       <img *ngIf="screenshotDataUrl" class="proof-preview" [src]="screenshotDataUrl" alt="Screenshot preview" />
       <p class="ax-error" *ngIf="error">{{ error }}</p>
-      <button class="ax-btn ax-btn-primary" [disabled]="isUploadLocked" (click)="submit()">Submit Result</button>
+      <button class="ax-btn ax-btn-primary" [disabled]="isUploadLocked || !isParticipant(currentUserId)" (click)="submit()">Submit Result</button>
     </div>
     <ng-template #noMatch>
       <div class="ax-card">
