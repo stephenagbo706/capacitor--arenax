@@ -113,7 +113,7 @@
 
       <div class="ax-chat-input">
         <button class="ax-icon-btn upload-btn" type="button" (click)="fileInput.click()" aria-label="Add image">
-          <span class="icon-photo" aria-hidden="true"></span>
+          <i class="fa-regular fa-image" aria-hidden="true"></i>
         </button>
         <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
         <input class="ax-input" placeholder="Type a message" [(ngModel)]="message" />
