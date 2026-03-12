@@ -298,9 +298,73 @@
       </header>
       <article class="balance-card">
         <p>Available Balance</p>
-        <strong>$245.00</strong>
+        <div class="dual-balance">
+          <div>
+            <p class="ax-muted">₦ Naira</p>
+            <strong>₦ {{ nairaBalance | number:'1.0-0' }}</strong>
+          </div>
+          <div>
+            <p class="ax-muted">$ Dollar</p>
+            <strong>$ {{ usdBalance | number:'1.0-0' }}</strong>
+          </div>
+        </div>
         <small>+$42.50 this week</small>
       </article>
+
+      <article class="payment-card">
+        <header class="payment-head">
+          <div>
+            <p class="ax-muted">ArenaX Payment Types</p>
+            <h3>Multi-currency wallet</h3>
+          </div>
+          <i class="fa-solid fa-wallet"></i>
+        </header>
+
+        <div class="payment-grid">
+          <div class="payment-line">
+            <div>
+              <p class="ax-muted">₦ Naira Balance</p>
+              <strong>₦ {{ nairaBalance | number:'1.0-0' }}</strong>
+            </div>
+            <span class="pill">NGN</span>
+          </div>
+          <div class="payment-line">
+            <div>
+              <p class="ax-muted">$ USD Balance</p>
+              <strong>$ {{ usdBalance | number:'1.0-0' }}</strong>
+            </div>
+            <span class="pill">USD</span>
+          </div>
+        </div>
+
+        <div class="currency-card">
+          <p class="ax-muted">Preferred Currency</p>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="currency"
+                value="NGN"
+                [checked]="preferredCurrency === 'NGN'"
+                (change)="setPreferredCurrency('NGN')"
+              />
+              <span>₦ Naira</span>
+            </label>
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="currency"
+                value="USD"
+                [checked]="preferredCurrency === 'USD'"
+                (change)="setPreferredCurrency('USD')"
+              />
+              <span>$ Dollar</span>
+            </label>
+          </div>
+          <small class="ax-muted">Prices will display in {{ preferredCurrency === 'NGN' ? '₦ Naira' : '$ Dollar' }}.</small>
+        </div>
+      </article>
+
       <div class="quick-row">
         <button class="action-btn" type="button">Add Funds</button>
         <button class="action-btn ghost" type="button">Withdraw</button>

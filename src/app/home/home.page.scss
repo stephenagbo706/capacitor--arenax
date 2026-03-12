@@ -708,6 +708,85 @@ ion-content {
   margin-bottom: 16px;
 }
 
+.dual-balance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 8px 0 6px;
+}
+
+.payment-card {
+  background: rgba(8, 12, 33, 0.7);
+  border: 1px solid rgba(111, 169, 255, 0.25);
+  border-radius: 18px;
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+  box-shadow: 0 14px 30px rgba(7, 12, 33, 0.35);
+  margin-bottom: 16px;
+}
+
+.payment-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payment-head i {
+  color: rgba(126, 244, 255, 0.9);
+}
+
+.payment-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.payment-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(12, 18, 48, 0.75);
+  border: 1px solid rgba(111, 169, 255, 0.18);
+}
+
+.pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(126, 244, 255, 0.16);
+  color: #7ef4ff;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+}
+
+.currency-card {
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(6, 10, 30, 0.8);
+  border: 1px solid rgba(111, 169, 255, 0.18);
+  display: grid;
+  gap: 10px;
+}
+
+.radio-group {
+  display: grid;
+  gap: 8px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.radio-option input {
+  accent-color: var(--accent-2);
+}
+
 .card-list {
   display: grid;
   gap: 10px;

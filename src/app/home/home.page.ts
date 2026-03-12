@@ -19,6 +19,9 @@ export class HomePage {
   activeTournamentFilter: 'All' | 'Live' | 'Upcoming' | 'Ended' = 'All';
   profileImageSrc = this.loadProfileImage();
   createError = '';
+  nairaBalance = 10500;
+  usdBalance = 25;
+  preferredCurrency: 'NGN' | 'USD' = this.loadPreferredCurrency();
 
   activeMatches: Array<{ stake: number; label: string; timer: string; icon: string }> = [
     { stake: 50, label: 'FIFA 24', timer: '00:45:32', icon: 'fa-solid fa-futbol' },
@@ -119,6 +122,16 @@ export class HomePage {
 
   openRankingLeaderboard() {
     alert('Open ranking leaderboard.');
+  }
+
+  setPreferredCurrency(currency: HomePage['preferredCurrency']) {
+    this.preferredCurrency = currency;
+    localStorage.setItem('ax-preferred-currency', currency);
+  }
+
+  private loadPreferredCurrency(): HomePage['preferredCurrency'] {
+    const saved = localStorage.getItem('ax-preferred-currency');
+    return saved === 'USD' ? 'USD' : 'NGN';
   }
 
   private loadProfileImage() {

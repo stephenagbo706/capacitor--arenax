@@ -15,6 +15,19 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
 export class WalletPage {
   user$ = this.arena.currentUser$;
   transactions$ = this.arena.transactions$;
+  nairaBalance = 10500;
+  usdBalance = 25;
+  preferredCurrency: 'NGN' | 'USD' = this.loadPreferredCurrency();
 
   constructor(private arena: ArenaService) {}
+
+  setPreferredCurrency(currency: WalletPage['preferredCurrency']) {
+    this.preferredCurrency = currency;
+    localStorage.setItem('ax-preferred-currency', currency);
+  }
+
+  private loadPreferredCurrency(): WalletPage['preferredCurrency'] {
+    const saved = localStorage.getItem('ax-preferred-currency');
+    return saved === 'USD' ? 'USD' : 'NGN';
+  }
 }
