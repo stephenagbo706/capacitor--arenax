@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
-  imports: [IonContent, NgFor, NgIf],
+  imports: [IonContent, NgFor, NgIf, RouterLink],
 })
 export class HomePage {
   activeScreen: 'scr-login' | 'scr-home' | 'scr-create' | 'scr-tournaments' | 'scr-wallet' | 'scr-profile' = 'scr-login';
@@ -19,8 +20,8 @@ export class HomePage {
   activeTournamentFilter: 'All' | 'Live' | 'Upcoming' | 'Ended' = 'All';
   profileImageSrc = this.loadProfileImage();
   createError = '';
-  nairaBalance = 10500;
-  usdBalance = 25;
+  nairaBalance = 0;
+  usdBalance = 0;
   preferredCurrency: 'NGN' | 'USD' = this.loadPreferredCurrency();
 
   activeMatches: Array<{ stake: number; label: string; timer: string; icon: string }> = [

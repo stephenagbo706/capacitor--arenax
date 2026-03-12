@@ -209,6 +209,14 @@
       <header class="top-row">
         <h2>Tournaments</h2>
       </header>
+      <div class="season-cta">
+        <div>
+          <p class="ax-muted">Season Structure</p>
+          <h3>ArenaX Football Seasons</h3>
+          <p>Every year runs January through December with marquee tournaments across FIFA, eFootball, and DLS.</p>
+        </div>
+        <button class="btn btn-outline" routerLink="/seasons" type="button">View Season Calendar</button>
+      </div>
       <div class="chip-row tournament-filters">
         <button class="chip" [class.active]="activeTournamentFilter === 'All'" type="button" (click)="setTournamentFilter('All')">All</button>
         <button class="chip" [class.active]="activeTournamentFilter === 'Live'" type="button" (click)="setTournamentFilter('Live')">
@@ -298,17 +306,14 @@
       </header>
       <article class="balance-card">
         <p>Available Balance</p>
-        <div class="dual-balance">
-          <div>
-            <p class="ax-muted">₦ Naira</p>
-            <strong>₦ {{ nairaBalance | number:'1.0-0' }}</strong>
-          </div>
-          <div>
-            <p class="ax-muted">$ Dollar</p>
-            <strong>$ {{ usdBalance | number:'1.0-0' }}</strong>
-          </div>
-        </div>
-        <small>+$42.50 this week</small>
+        <ng-container *ngIf="preferredCurrency === 'NGN'; else usdBal">
+          <strong *ngIf="nairaBalance > 0; else emptyBalance">₦ {{ nairaBalance | number:'1.0-0' }}</strong>
+        </ng-container>
+        <ng-template #usdBal>
+          <strong *ngIf="usdBalance > 0; else emptyBalance">$ {{ usdBalance | number:'1.0-0' }}</strong>
+        </ng-template>
+        <ng-template #emptyBalance><strong class="ax-muted">No funds yet</strong></ng-template>
+        <small>Shown in your selected currency</small>
       </article>
 
       <article class="payment-card">
@@ -320,22 +325,9 @@
           <i class="fa-solid fa-wallet"></i>
         </header>
 
-        <div class="payment-grid">
-          <div class="payment-line">
-            <div>
-              <p class="ax-muted">₦ Naira Balance</p>
-              <strong>₦ {{ nairaBalance | number:'1.0-0' }}</strong>
-            </div>
-            <span class="pill">NGN</span>
-          </div>
-          <div class="payment-line">
-            <div>
-              <p class="ax-muted">$ USD Balance</p>
-              <strong>$ {{ usdBalance | number:'1.0-0' }}</strong>
-            </div>
-            <span class="pill">USD</span>
-          </div>
-        </div>
+        <p class="ax-muted">
+          Choose how you want to settle and withdraw. Funds will appear in Available Balance with the currency sign once processed.
+        </p>
 
         <div class="currency-card">
           <p class="ax-muted">Preferred Currency</p>

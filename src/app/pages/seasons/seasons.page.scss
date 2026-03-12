@@ -1,0 +1,248 @@
+:host {
+  --season-bg-0: #030715;
+  --season-bg-1: #0b1237;
+  --season-card: rgba(255, 255, 255, 0.04);
+  --season-border: rgba(255, 255, 255, 0.1);
+  --season-accent: #64d2ff;
+}
+
+ion-content {
+  --background: radial-gradient(circle at 20% 25%, rgba(100, 210, 255, 0.15), transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(143, 84, 255, 0.2), transparent 55%),
+    linear-gradient(170deg, var(--season-bg-0), var(--season-bg-1) 60%, #040818);
+  color: #edf5ff;
+}
+
+.season-screen {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 18px 120px;
+  display: grid;
+  gap: 18px;
+}
+
+.season-head h1 {
+  margin: 4px 0;
+}
+
+.season-tag {
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.season-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.season-tabs button {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #fff;
+  text-align: left;
+  font-weight: 600;
+}
+
+.season-tabs button.active {
+  border-color: var(--season-accent);
+  background: linear-gradient(145deg, rgba(100, 210, 255, 0.1), rgba(143, 84, 255, 0.18));
+}
+
+.calendar-card,
+.features-card,
+.leaderboard-card,
+.awards-card {
+  background: rgba(8, 12, 37, 0.85);
+  border-radius: 20px;
+  padding: 18px;
+  border: 1px solid var(--season-border);
+  display: grid;
+  gap: 16px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.game-filter p {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.game-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.game-options button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(6, 10, 30, 0.6);
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.game-options button.active {
+  border-color: var(--season-accent);
+  background: rgba(100, 210, 255, 0.18);
+}
+
+.month-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.month-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  display: grid;
+  gap: 10px;
+}
+
+.banner img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.month-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.month-meta h3 {
+  margin: 6px 0 2px;
+}
+
+.purpose {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.month-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.feature-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.feature-list span {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.tab-hint {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.features-card p {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.leaderboard-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.scoring {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.leader-list article {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.leader-list article:last-child {
+  border-bottom: none;
+}
+
+.rank {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--season-accent);
+}
+
+.awards-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.awards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.awards-grid article {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  display: grid;
+  gap: 4px;
+}
+
+.badge {
+  font-size: 1.2rem;
+}
+
+.awards-note {
+  margin: 0;
+  max-width: 320px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 500px) {
+  .month-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .leaderboard-head {
+    flex-direction: column;
+  }
+}

@@ -159,5 +159,43 @@ export interface ArenaState {
   chats: ChatThread[];
   notifications: NotificationItem[];
   transactions: TransactionItem[];
+  seasons: Season[];
   commissionRate: number;
+}
+
+export interface SeasonTournament {
+  id: string;
+  name: string;
+  month: string;
+  players: number;
+  entryFee: number;
+  prizePool: number;
+  startDate: string;
+  duration: string;
+  purpose: string;
+  rules: string[];
+  allowedGames: SupportedGame[];
+  banner: string;
+  bracketStages: string[];
+  playerIds: string[];
+  chatHighlight: string;
+}
+
+export interface SeasonLeaderboardEntry {
+  playerId: string;
+  points: number;
+}
+
+export interface SeasonAward {
+  title: string;
+  badge: string;
+}
+
+export interface Season {
+  id: string;
+  title: string;
+  year: number;
+  tournaments: SeasonTournament[];
+  leaderboard: SeasonLeaderboardEntry[];
+  awards: SeasonAward[];
 }

@@ -1,0 +1,141 @@
+<ion-content [fullscreen]="true">
+  <div class="season-screen">
+    <header class="season-head">
+      <p class="season-tag">Season Structure</p>
+      <h1>Each season runs from January through December.</h1>
+      <p class="season-sub">Every year gets its own title and tournament calendar.</p>
+    </header>
+
+    <div class="season-tabs">
+      <button
+        *ngFor="let season of seasons$ | async"
+        type="button"
+        [class.active]="activeSeasonId === season.id"
+        (click)="setSeason(season.id)"
+      >
+        <span>{{ season.title }}</span>
+        <small>{{ season.year }}</small>
+      </button>
+    </div>
+
+    <ng-container *ngIf="currentSeason$ | async as season">
+      <section class="calendar-card">
+        <div class="calendar-header">
+          <div>
+            <h2>Monthly Tournament Calendar · {{ season.year }}</h2>
+            <p>Each season schedules highlight tournaments in January, March, June, August, October, and December.</p>
+          </div>
+          <div class="game-filter">
+            <p>Select Game</p>
+            <div class="game-options">
+              <button
+                *ngFor="let game of gameFilters"
+                type="button"
+                (click)="setGame(game)"
+                [class.active]="activeGame === game"
+              >
+                {{ game === 'Dream League Soccer' ? 'DLS' : game }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="month-grid">
+          <article class="month-card" *ngFor="let tournament of filteredTournaments$ | async">
+            <div class="banner">
+              <img [src]="tournament.banner" [alt]="tournament.name" />
+            </div>
+            <div class="month-meta">
+              <span class="month-pill">{{ tournament.month }}</span>
+              <h3>{{ tournament.name }}</h3>
+              <p class="purpose">{{ tournament.purpose }}</p>
+            </div>
+            <div class="month-details">
+              <div><strong>Entry fee:</strong> ${{ tournament.entryFee }}</div>
+              <div><strong>Prize pool:</strong> ${{ tournament.prizePool }}</div>
+              <div><strong>Players:</strong> {{ tournament.players }}</div>
+              <div><strong>Start:</strong> {{ tournament.startDate | date:'MMM d, h:mm a' }}</div>
+              <div><strong>Duration:</strong> {{ tournament.duration }}</div>
+            </div>
+            <ul class="feature-list">
+              <li>
+                <strong>Rules:</strong>
+                <span>{{ tournament.rules.join(' · ') }}</span>
+              </li>
+              <li>
+                <strong>Player list:</strong>
+                <span>
+                  <ng-container *ngFor="let playerId of tournament.playerIds; let i = index">
+                    <span *ngIf="i < 3">{{ lookupPlayerName(playerId) }}{{ tournament.playerIds.length > 3 && i === 2 ? ' +' + (tournament.playerIds.length - 3) + ' more' : i === tournament.playerIds.length - 1 ? '' : ', ' }}</span>
+                  </ng-container>
+                </span>
+              </li>
+              <li>
+                <strong>Match brackets:</strong>
+                <span>{{ tournament.bracketStages.join(' · ') }}</span>
+              </li>
+              <li>
+                <strong>Tournament chat room:</strong>
+                <span>{{ tournament.chatHighlight }}</span>
+              </li>
+              <li>
+                <strong>Leaderboard:</strong>
+                <span>Season leaderboard updates as players earn points.</span>
+              </li>
+            </ul>
+            <div class="tab-hint">Overview | Players | Matches | Chat | Leaderboard</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="features-card">
+        <h2>Tournament Features</h2>
+        <p>
+          Every tournament page surfaces the banner, entry fee, prize pool, player count, start date, rules, player list,
+          match brackets, chat room, and leaderboard details so players know what to expect.
+        </p>
+      </section>
+
+      <section class="leaderboard-card">
+        <div class="leaderboard-head">
+          <div>
+            <p class="muted">Ranking System</p>
+            <h2>ArenaX Season Leaderboard</h2>
+            <p>Players earn points from matches and tournaments listed above.</p>
+          </div>
+          <ul class="scoring">
+            <li *ngFor="let rule of scoringRules">{{ rule }}</li>
+          </ul>
+        </div>
+        <div class="leader-list" *ngIf="leaderboard$ | async as leaderboard">
+          <article *ngFor="let entry of leaderboard">
+            <span class="rank">#{{ entry.rank }}</span>
+            <div>
+              <strong>{{ entry.name }}</strong>
+              <p>{{ entry.points }} pts</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="awards-card">
+        <div class="awards-head">
+          <div>
+            <p class="muted">End-of-Year Awards</p>
+            <h2>December automatically unlocks award badges.</h2>
+          </div>
+          <p class="awards-note">
+            Badges appear on player profiles, tournament chat, and leaderboards so the community can celebrate the elite.
+          </p>
+        </div>
+        <div class="awards-grid" *ngIf="awards$ | async as awards">
+          <article *ngFor="let award of awards">
+            <span class="badge">{{ award.badge }}</span>
+            <p>{{ award.title }}</p>
+          </article>
+        </div>
+      </section>
+    </ng-container>
+  </div>
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

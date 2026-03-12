@@ -55,6 +55,11 @@ export const routes: Routes = [
       import('./pages/tournament-details/tournament-details.page').then((m) => m.TournamentDetailsPage),
   },
   {
+    path: 'seasons',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/seasons/seasons.page').then((m) => m.SeasonsPage),
+  },
+  {
     path: 'spotlight',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/spotlight/spotlight.page').then((m) => m.SpotlightPage),

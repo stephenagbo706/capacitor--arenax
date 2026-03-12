@@ -593,6 +593,27 @@ ion-content {
   margin-bottom: 16px;
 }
 
+.season-cta {
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(7, 12, 33, 0.85);
+  border: 1px solid rgba(126, 244, 255, 0.2);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.season-cta h3 {
+  margin: 4px 0;
+}
+
+.season-cta p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.85rem;
+}
+
 .chip {
   border-radius: 999px;
   padding: 8px 10px;
@@ -708,13 +729,6 @@ ion-content {
   margin-bottom: 16px;
 }
 
-.dual-balance {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 8px 0 6px;
-}
-
 .payment-card {
   background: rgba(8, 12, 33, 0.7);
   border: 1px solid rgba(111, 169, 255, 0.25);
@@ -734,31 +748,6 @@ ion-content {
 
 .payment-head i {
   color: rgba(126, 244, 255, 0.9);
-}
-
-.payment-grid {
-  display: grid;
-  gap: 10px;
-}
-
-.payment-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(12, 18, 48, 0.75);
-  border: 1px solid rgba(111, 169, 255, 0.18);
-}
-
-.pill {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(126, 244, 255, 0.16);
-  color: #7ef4ff;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  font-size: 0.75rem;
 }
 
 .currency-card {
