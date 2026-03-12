@@ -234,8 +234,30 @@ ion-content {
   margin-top: 2px;
 }
 
-.profile-links .ax-card {
-  padding: 12px;
+.profile-links button {
+  padding: 12px 14px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: linear-gradient(120deg, var(--profile-violet), var(--profile-cyan));
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(53, 221, 246, 0.18);
+  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+}
+
+.profile-links button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(53, 221, 246, 0.26);
+  filter: brightness(1.05);
+}
+
+.profile-links i {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .ax-card {

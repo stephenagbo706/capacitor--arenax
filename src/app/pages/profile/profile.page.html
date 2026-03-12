@@ -67,6 +67,17 @@
       <div class="ax-card ax-row"><span>Call of Duty Mobile</span><strong>{{ user.gameIds['Call of Duty Mobile'] }}</strong></div>
     </div>
 
+    <div class="ax-grid profile-links">
+      <button class="ax-card ax-row" type="button" [routerLink]="'/notifications'">
+        <strong>Notifications</strong>
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <button class="ax-card ax-row" type="button" [routerLink]="'/settings'">
+        <strong>Settings</strong>
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+
     <h3 class="ax-section-title">Recent Results</h3>
     <ng-container *ngIf="getUserMatchResults(user.id) as results">
     <div class="result-grid" *ngIf="results.length; else noResults">
@@ -89,17 +100,6 @@
     <ng-template #noResults>
       <div class="ax-card empty-state">No wins or losses yet. Complete a match to start your progression.</div>
     </ng-template>
-
-    <div class="ax-grid profile-links">
-      <a class="ax-card ax-row" routerLink="/notifications">
-        <strong>Notifications</strong>
-        <i class="fa-solid fa-chevron-right"></i>
-      </a>
-      <a class="ax-card ax-row" routerLink="/settings">
-        <strong>Settings</strong>
-        <i class="fa-solid fa-chevron-right"></i>
-      </a>
-    </div>
   </div>
 
   <ax-bottom-nav></ax-bottom-nav>
