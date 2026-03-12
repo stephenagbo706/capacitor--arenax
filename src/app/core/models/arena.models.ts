@@ -163,27 +163,36 @@ export interface ArenaState {
   commissionRate: number;
 }
 
+export type MatchType = '1v1' | '2v2';
+
 export interface SeasonTournament {
   id: string;
   name: string;
   month: string;
+  startDate: string;
+  endDate: string;
   players: number;
   entryFee: number;
   prizePool: number;
-  startDate: string;
+  platformFeePercent: number;
+  matchType: MatchType;
   duration: string;
   purpose: string;
+  tier: 'beginner' | 'pro' | 'elite';
   rules: string[];
   allowedGames: SupportedGame[];
   banner: string;
   bracketStages: string[];
   playerIds: string[];
   chatHighlight: string;
+  notifications: string[];
+  subTournaments?: { name: string; game: SupportedGame }[];
 }
 
 export interface SeasonLeaderboardEntry {
   playerId: string;
   points: number;
+  rank?: number;
 }
 
 export interface SeasonAward {

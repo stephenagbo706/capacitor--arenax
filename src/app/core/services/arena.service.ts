@@ -14,6 +14,7 @@ import {
   UserProfile,
   Season,
 } from '../models/arena.models';
+import { SeasonAutomationService, FirestoreWriteFn } from './season-automation.service';
 
 const STORAGE_KEY = 'arenax_state_v2';
 const DEFAULT_CHAT_TEXTS = new Set([
@@ -41,9 +42,10 @@ export class ArenaService {
   transactions$ = new BehaviorSubject<TransactionItem[]>([]);
   seasons$ = new BehaviorSubject<Season[]>([]);
 
-  constructor() {
+  constructor(private automation: SeasonAutomationService) {
     this.state = this.loadState();
     this.hydrateSubjects();
+    this.ensureLatestSeason();
   }
 
   login(email: string, _password: string) {
@@ -109,6 +111,26 @@ export class ArenaService {
     this.state.currentUserId = undefined;
     this.persist();
     this.hydrateSubjects();
+  }
+
+  ensureLatestSeason(writeFn?: FirestoreWriteFn) {
+    const currentYear = new Date().getFullYear();
+    if (!this.state.seasons.find((season) => season.year === currentYear)) {
+      const generated = this.automation.generateSeason(currentYear, this.state.users);
+      this.state.seasons.unshift(generated);
+      if (writeFn) {
+        this.automation.persistSeasonToFirestore(generated, writeFn).catch(() => {});
+      }
+      this.persist();
+      this.hydrateSubjects();
+    }
+
+    const currentSeason = this.state.seasons.find((season) => season.year === currentYear) || this.state.seasons[0];
+    if (currentSeason) {
+      this.automation.updateLeaderboardFromMatches(currentSeason, this.state.matches, this.state.users);
+      this.persist();
+      this.hydrateSubjects();
+    }
   }
 
   updateProfile(update: Partial<UserProfile>) {
@@ -1364,217 +1386,7 @@ export class ArenaService {
       commissionRate: 0.15,
     };
 
-    const season2026: Season = {
-      id: uid(),
-      title: 'ArenaX Football Season 2026',
-      year: 2026,
-      tournaments: [
-        {
-          id: uid(),
-          name: 'ArenaX New Year Cup',
-          month: 'January',
-          players: 32,
-          entryFee: 5,
-          prizePool: 200,
-          startDate: '2026-01-05T18:00:00.000Z',
-          duration: '1 week',
-          purpose: 'Season kickoff tournament.',
-          rules: ['Standard FIFA 1v1 rules', 'Screenshot verification required for finals.'],
-          allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-          banner: 'assets/ax-ui/tournament-area.jpg',
-          bracketStages: ['Round of 32', 'Round of 16', 'Quarterfinals', 'Final'],
-          playerIds: [players[0].id, players[1].id, players[2].id, players[3].id],
-          chatHighlight: 'New Year chat opens at 6 PM with admin announcements.',
-        },
-        {
-          id: uid(),
-          name: 'ArenaX Spring Championship',
-          month: 'March',
-          players: 64,
-          entryFee: 10,
-          prizePool: 500,
-          startDate: '2026-03-12T18:00:00.000Z',
-          duration: '2 weeks',
-          purpose: 'Spring showcase for the season.',
-          rules: ['Respect the fixture window', 'No teaming or unauthorized coaching'],
-          allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-          banner: 'assets/ax-ui/summit-section.jpg',
-          bracketStages: ['Group stage', 'Playoffs', 'Finals'],
-          playerIds: [players[0].id, players[1].id, players[2].id],
-          chatHighlight: 'Spring lobby opens nightly at 8 PM.',
-        },
-        {
-          id: uid(),
-          name: 'ArenaX Summer Clash',
-          month: 'June',
-          players: 128,
-          entryFee: 15,
-          prizePool: 900,
-          startDate: '2026-06-07T18:00:00.000Z',
-          duration: '3 weeks',
-          purpose: 'Season midpoint with the biggest open field before Pro League.',
-          rules: ['Double elimination bracket for fairness', 'Admins review every screenshot'],
-          allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-          banner: 'assets/ax-ui/wel.jpg',
-          bracketStages: ['Open qualifier', 'Top 32 bracket', 'Semis & Finals'],
-          playerIds: [players[0].id, players[3].id, players[1].id],
-          chatHighlight: 'Summer Clash chat runs 24/7 with highlight announcements.',
-        },
-        {
-          id: uid(),
-          name: 'ArenaX Pro League',
-          month: 'August',
-          players: 96,
-          entryFee: 20,
-          prizePool: 1200,
-          startDate: '2026-08-02T18:00:00.000Z',
-          duration: '4 weeks',
-          purpose: 'Players compete weekly and earn ranking points.',
-          rules: ['Weekly fixtures with point drops', 'Live admin verification for each round'],
-          allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-          banner: 'assets/ax-ui/tournament-area.jpg',
-          bracketStages: ['Week 1', 'Week 2', 'Week 3', 'Championship week'],
-          playerIds: [players[0].id, players[2].id, players[3].id],
-          chatHighlight: 'Pro League chat threads include mention reminders and admin posts.',
-        },
-        {
-          id: uid(),
-          name: 'ArenaX Champions Cup',
-          month: 'October',
-          players: 32,
-          entryFee: 30,
-          prizePool: 1500,
-          startDate: '2026-10-10T18:00:00.000Z',
-          duration: '2 weeks',
-          purpose: 'Only top-ranked players can join.',
-          rules: ['Invite-only bracket for top performers', 'Anti-cheat review on every match'],
-          allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-          banner: 'assets/ax-ui/summit-section.jpg',
-          bracketStages: ['Top 32 bracket', 'Semi-finals', 'Grand final'],
-          playerIds: [players[0].id, players[1].id],
-          chatHighlight: 'Champions Cup announcements come from admins with winner spotlight.',
-        },
-        {
-          id: uid(),
-          name: 'ArenaX Winter Cup',
-          month: 'December',
-          players: 256,
-          entryFee: 35,
-          prizePool: 2500,
-          startDate: '2026-12-15T18:00:00.000Z',
-          duration: '2 weeks',
-          purpose: 'The biggest tournament of the year.',
-          rules: ['Live stream for finals', 'Auto reward distribution to winners'],
-          allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-          banner: 'assets/ax-ui/tournament-area.jpg',
-          bracketStages: ['Qualifiers', 'Top 64', 'Elite bracket', 'Winter final'],
-          playerIds: [players[0].id, players[2].id, players[3].id],
-          chatHighlight: 'Winter Cup chat reflects winners and badge drops in real time.',
-        },
-      ],
-      leaderboard: [
-        { playerId: players[0].id, points: 950 },
-        { playerId: players[1].id, points: 900 },
-        { playerId: players[2].id, points: 860 },
-      ],
-      awards: [
-        { title: 'ArenaX Player of the Year', badge: '🏆 ArenaX Champion 2026' },
-        { title: 'Best FIFA Player', badge: '🎮 FIFA Champion' },
-        { title: 'Best eFootball Player', badge: '⚽ Best eFootball Player' },
-        { title: 'Best DLS Player', badge: '🎮 DLS Champion' },
-        { title: 'Rising Star', badge: '🌟 Rising Star' },
-        { title: 'Most Consistent Player', badge: '🛡️ Most Consistent Player' },
-      ],
-    };
-
-    const season2027: Season = {
-      id: uid(),
-      title: 'ArenaX Pro League 2027',
-      year: 2027,
-      tournaments: [
-        {
-          id: uid(),
-          name: 'ArenaX Spring Pro League',
-          month: 'March',
-          players: 80,
-          entryFee: 25,
-          prizePool: 1800,
-          startDate: '2027-03-06T18:00:00.000Z',
-          duration: '4 weeks',
-          purpose: 'Pro League qualifier for the spring segment.',
-          rules: ['Weekly point resets', 'Admin review at end of each round'],
-          allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-          banner: 'assets/ax-ui/wel.jpg',
-          bracketStages: ['Week 1', 'Week 2', 'Playoffs'],
-          playerIds: [players[0].id, players[1].id],
-          chatHighlight: 'Pro League spring chat keeps ranking points transparent.',
-        },
-        {
-          id: uid(),
-          name: 'ArenaX Autumn Pro League',
-          month: 'November',
-          players: 96,
-          entryFee: 30,
-          prizePool: 2200,
-          startDate: '2027-11-08T18:00:00.000Z',
-          duration: '4 weeks',
-          purpose: 'Late-season push with elite ranking bonuses.',
-          rules: ['Top-ranked invite only', 'Screenshots required before each final'],
-          allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-          banner: 'assets/ax-ui/tournament-area.jpg',
-          bracketStages: ['Elite qualifier', 'Championship week'],
-          playerIds: [players[0].id, players[2].id],
-          chatHighlight: 'Autumn chat features admin bulletins for champion contenders.',
-        },
-      ],
-      leaderboard: [
-        { playerId: players[0].id, points: 820 },
-        { playerId: players[1].id, points: 780 },
-        { playerId: players[3].id, points: 740 },
-      ],
-      awards: [
-        { title: 'Season MVP', badge: '🏆 ArenaX Pro MVP' },
-        { title: 'Best eFootball Run', badge: '⚽ eFootball King' },
-        { title: 'Rising Star', badge: '🌟 Rising Challenger' },
-      ],
-    };
-
-    const season2028: Season = {
-      id: uid(),
-      title: 'ArenaX Global Season 2028',
-      year: 2028,
-      tournaments: [
-        {
-          id: uid(),
-          name: 'ArenaX Global Kickoff',
-          month: 'January',
-          players: 64,
-          entryFee: 15,
-          prizePool: 1300,
-          startDate: '2028-01-10T18:00:00.000Z',
-          duration: '3 weeks',
-          purpose: 'Global crossover opening month.',
-          rules: ['Auto-match lobby for global players', 'Prize pool favors consistent winners'],
-          allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-          banner: 'assets/ax-ui/summit-section.jpg',
-          bracketStages: ['International qualifier', 'Global finals'],
-          playerIds: [players[1].id, players[3].id],
-          chatHighlight: 'Global kickoff chat hosts cross-region shoutouts.',
-        },
-      ],
-      leaderboard: [
-        { playerId: players[1].id, points: 890 },
-        { playerId: players[0].id, points: 860 },
-        { playerId: players[2].id, points: 810 },
-      ],
-      awards: [
-        { title: 'Global Champion', badge: '🌍 ArenaX Global Champ' },
-        { title: 'Best FIFA Player', badge: '🎮 FIFA Dominator' },
-      ],
-    };
-
-
-    const seasons = [season2026, season2027, season2028];
+    const seasons = [2026, 2027, 2028].map((year) => this.automation.generateSeason(year, players));
 
     return {
       users: players,
