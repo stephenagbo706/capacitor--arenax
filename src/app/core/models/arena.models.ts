@@ -139,13 +139,19 @@ export interface NotificationItem {
   chatId?: string;
 }
 
+export type Currency = 'NGN' | 'USD';
+
 export interface TransactionItem {
   id: string;
   type: TransactionType;
   amount: number;
   createdAt: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: 'pending' | 'completed' | 'failed' | 'processed';
+  currency?: Currency;
+  method?: string;
+  referenceId?: string;
   note?: string;
+  details?: string;
 }
 
 export interface ArenaState {

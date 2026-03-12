@@ -2,15 +2,68 @@
   <div class="ax-screen ax-fade-in">
     <header>
       <h2>Withdraw</h2>
-      <p class="ax-muted">Move winnings to your bank securely.</p>
+      <p class="ax-muted">Move winnings to your payout option.</p>
     </header>
 
-    <div class="ax-card ax-grid">
-      <label class="ax-field">Amount
-        <input class="ax-input" type="number" [(ngModel)]="amount" />
+    <section class="ax-card withdraw-card">
+      <div class="withdraw-head">
+        <p>Choose currency, destination, and method for requesting a payout.</p>
+        <small class="ax-muted">Withdrawal limits: {{ minAmount }}–{{ maxAmount }} units | 24h cooldown.</small>
+      </div>
+
+      <div class="currency-toggle">
+        <button type="button" [class.active]="currency === 'NGN'" (click)="currency = 'NGN'">
+          ₦ Naira
+        </button>
+        <button type="button" [class.active]="currency === 'USD'" (click)="currency = 'USD'">
+          $ Dollar
+        </button>
+      </div>
+
+      <div class="method-options">
+        <button
+          *ngFor="let method of withdrawMethods"
+          type="button"
+          [class.active]="selectedMethod === method"
+          (click)="selectedMethod = method"
+        >
+          {{ method }}
+        </button>
+      </div>
+
+      <label class="ax-field">
+        <span>Payout destination</span>
+        <input
+          class="ax-input"
+          type="text"
+          placeholder="Bank account number, mobile wallet, or PayPal email"
+          [(ngModel)]="destination"
+        />
       </label>
+
+      <label class="ax-field">
+        <span>Amount</span>
+        <input
+          class="ax-input"
+          type="number"
+          [min]="minAmount"
+          [max]="maxAmount"
+          [(ngModel)]="amount"
+        />
+      </label>
+
       <p class="ax-error" *ngIf="error">{{ error }}</p>
-      <button class="ax-btn ax-btn-primary" (click)="submit()">Confirm Withdraw</button>
-    </div>
+
+      <button class="ax-btn ax-btn-primary" (click)="submit()">Request Withdrawal</button>
+
+      <div class="status-panel" *ngIf="status !== 'idle'">
+        <p class="status-label">{{ statusMessage }}</p>
+        <div class="status-badges">
+          <span class="status-chip" [class.active]="status === 'pending'">Pending</span>
+          <span class="status-chip" [class.active]="status === 'processed'">Processed</span>
+        </div>
+        <p *ngIf="referenceId">Reference ID: {{ referenceId }}</p>
+      </div>
+    </section>
   </div>
 </ion-content>

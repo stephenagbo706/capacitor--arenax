@@ -1,30 +1,54 @@
 import { Component } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { ArenaService } from '../../core/services/arena.service';
 
 @Component({
   selector: 'app-deposit',
   standalone: true,
-  imports: [IonContent, FormsModule, NgIf],
+  imports: [CommonModule, IonContent, FormsModule, NgFor, NgIf],
   templateUrl: './deposit.page.html',
   styleUrls: ['./deposit.page.scss'],
 })
 export class DepositPage {
-  amount = 50;
+  amount = 500;
   error = '';
+  referenceId = '';
+  status: 'idle' | 'pending' | 'completed' | 'failed' = 'idle';
+  statusMessage = '';
+  currency: 'NGN' | 'USD' = 'NGN';
+  paymentMethods = ['Bank transfer', 'Card', 'Mobile money', 'Paystack'];
+  selectedMethod = this.paymentMethods[0];
+  minAmount = 100;
+  maxAmount = 500000;
 
-  constructor(private arena: ArenaService, private router: Router) {}
+  constructor(private arena: ArenaService) {}
 
   submit() {
-    const result = this.arena.deposit(this.amount);
+    this.error = '';
+    this.referenceId = '';
+    this.statusMessage = '';
+    this.status = 'pending';
+
+    const result = this.arena.deposit({
+      amount: this.amount,
+      currency: this.currency,
+      method: this.selectedMethod,
+    });
+
     if (!result?.ok) {
-      this.error = result?.message || 'Deposit failed.';
+      this.status = 'failed';
+      this.statusMessage = result?.message || 'We could not process the deposit.';
+      this.error = this.statusMessage;
       return;
     }
-    this.error = '';
-    this.router.navigateByUrl('/wallet');
+
+    this.status = result.status === 'pending' ? 'pending' : 'completed';
+    this.statusMessage =
+      this.status === 'pending'
+        ? 'Waiting for payment confirmation. We will update your wallet shortly.'
+        : 'Deposit completed ✔ Funds are available in your wallet.';
+    this.referenceId = result.referenceId || '';
   }
 }

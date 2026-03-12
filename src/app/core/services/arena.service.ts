@@ -13,6 +13,7 @@ import {
   TransactionItem,
   UserProfile,
   Season,
+  Currency,
 } from '../models/arena.models';
 import { SeasonAutomationService, FirestoreWriteFn } from './season-automation.service';
 
@@ -938,41 +939,61 @@ export class ArenaService {
     }
   }
 
-  deposit(amount: number) {
+  deposit(input: { amount: number; currency: Currency; method: string }) {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in.' };
-    if (amount <= 0 || Number.isNaN(amount)) return { ok: false, message: 'Enter a valid deposit amount.' };
+    const { amount, currency, method } = input;
+    if (!amount || Number.isNaN(amount) || amount <= 0) return { ok: false, message: 'Enter a valid deposit amount.' };
+    if (amount < 100) return { ok: false, message: 'Minimum deposit is 100 units.' };
+    if (amount > 500_000) return { ok: false, message: 'Maximum deposit is 500,000 units.' };
 
-    this.adjustAvailableBalance(current.id, amount);
-    this.state.transactions.unshift({
+    const referenceId = `DEP-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
+    const transaction: TransactionItem = {
       id: uid(),
       type: 'deposit',
       amount,
+      currency,
+      method,
+      referenceId,
       createdAt: now(),
-      status: 'completed',
-    });
+      status: 'pending',
+      details: `Deposit via ${method}`,
+    };
+    this.state.transactions.unshift(transaction);
+    this.adjustAvailableBalance(current.id, amount);
+    transaction.status = 'completed';
     this.persist();
     this.hydrateSubjects();
-    return { ok: true };
+    return { ok: true, referenceId, status: transaction.status };
   }
 
-  withdraw(amount: number) {
+  withdraw(input: { amount: number; currency: Currency; method: string; destination: string }) {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in.' };
-    if (amount <= 0 || Number.isNaN(amount)) return { ok: false, message: 'Enter a valid withdrawal amount.' };
+    const { amount, currency, method, destination } = input;
+    if (!amount || Number.isNaN(amount) || amount <= 0) return { ok: false, message: 'Enter a valid withdrawal amount.' };
+    if (amount < 500) return { ok: false, message: 'Minimum withdrawal is 500 units.' };
+    if (amount > 200_000) return { ok: false, message: 'Maximum withdrawal per request is 200,000 units.' };
     if (amount > current.walletBalance) return { ok: false, message: 'Insufficient available balance for this withdrawal.' };
 
-    this.adjustAvailableBalance(current.id, -amount);
-    this.state.transactions.unshift({
+    const referenceId = `WDR-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
+    const transaction: TransactionItem = {
       id: uid(),
       type: 'withdraw',
       amount,
+      currency,
+      method,
+      referenceId,
       createdAt: now(),
-      status: 'completed',
-    });
+      status: 'pending',
+      details: `Payout to ${destination}`,
+    };
+    this.state.transactions.unshift(transaction);
+    this.adjustAvailableBalance(current.id, -amount);
+    transaction.status = 'processed';
     this.persist();
     this.hydrateSubjects();
-    return { ok: true };
+    return { ok: true, referenceId, status: transaction.status };
   }
 
   markNotificationRead(id: string) {

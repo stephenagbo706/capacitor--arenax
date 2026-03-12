@@ -2,15 +2,58 @@
   <div class="ax-screen ax-fade-in">
     <header>
       <h2>Deposit</h2>
-      <p class="ax-muted">Top up your ArenaX wallet instantly.</p>
+      <p class="ax-muted">Add funds to your ArenaX wallet securely.</p>
     </header>
 
-    <div class="ax-card ax-grid">
-      <label class="ax-field">Amount
-        <input class="ax-input" type="number" [(ngModel)]="amount" />
+    <section class="ax-card deposit-card">
+      <div class="deposit-head">
+        <p>Select currency and payment method to fund your wallet.</p>
+        <small class="ax-muted">Min {{ minAmount }} · Max {{ maxAmount }} units</small>
+      </div>
+
+      <div class="currency-toggle">
+        <button type="button" [class.active]="currency === 'NGN'" (click)="currency = 'NGN'">
+          ₦ Naira
+        </button>
+        <button type="button" [class.active]="currency === 'USD'" (click)="currency = 'USD'">
+          $ Dollar
+        </button>
+      </div>
+
+      <div class="method-options">
+        <button
+          *ngFor="let method of paymentMethods"
+          type="button"
+          [class.active]="selectedMethod === method"
+          (click)="selectedMethod = method"
+        >
+          {{ method }}
+        </button>
+      </div>
+
+      <label class="ax-field">
+        <span>Amount</span>
+        <input
+          class="ax-input"
+          type="number"
+          [min]="minAmount"
+          [max]="maxAmount"
+          [(ngModel)]="amount"
+        />
       </label>
+
       <p class="ax-error" *ngIf="error">{{ error }}</p>
+
       <button class="ax-btn ax-btn-primary" (click)="submit()">Confirm Deposit</button>
-    </div>
+
+      <div class="status-panel" *ngIf="status !== 'idle'">
+        <p class="status-label">{{ statusMessage }}</p>
+        <div class="status-badges">
+          <span class="status-chip" [class.active]="status === 'pending'">Pending</span>
+          <span class="status-chip" [class.active]="status === 'completed'">Completed</span>
+        </div>
+        <p *ngIf="referenceId">Reference ID: {{ referenceId }}</p>
+      </div>
+    </section>
   </div>
 </ion-content>

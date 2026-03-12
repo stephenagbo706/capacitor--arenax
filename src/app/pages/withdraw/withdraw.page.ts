@@ -1,30 +1,70 @@
 import { Component } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { ArenaService } from '../../core/services/arena.service';
 
 @Component({
   selector: 'app-withdraw',
   standalone: true,
-  imports: [IonContent, FormsModule, NgIf],
+  imports: [CommonModule, IonContent, FormsModule, NgFor, NgIf],
   templateUrl: './withdraw.page.html',
   styleUrls: ['./withdraw.page.scss'],
 })
 export class WithdrawPage {
-  amount = 25;
+  amount = 1000;
   error = '';
+  referenceId = '';
+  status: 'idle' | 'pending' | 'processed' | 'failed' = 'idle';
+  statusMessage = '';
+  currency: 'NGN' | 'USD' = 'NGN';
+  withdrawMethods = ['Bank transfer', 'Mobile money / e-wallet', 'PayPal / Partner payout'];
+  selectedMethod = this.withdrawMethods[0];
+  destination = '';
+  minAmount = 500;
+  maxAmount = 200000;
+  cooldownMs = 24 * 60 * 60 * 1000;
+  lastWithdrawalTimestamp?: number;
 
-  constructor(private arena: ArenaService, private router: Router) {}
+  constructor(private arena: ArenaService) {}
 
   submit() {
-    const result = this.arena.withdraw(this.amount);
-    if (!result?.ok) {
-      this.error = result?.message || 'Withdrawal failed.';
+    this.error = '';
+    this.referenceId = '';
+    this.statusMessage = '';
+
+    if (this.lastWithdrawalTimestamp && Date.now() - this.lastWithdrawalTimestamp < this.cooldownMs) {
+      this.error = 'Withdrawals can only be requested once every 24 hours.';
       return;
     }
-    this.error = '';
-    this.router.navigateByUrl('/wallet');
+
+    if (!this.destination.trim()) {
+      this.error = 'Provide a payout destination (bank, mobile money, or PayPal).';
+      return;
+    }
+
+    this.status = 'pending';
+
+    const result = this.arena.withdraw({
+      amount: this.amount,
+      currency: this.currency,
+      method: this.selectedMethod,
+      destination: this.destination,
+    });
+
+    if (!result?.ok) {
+      this.status = 'failed';
+      this.statusMessage = result?.message || 'Unable to request withdrawal.';
+      this.error = this.statusMessage;
+      return;
+    }
+
+    this.status = result.status === 'pending' ? 'pending' : 'processed';
+    this.statusMessage =
+      this.status === 'pending'
+        ? 'Withdrawal request submitted. Admin approval is required.'
+        : 'Withdrawal processed. Funds should hit your destination shortly.';
+    this.referenceId = result.referenceId || '';
+    this.lastWithdrawalTimestamp = Date.now();
   }
 }
