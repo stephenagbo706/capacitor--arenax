@@ -1,1 +1,11 @@
 @import '../home/home.page.scss';
+
+.ax-card.danger {
+  border-color: rgba(255, 99, 132, 0.35);
+  color: #ffc7cf;
+  background: linear-gradient(160deg, rgba(60, 10, 26, 0.65), rgba(34, 8, 16, 0.9));
+}
+
+.ax-card.danger i {
+  color: #ff6b8a;
+}

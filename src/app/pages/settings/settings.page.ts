@@ -12,7 +12,26 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./settings.page.scss'],
 })
 export class SettingsPage {
+  twoFactorEnabled = localStorage.getItem('ax-twofactor') === 'true';
+
   constructor(private arena: ArenaService, private router: Router) {}
+
+  manageTwoFactor() {
+    this.twoFactorEnabled = !this.twoFactorEnabled;
+    localStorage.setItem('ax-twofactor', String(this.twoFactorEnabled));
+    const status = this.twoFactorEnabled ? 'enabled' : 'disabled';
+    window.alert(`Two-factor authentication ${status}.`);
+  }
+
+  confirmDeleteAccount() {
+    const confirmed = window.confirm(
+      'Deleting your account will sign you out and clear local data. Continue?'
+    );
+    if (!confirmed) return;
+    localStorage.clear();
+    this.arena.logout();
+    this.router.navigateByUrl('/auth/login');
+  }
 
   logout() {
     this.arena.logout();

@@ -14,6 +14,21 @@
         <strong>Change Password</strong>
         <i class="fa-solid fa-chevron-right"></i>
       </a>
+      <button class="ax-card ax-row" type="button" (click)="manageTwoFactor()">
+        <div>
+          <strong>Two-Factor Authentication</strong>
+          <p class="ax-muted">Add an extra security layer</p>
+          <small class="ax-badge">{{ twoFactorEnabled ? 'Enabled' : 'Disabled' }}</small>
+        </div>
+        <i class="fa-solid fa-shield-halved"></i>
+      </button>
+      <button class="ax-card ax-row danger" type="button" (click)="confirmDeleteAccount()">
+        <div>
+          <strong>Delete Account</strong>
+          <p class="ax-muted">Permanently remove your data</p>
+        </div>
+        <i class="fa-solid fa-trash"></i>
+      </button>
       <button class="ax-btn" (click)="logout()">Logout</button>
     </div>
   </div>
