@@ -205,19 +205,51 @@
       <p class="form-error" *ngIf="createError">{{ createError }}</p>
     </section>
 
-    <section class="screen" [class.active]="activeScreen === 'scr-tournaments'" id="scr-tournaments">
-      <header class="top-row">
-        <h2>Tournaments</h2>
-      </header>
-      <div class="season-cta">
-        <div>
+      <section class="screen" [class.active]="activeScreen === 'scr-tournaments'" id="scr-tournaments">
+        <header class="top-row">
+          <h2>Tournaments</h2>
+        </header>
+        <div class="season-cta">
+          <div>
           <p class="ax-muted">Season Structure</p>
           <h3>ArenaX Football Seasons</h3>
           <p>Every year runs January through December with marquee tournaments across FIFA, eFootball, and DLS.</p>
         </div>
         <button class="btn btn-outline" routerLink="/seasons" type="button">View Season Calendar</button>
-      </div>
-      <div class="chip-row tournament-filters">
+        </div>
+        <article class="platform-flow">
+          <header>
+            <p class="ax-muted">ArenaX Platform Fee Flow</p>
+            <h3>Transparent revenue tracking from entry fee to payout.</h3>
+          </header>
+          <ol>
+            <li>
+              <strong>Match / tournament creation:</strong> Players or admins set the entry fee (₦ or $) and participants pay via the ArenaX wallet.
+            </li>
+            <li>
+              <strong>Collection of entry fees:</strong> Fees land in the match escrow, total pot auto-calculates, and platform fee tier (5–10%) is determined.
+            </li>
+            <li>
+              <strong>Platform fee deduction:</strong> After the match concludes, ArenaX deducts its percentage from the total pot before any payout.
+            </li>
+            <li>
+              <strong>Payout to winners:</strong> Remaining prize is instantly credited to the winner(s)’ wallet for future use or withdrawal.
+            </li>
+            <li>
+              <strong>Wallet & transaction record:</strong> Every move (entry, platform fee, prize, match result) is logged for transparency.
+            </li>
+            <li>
+              <strong>Optional revenue boosters:</strong> Seasonal/Pro/2v2 events introduce higher fees or multipliers, lifting the platform fee and pot size.
+            </li>
+            <li>
+              <strong>Anti-fraud & verification:</strong> Screenshots or live verification guard payouts—only verified results release funds.
+            </li>
+            <li>
+              <strong>Summary:</strong> Player pays → fee hits escrow → match ends → platform fee deducted → winners paid → ArenaX retains fee → transaction logged.
+            </li>
+          </ol>
+        </article>
+        <div class="chip-row tournament-filters">
         <button class="chip" [class.active]="activeTournamentFilter === 'All'" type="button" (click)="setTournamentFilter('All')">All</button>
         <button class="chip" [class.active]="activeTournamentFilter === 'Live'" type="button" (click)="setTournamentFilter('Live')">
           <i class="fa-solid fa-circle"></i> Live
