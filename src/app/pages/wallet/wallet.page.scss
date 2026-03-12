@@ -8,6 +8,9 @@
 }
 
 .paytypes-card {
+  width: min(100%, 560px);
+  margin: 0 auto;
+  padding: 16px;
   display: grid;
   gap: 14px;
 }
@@ -22,12 +25,6 @@
   color: rgba(126, 244, 255, 0.9);
 }
 
-.dual-balance {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
 .currency-card {
   padding: 12px;
   border-radius: 14px;
@@ -35,6 +32,31 @@
   border: 1px solid rgba(111, 169, 255, 0.18);
   display: grid;
   gap: 10px;
+}
+
+.currency-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.currency-label {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 160ms ease;
+}
+
+.currency-label.active {
+  color: #fff;
+}
+
+.currency-toggle__switch {
+  --handle-background: #fff;
+  --background: rgba(255, 255, 255, 0.16);
+  --background-checked: linear-gradient(90deg, #8f56ff, #4dd3ff);
+  --handle-background-checked: #fff;
 }
 
 .radio-group {

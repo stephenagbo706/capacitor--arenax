@@ -41,45 +41,25 @@
       <div class="paytypes-head">
         <div>
           <p class="ax-muted">ArenaX Payment Types</p>
-          <h3>Multi-currency Wallet</h3>
-        </div>
+         </div>
         <i class="fa-solid fa-wallet"></i>
       </div>
 
-      <div class="dual-balance">
-        <div>
-          <p class="ax-muted">₦ Naira Balance</p>
-          <strong>₦ {{ nairaBalance | number:'1.0-0' }}</strong>
-        </div>
-        <div>
-          <p class="ax-muted">$ USD Balance</p>
-          <strong>$ {{ usdBalance | number:'1.0-0' }}</strong>
-        </div>
-      </div>
+      <p class="ax-muted">
+        Pick your settlement currency. When a payout processes in Naira or Dollar, it will surface in Available Balance with the matching sign.
+      </p>
 
       <div class="currency-card">
         <p class="ax-muted">Preferred Currency</p>
-        <div class="radio-group">
-          <label class="radio-option">
-            <input
-              type="radio"
-              name="wallet-currency"
-              value="NGN"
-              [checked]="preferredCurrency === 'NGN'"
-              (change)="setPreferredCurrency('NGN')"
-            />
-            <span>₦ Naira</span>
-          </label>
-          <label class="radio-option">
-            <input
-              type="radio"
-              name="wallet-currency"
-              value="USD"
-              [checked]="preferredCurrency === 'USD'"
-              (change)="setPreferredCurrency('USD')"
-            />
-            <span>$ Dollar</span>
-          </label>
+        <div class="currency-toggle" role="group" aria-label="Toggle preferred currency">
+          <span class="currency-label" [class.active]="preferredCurrency === 'NGN'">₦ Naira</span>
+          <ion-toggle
+            role="switch"
+            class="currency-toggle__switch"
+            [checked]="preferredCurrency === 'USD'"
+            (ionChange)="setPreferredCurrency($event.detail.checked ? 'USD' : 'NGN')"
+          ></ion-toggle>
+          <span class="currency-label" [class.active]="preferredCurrency === 'USD'">$ Dollar</span>
         </div>
         <small class="ax-muted">Prices will show in {{ preferredCurrency === 'NGN' ? '₦ Naira' : '$ Dollar' }}.</small>
       </div>
