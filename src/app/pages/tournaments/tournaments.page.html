@@ -58,6 +58,9 @@
             {{ isJoined(featured.participants) ? 'Joined' : featured.status === 'ended' ? 'Closed' : 'Join Now' }}
           </button>
         </div>
+        <button class="featured__link" type="button" [routerLink]="['/tournaments', featured.id]">
+          View tournament page
+        </button>
       </div>
     </section>
 
@@ -83,6 +86,7 @@
             <button class="mini-join-btn" type="button" [disabled]="isJoined(item.participants) || item.status === 'ended'" (click)="joinTournament(item.id)">
               {{ isJoined(item.participants) ? 'Joined' : item.status === 'ended' ? 'Closed' : 'Join' }}
             </button>
+            <button class="mini-details-btn" type="button" [routerLink]="['/tournaments', item.id]">Details</button>
           </div>
         </div>
       </article>

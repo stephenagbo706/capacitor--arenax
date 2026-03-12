@@ -1,0 +1,149 @@
+<ion-content [fullscreen]="true">
+  <div class="tournament-details">
+    <button class="back-btn" routerLink="/tournaments">← All tournaments</button>
+
+    <ng-container *ngIf="tournament$ | async as tournament; else missing">
+      <section class="details-header">
+        <div class="details-header__meta">
+          <span class="pill">{{ tournament.game }}</span>
+          <span class="status-pill" [class.live]="tournament.status === 'live'" [class.upcoming]="tournament.status === 'upcoming'">
+            {{ formatStatus(tournament.status) }}
+          </span>
+        </div>
+        <h1>{{ tournament.title }}</h1>
+        <p class="details-starts">Starts {{ tournament.startsAt | date:'EEEE, MMM d · h:mm a' }}</p>
+        <div class="timer-card">
+          <p>Tournament timer</p>
+          <strong>{{ countdown$ | async }}</strong>
+          <small>{{ tournament.status === 'live' ? 'Live now · Rewards auto-sent' : 'Countdown to kickoff' }}</small>
+        </div>
+      </section>
+
+      <div class="details-tabs">
+        <button *ngFor="let tab of tabs" type="button" [class.active]="activeTab === tab" (click)="setTab(tab)">
+          {{ tab }}
+        </button>
+      </div>
+
+      <section class="tab-panel" *ngIf="activeTab === 'Overview'">
+        <div class="overview-grid">
+          <article class="stat-card">
+            <p>Prize pool</p>
+            <strong>${{ tournament.prizePool }}</strong>
+          </article>
+          <article class="stat-card">
+            <p>Entry fee</p>
+            <strong>${{ tournament.entryFee }}</strong>
+          </article>
+          <article class="stat-card">
+            <p>Prize distribution</p>
+            <div class="stat-note" *ngFor="let line of prizeDistribution">{{ line }}</div>
+          </article>
+        </div>
+        <div class="overview-notes">
+          <h3>Rules</h3>
+          <ul>
+            <li *ngFor="let rule of rules">{{ rule }}</li>
+          </ul>
+        </div>
+        <div class="overview-notifications">
+          <h3>Notifications</h3>
+          <article *ngFor="let item of notifications">
+            <strong>{{ item.title }}</strong>
+            <p>{{ item.body }}</p>
+          </article>
+        </div>
+        <div class="overview-anti-cheat">
+          <h3>Anti-Cheat / Verification</h3>
+          <ul>
+            <li *ngFor="let item of antiCheatFeatures">{{ item }}</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="tab-panel" *ngIf="activeTab === 'Players'">
+        <div class="player-list" *ngIf="players$ | async as players; else emptyPlayers">
+          <article class="player-card" *ngFor="let player of players">
+            <img [src]="player.avatar" [alt]="player.username" />
+            <div>
+              <strong>{{ player.username }}</strong>
+              <p class="ax-muted">Game ID · {{ player.gameId }}</p>
+              <p class="ax-muted">Record · {{ player.wins }}W / {{ player.losses }}L</p>
+            </div>
+            <span class="player-goals">{{ player.goals }} goals</span>
+          </article>
+        </div>
+        <ng-template #emptyPlayers>
+          <p class="ax-muted">No participants yet.</p>
+        </ng-template>
+        <div class="leaderboard" *ngIf="leaderboard$ | async as leaderboard">
+          <h3>Leaderboard</h3>
+          <article *ngFor="let leader of leaderboard">
+            <span class="rank">#{{ leader.rank }}</span>
+            <div>
+              <strong>{{ leader.name }}</strong>
+              <p>{{ leader.wins }} wins · {{ leader.losses }} losses</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" *ngIf="activeTab === 'Matches'">
+        <ng-container *ngIf="players$ | async as players">
+          <ng-container *ngIf="tournamentMatches$ | async as matches; else noMatches">
+            <article class="match-card" *ngFor="let match of matches">
+              <div>
+                <strong>{{ findPlayer(players, match.player1Id)?.username || 'Player 1' }}</strong>
+                <span class="ax-muted">vs</span>
+                <strong>{{ match.player2Id ? findPlayer(players, match.player2Id)?.username || 'Player 2' : 'Waiting' }}</strong>
+              </div>
+              <div class="match-meta">
+                <span>{{ match.scheduledAt }}</span>
+                <span class="status-badge" [class.online]="match.status === 'live'">{{ match.status }}</span>
+              </div>
+              <p class="ax-muted">Room {{ match.roomCode || 'TBD' }}</p>
+            </article>
+          </ng-container>
+          <ng-template #noMatches>
+            <p class="ax-muted">No matches scheduled yet.</p>
+          </ng-template>
+        </ng-container>
+      </section>
+
+      <section class="tab-panel" *ngIf="activeTab === 'Chat'">
+        <ng-container *ngIf="players$ | async as players">
+          <div class="chat-intro">
+            <div>
+              <h3>Tournament Group Chat</h3>
+              <p class="ax-muted">Every tournament has a live chat for replies, mentions, and announcements.</p>
+            </div>
+            <span class="chat-pill">Group chat</span>
+          </div>
+          <div class="chat-features">
+            <span *ngFor="let feature of chatFeatures">{{ feature }}</span>
+          </div>
+          <div class="chat-messages">
+            <article class="chat-message" *ngFor="let msg of chatMessages$ | async" [class.announcement]="msg.type === 'announcement'">
+              <div class="chat-message__head">
+                <strong>{{ findPlayer(players, msg.senderId)?.username || 'Admin' }}</strong>
+                <small>{{ msg.timestamp | date:'shortTime' }}</small>
+              </div>
+              <p>{{ msg.text }}</p>
+              <div class="reply-chip" *ngIf="msg.replyTo">
+                <small>Replying to {{ msg.replyTo.sender }}</small>
+                <p>{{ msg.replyTo.text }}</p>
+              </div>
+              <span class="mention" *ngIf="msg.mention">{{ msg.mention }}</span>
+              <span class="chat-type" *ngIf="msg.type === 'announcement'">Admin announcement</span>
+            </article>
+          </div>
+        </ng-container>
+      </section>
+    </ng-container>
+
+    <ng-template #missing>
+      <p class="ax-muted">Tournament details unavailable.</p>
+    </ng-template>
+  </div>
+  <ax-bottom-nav></ax-bottom-nav>
+</ion-content>

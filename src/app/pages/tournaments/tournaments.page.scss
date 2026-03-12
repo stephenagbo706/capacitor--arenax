@@ -292,14 +292,45 @@ ion-content {
 
 .mini-card__row {
   display: flex;
-  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   font-size: 0.85rem;
   opacity: 0.85;
+  flex-wrap: wrap;
 }
 
 .mini-card__row i {
   margin-right: 6px;
   color: rgba(126, 244, 255, 0.8);
+}
+
+.mini-details-btn {
+  border: 1px solid rgba(126, 244, 255, 0.35);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: #8dd7ff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.mini-details-btn:hover {
+  border-color: rgba(142, 214, 255, 0.9);
+  color: #fff;
+}
+
+.featured__link {
+  margin: 10px 0 0;
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 10px 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: #dbe3ff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 @media (max-width: 380px) {

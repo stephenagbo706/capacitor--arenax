@@ -49,6 +49,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/tournaments/tournaments.page').then((m) => m.TournamentsPage),
   },
   {
+    path: 'tournaments/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/tournament-details/tournament-details.page').then((m) => m.TournamentDetailsPage),
+  },
+  {
     path: 'spotlight',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/spotlight/spotlight.page').then((m) => m.SpotlightPage),

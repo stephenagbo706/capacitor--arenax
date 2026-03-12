@@ -1,0 +1,329 @@
+:host {
+  --td-bg-0: #030512;
+  --td-bg-1: #090f2e;
+  --td-card: rgba(15, 24, 58, 0.85);
+  --td-border: rgba(126, 244, 255, 0.15);
+  --td-accent: #8f56ff;
+  --td-accent-2: #48b8ff;
+}
+
+ion-content {
+  --background: radial-gradient(circle at 20% 20%, rgba(72, 208, 255, 0.15), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(143, 84, 255, 0.2), transparent 50%),
+    linear-gradient(160deg, var(--td-bg-0), var(--td-bg-1) 55%, #050a1d);
+  color: #ecf2ff;
+}
+
+.tournament-details {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 26px 18px 120px;
+  display: grid;
+  gap: 18px;
+}
+
+.back-btn {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+}
+
+.details-header {
+  background: linear-gradient(145deg, rgba(15, 24, 58, 0.95), rgba(25, 40, 90, 0.9));
+  border-radius: 20px;
+  border: 1px solid rgba(126, 244, 255, 0.25);
+  padding: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.details-header__meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pill {
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.status-pill {
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.status-pill.live {
+  border-color: var(--td-accent);
+  color: #fff;
+}
+
+.status-pill.upcoming {
+  border-color: var(--td-accent-2);
+  color: #b8e8ff;
+}
+
+.details-starts {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.timer-card {
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(10, 14, 36, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: grid;
+  gap: 2px;
+}
+
+.details-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.details-tabs button {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(10, 14, 36, 0.7);
+  border-radius: 14px;
+  padding: 10px 6px;
+  font-weight: 600;
+  color: #e9f5ff;
+}
+
+.details-tabs button.active {
+  background: linear-gradient(130deg, var(--td-accent), var(--td-accent-2));
+  border-color: transparent;
+  box-shadow: 0 12px 24px rgba(143, 84, 255, 0.35);
+}
+
+.tab-panel {
+  background: var(--td-card);
+  border-radius: 20px;
+  border: 1px solid var(--td-border);
+  padding: 18px;
+  display: grid;
+  gap: 16px;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-card p {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  margin: 0 0 4px;
+  opacity: 0.6;
+}
+
+.stat-card strong {
+  font-size: 1.3rem;
+}
+
+.stat-note {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.overview-notes ul,
+.overview-anti-cheat ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.overview-notes li,
+.overview-anti-cheat li {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.overview-notifications article {
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: grid;
+  gap: 4px;
+}
+
+.player-list {
+  display: grid;
+  gap: 12px;
+}
+
+.player-card {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.player-card img {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.player-goals {
+  font-size: 0.8rem;
+  color: #8ef9cf;
+}
+
+.leaderboard article {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.leaderboard article:last-child {
+  border-bottom: none;
+}
+
+.leaderboard .rank {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--td-accent);
+}
+
+.match-card {
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  display: grid;
+  gap: 6px;
+}
+
+.match-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.status-badge.online {
+  border-color: var(--td-accent);
+  color: var(--td-accent);
+}
+
+.chat-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-pill {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 6px 12px;
+  font-size: 0.75rem;
+}
+
+.chat-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chat-features span {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.chat-messages {
+  display: grid;
+  gap: 10px;
+}
+
+.chat-message {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.chat-message.announcement {
+  border-color: rgba(143, 84, 255, 0.6);
+  box-shadow: 0 0 12px rgba(143, 84, 255, 0.3);
+}
+
+.chat-message__head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.reply-chip {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mention {
+  color: var(--td-accent-2);
+  font-weight: 600;
+}
+
+.chat-type {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 520px) {
+  .details-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .match-meta {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

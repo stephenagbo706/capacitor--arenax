@@ -3,11 +3,12 @@ import { IonContent } from '@ionic/angular/standalone';
 import { DatePipe, NgForOf, NgIf } from '@angular/common';
 import { ArenaService } from '../../core/services/arena.service';
 import { BottomNavComponent } from '../../shared/bottom-nav.component';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-tournaments',
   standalone: true,
-  imports: [IonContent, DatePipe, NgForOf, NgIf, BottomNavComponent],
+  imports: [IonContent, DatePipe, NgForOf, NgIf, RouterLink, BottomNavComponent],
   templateUrl: './tournaments.page.html',
   styleUrls: ['./tournaments.page.scss'],
 })
