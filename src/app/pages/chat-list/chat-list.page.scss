@@ -68,26 +68,86 @@
   gap: 12px;
 }
 
+.community-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.community-label {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(126, 244, 255, 0.7);
+}
+
 .community-card h3 {
   margin: 0;
   font-size: 1.05rem;
 }
 
-.community-card ul {
-  margin: 0;
-  padding-left: 18px;
+.community-pill {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(46, 229, 238, 0.18);
+  border: 1px solid rgba(46, 229, 238, 0.55);
+  color: #d9fdff;
+}
+
+.community-stats {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+}
+
+.community-stat {
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(6, 14, 40, 0.7);
+  border: 1px solid rgba(126, 244, 255, 0.18);
+  display: grid;
+  gap: 6px;
+}
+
+.community-stat span {
+  font-size: 0.75rem;
+  color: rgba(233, 243, 255, 0.65);
+}
+
+.community-stat strong {
+  font-size: 1rem;
+  color: #fff;
+}
+
+.community-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.community-tags span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: rgba(126, 244, 255, 0.12);
+  border: 1px solid rgba(126, 244, 255, 0.3);
   color: rgba(233, 243, 255, 0.9);
 }
 
-.community-card li {
-  font-size: 0.9rem;
-  line-height: 1.4;
+.community-actions {
+  display: grid;
+  gap: 8px;
 }
 
-.community-card strong {
-  font-weight: 700;
+.community-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(233, 243, 255, 0.65);
 }
 
 .discover-grid {
@@ -169,5 +229,9 @@
 
   .community-card {
     order: -1;
+  }
+
+  .community-stats {
+    grid-template-columns: 1fr;
   }
 }

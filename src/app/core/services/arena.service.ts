@@ -1384,6 +1384,25 @@ export class ArenaService {
         lockedBalance: 0,
         online: true,
       },
+      {
+        id: uid(),
+        username: 'ArenaX Community',
+        email: 'community@arenax.app',
+        gameId: 'AX-COMMUNITY',
+        gameIds: {
+          eFootball: 'AX-COMMUNITY',
+          'Dream League Soccer': 'AX-COMMUNITY',
+          FIFA: 'AX-COMMUNITY',
+          'Call of Duty Mobile': 'AX-COMMUNITY',
+        },
+        avatar: 'assets/ax-ui/logo.png',
+        wins: 0,
+        losses: 0,
+        goals: 0,
+        walletBalance: 0,
+        lockedBalance: 0,
+        online: true,
+      },
     ];
 
     const liveMatch: Match = {

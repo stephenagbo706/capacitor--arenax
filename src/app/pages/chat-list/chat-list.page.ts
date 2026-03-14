@@ -72,6 +72,19 @@ export class ChatListPage {
     this.router.navigate(['/chat', chatId]);
   }
 
+  openCommunityChat() {
+    this.errorMessage = '';
+    this.statusMessage = '';
+    const communityUser = this.users$.value.find((user) => user.username === 'ArenaX Community');
+    if (!communityUser) {
+      this.errorMessage = 'Community chat is unavailable right now.';
+      return;
+    }
+    const chatId = this.arena.createChatWith(communityUser.id);
+    if (!chatId) return;
+    this.router.navigate(['/chat', chatId]);
+  }
+
   sendFriendRequest(userId: string) {
     const result = this.arena.sendFriendRequest(userId);
     if (!result.ok) {

@@ -87,27 +87,43 @@
         </div>
       </div>
       <aside class="community-card">
-        <h3>ArenaX Community Chat – Features</h3>
-        <ul>
-          <li>
-            <strong>General Chat Room:</strong> Global room plus optional FIFA/eFootball/DLS/COD subrooms supporting text, emojis, and formatting.
-          </li>
-          <li>
-            <strong>Player Profiles & Mentions:</strong> Tap a username to view profile, mention @players, follow them, or start private chats.
-          </li>
-          <li>
-            <strong>Real-Time Messaging:</strong> Messages, typing indicators, and online/offline status update instantly (via WebSockets/Firebase).
-          </li>
-          <li>
-            <strong>Admin & Moderation Tools:</strong> Admins can pin/delete/ban and auto-moderation filters block spam/offensive links.
-          </li>
-          <li>
-            <strong>Chat Features:</strong> Copy, reply, edit/delete your own messages, and optionally share images/screenshots.
-          </li>
-          <li>
-            <strong>Notifications:</strong> Alerts for new community chat messages plus optional game or tournament updates.
-          </li>
-        </ul>
+        <div class="community-header">
+          <div>
+            <p class="community-label">ArenaX Community</p>
+            <h3>Community Chat Group</h3>
+          </div>
+          <span class="community-pill">Live</span>
+        </div>
+        <p class="ax-muted">
+          Join the ArenaX Community group to meet players, find rivals, and keep up with weekly events.
+        </p>
+        <div class="community-stats">
+          <div class="community-stat">
+            <span>Members</span>
+            <strong>12.4k</strong>
+          </div>
+          <div class="community-stat">
+            <span>Active Now</span>
+            <strong>640</strong>
+          </div>
+          <div class="community-stat">
+            <span>Rooms</span>
+            <strong>Global + 4</strong>
+          </div>
+        </div>
+        <div class="community-tags">
+          <span>#general</span>
+          <span>#fifa</span>
+          <span>#efootball</span>
+          <span>#dls</span>
+          <span>#codm</span>
+        </div>
+        <div class="community-actions">
+          <button class="ax-btn ax-btn-primary" type="button" (click)="openCommunityChat()">
+            Open Community Chat
+          </button>
+          <p class="community-note">Messages sync instantly with chat alerts.</p>
+        </div>
       </aside>
     </div>
   </div>
