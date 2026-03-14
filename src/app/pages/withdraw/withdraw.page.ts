@@ -59,11 +59,11 @@ export class WithdrawPage {
       return;
     }
 
-    this.status = result.status === 'pending' ? 'pending' : 'processed';
-    this.statusMessage =
-      this.status === 'pending'
-        ? 'Withdrawal request submitted. Admin approval is required.'
-        : 'Withdrawal processed. Funds should hit your destination shortly.';
+    const isProcessed = result.status === 'processed';
+    this.status = isProcessed ? 'processed' : 'pending';
+    this.statusMessage = isProcessed
+      ? 'Withdrawal processed. Funds should hit your destination shortly.'
+      : 'Withdrawal request submitted. Admin approval is required.';
     this.referenceId = result.referenceId || '';
     this.lastWithdrawalTimestamp = Date.now();
   }

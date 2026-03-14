@@ -1,4 +1,4 @@
-@import '../home/home.page.scss';
+@use '../home/home.page.scss' as *;
 
 .spot-card {
   display: grid;

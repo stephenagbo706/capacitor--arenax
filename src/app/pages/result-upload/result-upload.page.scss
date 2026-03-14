@@ -1,4 +1,4 @@
-@import '../find-players/find-players.page.scss';
+@use '../find-players/find-players.page.scss' as *;
 
 .match-game-chip {
   display: grid;

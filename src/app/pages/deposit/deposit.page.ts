@@ -44,11 +44,11 @@ export class DepositPage {
       return;
     }
 
-    this.status = result.status === 'pending' ? 'pending' : 'completed';
-    this.statusMessage =
-      this.status === 'pending'
-        ? 'Waiting for payment confirmation. We will update your wallet shortly.'
-        : 'Deposit completed ✔ Funds are available in your wallet.';
+    const isCompleted = result.status === 'completed';
+    this.status = isCompleted ? 'completed' : 'pending';
+    this.statusMessage = isCompleted
+      ? 'Deposit completed ✔ Funds are available in your wallet.'
+      : 'Waiting for payment confirmation. We will update your wallet shortly.';
     this.referenceId = result.referenceId || '';
   }
 }

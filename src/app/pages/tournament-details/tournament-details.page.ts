@@ -96,7 +96,7 @@ export class TournamentDetailsPage {
       const primary = players[0];
       const secondary = players[1] || primary;
       const admin = players[2] || primary;
-      return [
+      const messages: TournamentChatMessage[] = [
         {
           id: 'announcement',
           senderId: admin.id,
@@ -120,6 +120,7 @@ export class TournamentDetailsPage {
           replyTo: { sender: secondary.username, text: 'Match ready! Room RM-4B9F is prepped for round 1.' },
         },
       ];
+      return messages;
     }),
     shareReplay(1)
   );

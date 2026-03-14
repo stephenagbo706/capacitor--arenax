@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { AsyncPipe, CommonModule, NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe, CommonModule, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -9,7 +9,7 @@ import { ArenaService } from '../../core/services/arena.service';
 @Component({
   selector: 'app-result-upload',
   standalone: true,
-  imports: [IonContent, FormsModule, NgIf, NgForOf, AsyncPipe, CommonModule],
+  imports: [IonContent, FormsModule, NgIf, AsyncPipe, CommonModule],
   templateUrl: './result-upload.page.html',
   styleUrls: ['./result-upload.page.scss'],
 })

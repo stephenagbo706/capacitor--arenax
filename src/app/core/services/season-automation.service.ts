@@ -21,6 +21,7 @@ interface TournamentTemplate {
   bracketStages: string[];
   chatHighlight: string;
   notifications: string[];
+  players: number;
   subTournaments?: Array<{ name: string; game: SupportedGame }>;
 }
 
@@ -45,6 +46,7 @@ export class SeasonAutomationService {
       bracketStages: ['Round of 32', 'Round of 16', 'Quarterfinals', 'Final'],
       chatHighlight: 'New Year chat opens at 6 PM with admin announcements.',
       notifications: ['Registration closes January 5', 'Matches start January 10 at 6:00 PM UTC'],
+      players: 32,
     },
     {
       name: 'ArenaX Spring Championship',
@@ -64,6 +66,7 @@ export class SeasonAutomationService {
       bracketStages: ['Group stage', 'Playoffs', 'Finals'],
       chatHighlight: 'Spring lobby opens nightly at 8 PM.',
       notifications: ['Match registration closes March 1', 'Matches begin March 5'],
+      players: 16,
     },
     {
       name: 'ArenaX Summer Clash',
@@ -83,6 +86,7 @@ export class SeasonAutomationService {
       bracketStages: ['Open qualifier', 'Top 32 bracket', 'Semi-Finals', 'Final'],
       chatHighlight: 'Summer Clash chat runs 24/7 with highlight announcements.',
       notifications: ['Lines open June 4 for team submissions', 'Matches begin June 10'],
+      players: 32,
     },
     {
       name: 'ArenaX Pro League',
@@ -102,6 +106,7 @@ export class SeasonAutomationService {
       bracketStages: ['Week 1', 'Week 2', 'Week 3', 'Championship week'],
       chatHighlight: 'Pro League chat threads include mention reminders and admin posts.',
       notifications: ['Registration ends July 28', 'First fixtures rollout August 1'],
+      players: 16,
     },
     {
       name: 'ArenaX Champions Cup',
@@ -121,6 +126,7 @@ export class SeasonAutomationService {
       bracketStages: ['Top 32 bracket', 'Semi-finals', 'Grand Final'],
       chatHighlight: 'Announcements from admins with winner spotlight.',
       notifications: ['Champions invite drops September 20', 'Bracket locked October 10'],
+      players: 32,
     },
     {
       name: 'ArenaX Winter Cup',
@@ -140,6 +146,7 @@ export class SeasonAutomationService {
       bracketStages: ['Qualifiers', 'Top 64', 'Elite bracket', 'Winter Final'],
       chatHighlight: 'Winter Cup chat reflects winners and badge drops.',
       notifications: ['Qualifier invites December 1', 'Finals December 24'],
+      players: 64,
       subTournaments: [
         { name: 'Winter FIFA Division', game: 'FIFA' },
         { name: 'Winter eFootball Sprint', game: 'eFootball' },
