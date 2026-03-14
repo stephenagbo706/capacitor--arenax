@@ -222,6 +222,10 @@ export interface SeasonTournament {
   id: string;
   name: string;
   month: string;
+  registrationOpen: string;
+  registrationClose: string;
+  matchStart: string;
+  matchEnd: string;
   startDate: string;
   endDate: string;
   players: number;

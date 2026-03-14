@@ -5,18 +5,18 @@ export type FirestoreWriteFn = (path: string, payload: Record<string, unknown>) 
 
 interface TournamentTemplate {
   name: string;
-  month: string;
-  startDay: number;
-  endDay: number;
+  game: SupportedGame;
+  registrationOpen: { month: string; day: number; yearOffset?: number };
+  registrationClose: { month: string; day: number; yearOffset?: number };
+  matchStart: { month: string; day: number; yearOffset?: number };
+  matchEnd: { month: string; day: number; yearOffset?: number };
   entryFee: number;
   prizePool: number;
   matchType: SeasonTournament['matchType'];
-  duration: string;
   purpose: string;
   tier: SeasonTournament['tier'];
   platformFeePercent: number;
   rules: string[];
-  allowedGames: SupportedGame[];
   banner: string;
   bracketStages: string[];
   chatHighlight: string;
@@ -27,132 +27,7 @@ interface TournamentTemplate {
 
 @Injectable({ providedIn: 'root' })
 export class SeasonAutomationService {
-  private readonly baseCalendars: TournamentTemplate[] = [
-    {
-      name: 'ArenaX New Year Cup',
-      month: 'January',
-      startDay: 10,
-      endDay: 15,
-      entryFee: 5,
-      prizePool: 200,
-      matchType: '1v1',
-      duration: '6 days',
-      purpose: 'Season kickoff tournament.',
-      tier: 'beginner',
-      platformFeePercent: 0.05,
-      rules: ['Standard FIFA 1v1 rules', 'Screenshot verification required for finals.'],
-      allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-      banner: 'assets/ax-ui/tournament-area.jpg',
-      bracketStages: ['Round of 32', 'Round of 16', 'Quarterfinals', 'Final'],
-      chatHighlight: 'New Year chat opens at 6 PM with admin announcements.',
-      notifications: ['Registration closes January 5', 'Matches start January 10 at 6:00 PM UTC'],
-      players: 32,
-    },
-    {
-      name: 'ArenaX Spring Championship',
-      month: 'March',
-      startDay: 5,
-      endDay: 12,
-      entryFee: 10,
-      prizePool: 500,
-      matchType: '1v1',
-      duration: '1 week',
-      purpose: 'Spring showcase for the season.',
-      tier: 'beginner',
-      platformFeePercent: 0.06,
-      rules: ['Respect the fixture window', 'No teaming or unauthorized coaching'],
-      allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-      banner: 'assets/ax-ui/summit-section.jpg',
-      bracketStages: ['Group stage', 'Playoffs', 'Finals'],
-      chatHighlight: 'Spring lobby opens nightly at 8 PM.',
-      notifications: ['Match registration closes March 1', 'Matches begin March 5'],
-      players: 16,
-    },
-    {
-      name: 'ArenaX Summer Clash',
-      month: 'June',
-      startDay: 10,
-      endDay: 20,
-      entryFee: 15,
-      prizePool: 900,
-      matchType: '2v2',
-      duration: '10 days',
-      purpose: 'Mid-season 2v2 clash and revenue booster.',
-      tier: 'pro',
-      platformFeePercent: 0.07,
-      rules: ['Double elimination bracket', 'Admin review on every screenshot'],
-      allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-      banner: 'assets/ax-ui/wel.jpg',
-      bracketStages: ['Open qualifier', 'Top 32 bracket', 'Semi-Finals', 'Final'],
-      chatHighlight: 'Summer Clash chat runs 24/7 with highlight announcements.',
-      notifications: ['Lines open June 4 for team submissions', 'Matches begin June 10'],
-      players: 32,
-    },
-    {
-      name: 'ArenaX Pro League',
-      month: 'August',
-      startDay: 1,
-      endDay: 31,
-      entryFee: 20,
-      prizePool: 1200,
-      matchType: '2v2',
-      duration: '4 weeks',
-      purpose: 'Month-long league with weekly matches and ranking points.',
-      tier: 'pro',
-      platformFeePercent: 0.08,
-      rules: ['Weekly fixtures with point drops', 'Live admin verification'],
-      allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-      banner: 'assets/ax-ui/tournament-area.jpg',
-      bracketStages: ['Week 1', 'Week 2', 'Week 3', 'Championship week'],
-      chatHighlight: 'Pro League chat threads include mention reminders and admin posts.',
-      notifications: ['Registration ends July 28', 'First fixtures rollout August 1'],
-      players: 16,
-    },
-    {
-      name: 'ArenaX Champions Cup',
-      month: 'October',
-      startDay: 10,
-      endDay: 18,
-      entryFee: 30,
-      prizePool: 1500,
-      matchType: '1v1',
-      duration: '8 days',
-      purpose: 'Elite competition for top-ranked players.',
-      tier: 'elite',
-      platformFeePercent: 0.1,
-      rules: ['Invite-only bracket', 'Anti-cheat verification on every match'],
-      allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-      banner: 'assets/ax-ui/summit-section.jpg',
-      bracketStages: ['Top 32 bracket', 'Semi-finals', 'Grand Final'],
-      chatHighlight: 'Announcements from admins with winner spotlight.',
-      notifications: ['Champions invite drops September 20', 'Bracket locked October 10'],
-      players: 32,
-    },
-    {
-      name: 'ArenaX Winter Cup',
-      month: 'December',
-      startDay: 15,
-      endDay: 25,
-      entryFee: 35,
-      prizePool: 2500,
-      matchType: '2v2',
-      duration: '11 days',
-      purpose: 'Biggest tournament and end-of-year celebration.',
-      tier: 'elite',
-      platformFeePercent: 0.1,
-      rules: ['Live stream finals', 'Automatic reward distribution'],
-      allowedGames: ['FIFA', 'eFootball', 'Dream League Soccer'],
-      banner: 'assets/ax-ui/tournament-area.jpg',
-      bracketStages: ['Qualifiers', 'Top 64', 'Elite bracket', 'Winter Final'],
-      chatHighlight: 'Winter Cup chat reflects winners and badge drops.',
-      notifications: ['Qualifier invites December 1', 'Finals December 24'],
-      players: 64,
-      subTournaments: [
-        { name: 'Winter FIFA Division', game: 'FIFA' },
-        { name: 'Winter eFootball Sprint', game: 'eFootball' },
-      ],
-    },
-  ];
+  private readonly baseCalendars: TournamentTemplate[] = this.buildCalendar();
 
   private scoringRules = {
     winMatch: 10,
@@ -229,26 +104,42 @@ export class SeasonAutomationService {
   }
 
   private buildTournament(template: TournamentTemplate, year: number, players: UserProfile[]): SeasonTournament {
-    const startDate = this.makeIsoDate(year, template.month, template.startDay);
-    const endDate = this.makeIsoDate(year, template.month, template.endDay);
+    const registrationOpen = this.makeIsoDate(
+      year,
+      template.registrationOpen.month,
+      template.registrationOpen.day,
+      template.registrationOpen.yearOffset
+    );
+    const registrationClose = this.makeIsoDate(
+      year,
+      template.registrationClose.month,
+      template.registrationClose.day,
+      template.registrationClose.yearOffset
+    );
+    const matchStart = this.makeIsoDate(year, template.matchStart.month, template.matchStart.day, template.matchStart.yearOffset);
+    const matchEnd = this.makeIsoDate(year, template.matchEnd.month, template.matchEnd.day, template.matchEnd.yearOffset);
     const playerIds = this.pickPlayers(players, template.players);
 
     return {
       id: this.uid(),
       name: `${template.name} ${year}`,
-      month: template.month,
-      startDate,
-      endDate,
+      month: template.matchStart.month,
+      registrationOpen,
+      registrationClose,
+      matchStart,
+      matchEnd,
+      startDate: matchStart,
+      endDate: matchEnd,
       players: template.players,
       entryFee: template.entryFee,
       prizePool: template.prizePool,
       platformFeePercent: template.platformFeePercent,
       matchType: template.matchType,
-      duration: template.duration,
+      duration: this.getDurationLabel(matchStart, matchEnd),
       purpose: template.purpose,
       tier: template.tier,
       rules: template.rules,
-      allowedGames: template.allowedGames,
+      allowedGames: [template.game],
       banner: template.banner,
       bracketStages: template.bracketStages,
       playerIds,
@@ -268,7 +159,7 @@ export class SeasonAutomationService {
 
   private buildSeasonAwards(year: number) {
     return [
-      { title: 'ArenaX Player of the Year', badge: `🏆 ArenaX Champion ${year}` },
+      { title: 'ArenaX Football Player of the Year', badge: `🏆 ArenaX Football Champion ${year}` },
       { title: 'Best FIFA Player', badge: '🎮 FIFA Champion' },
       { title: 'Best eFootball Player', badge: '⚽ Best eFootball Player' },
       { title: 'Best DLS Player', badge: '🎮 DLS Champion' },
@@ -277,9 +168,333 @@ export class SeasonAutomationService {
     ];
   }
 
-  private makeIsoDate(year: number, monthLabel: string, day: number) {
-    const month = new Date(`${monthLabel} 1, ${year}`).getUTCMonth();
-    return new Date(Date.UTC(year, month, day, 18, 0, 0)).toISOString();
+  private makeIsoDate(year: number, monthLabel: string, day: number, yearOffset = 0) {
+    const resolvedYear = year + yearOffset;
+    const month = new Date(`${monthLabel} 1, ${resolvedYear}`).getUTCMonth();
+    return new Date(Date.UTC(resolvedYear, month, day, 18, 0, 0)).toISOString();
+  }
+
+  private getDurationLabel(startIso: string, endIso: string) {
+    const start = Date.parse(startIso);
+    const end = Date.parse(endIso);
+    if (Number.isNaN(start) || Number.isNaN(end) || end < start) return 'TBD';
+    const days = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    return `${days} days`;
+  }
+
+  private buildBracketStages(players: number) {
+    if (players >= 64) return ['Round of 64', 'Round of 32', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
+    if (players >= 32) return ['Round of 32', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
+    if (players >= 24) return ['Round of 24', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
+    if (players >= 16) return ['Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
+    if (players >= 8) return ['Quarterfinals', 'Semifinals', 'Final'];
+    return ['Final'];
+  }
+
+  private buildCalendar() {
+    const config = {
+      'Winter Cup': {
+        entryFee: 5,
+        prizePool: 250,
+        players: 32,
+        tier: 'beginner' as const,
+        matchType: '1v1' as const,
+        purpose: 'Season opener and momentum builder.',
+      },
+      'Rising Stars Cup': {
+        entryFee: 8,
+        prizePool: 400,
+        players: 24,
+        tier: 'beginner' as const,
+        matchType: '1v1' as const,
+        purpose: 'Emerging talent showcase.',
+      },
+      'Masters Championship': {
+        entryFee: 12,
+        prizePool: 700,
+        players: 32,
+        tier: 'pro' as const,
+        matchType: '1v1' as const,
+        purpose: 'Mid-spring competitive championship.',
+      },
+      'Summer Cup': {
+        entryFee: 15,
+        prizePool: 900,
+        players: 32,
+        tier: 'pro' as const,
+        matchType: '1v1' as const,
+        purpose: 'Mid-year summer event.',
+      },
+      'Pro League': {
+        entryFee: 20,
+        prizePool: 1200,
+        players: 16,
+        tier: 'pro' as const,
+        matchType: '1v1' as const,
+        purpose: 'League format with weekly matchups.',
+      },
+      'Global Championship': {
+        entryFee: 25,
+        prizePool: 1600,
+        players: 32,
+        tier: 'elite' as const,
+        matchType: '1v1' as const,
+        purpose: 'International spotlight tournament.',
+      },
+      'Champions Cup': {
+        entryFee: 30,
+        prizePool: 2200,
+        players: 32,
+        tier: 'elite' as const,
+        matchType: '1v1' as const,
+        purpose: 'Year-end champion showdown.',
+      },
+    };
+
+    const platformFeeByTier = {
+      beginner: 0.05,
+      pro: 0.07,
+      elite: 0.1,
+    } as const;
+
+    const build = (
+      name: keyof typeof config,
+      game: SupportedGame,
+      banner: string,
+      registrationOpen: TournamentTemplate['registrationOpen'],
+      registrationClose: TournamentTemplate['registrationClose'],
+      matchStart: TournamentTemplate['matchStart'],
+      matchEnd: TournamentTemplate['matchEnd']
+    ): TournamentTemplate => {
+      const details = config[name];
+      const rules = [
+        `Standard ${game} rules apply.`,
+        'Screenshot verification required for every match.',
+        'Respect the official match window or risk disqualification.',
+      ];
+      const notifications = [
+        `Registration closes ${this.formatMonthDay(registrationClose.month, registrationClose.day)}.`,
+        `Matches begin ${this.formatMonthDay(matchStart.month, matchStart.day)}.`,
+      ];
+
+      return {
+        name: `${game === 'Dream League Soccer' ? 'DLS' : game} ${name}`,
+        game,
+        registrationOpen,
+        registrationClose,
+        matchStart,
+        matchEnd,
+        entryFee: details.entryFee,
+        prizePool: details.prizePool,
+        matchType: details.matchType,
+        purpose: details.purpose,
+        tier: details.tier,
+        platformFeePercent: platformFeeByTier[details.tier],
+        rules,
+        banner,
+        bracketStages: this.buildBracketStages(details.players),
+        chatHighlight: `${name} lobby opens during registration with daily admin check-ins.`,
+        notifications,
+        players: details.players,
+      };
+    };
+
+    return [
+      build(
+        'Winter Cup',
+        'Dream League Soccer',
+        'assets/Dls%2026.jpeg',
+        { month: 'January', day: 1 },
+        { month: 'January', day: 21 },
+        { month: 'January', day: 25 },
+        { month: 'February', day: 5 }
+      ),
+      build(
+        'Rising Stars Cup',
+        'Dream League Soccer',
+        'assets/Dls%2026.jpeg',
+        { month: 'February', day: 15 },
+        { month: 'March', day: 7 },
+        { month: 'March', day: 10 },
+        { month: 'March', day: 25 }
+      ),
+      build(
+        'Masters Championship',
+        'Dream League Soccer',
+        'assets/Dls%2026.jpeg',
+        { month: 'April', day: 1 },
+        { month: 'April', day: 21 },
+        { month: 'April', day: 25 },
+        { month: 'May', day: 10 }
+      ),
+      build(
+        'Summer Cup',
+        'Dream League Soccer',
+        'assets/Dls%2026.jpeg',
+        { month: 'June', day: 1 },
+        { month: 'June', day: 21 },
+        { month: 'June', day: 25 },
+        { month: 'July', day: 10 }
+      ),
+      build(
+        'Pro League',
+        'Dream League Soccer',
+        'assets/Dls%2026.jpeg',
+        { month: 'August', day: 1 },
+        { month: 'August', day: 21 },
+        { month: 'August', day: 25 },
+        { month: 'September', day: 10 }
+      ),
+      build(
+        'Global Championship',
+        'Dream League Soccer',
+        'assets/Dls%2026.jpeg',
+        { month: 'October', day: 1 },
+        { month: 'October', day: 21 },
+        { month: 'October', day: 25 },
+        { month: 'November', day: 10 }
+      ),
+      build(
+        'Champions Cup',
+        'Dream League Soccer',
+        'assets/Dls%2026.jpeg',
+        { month: 'November', day: 25 },
+        { month: 'December', day: 15 },
+        { month: 'December', day: 20 },
+        { month: 'January', day: 5, yearOffset: 1 }
+      ),
+      build(
+        'Winter Cup',
+        'eFootball',
+        'assets/Efootball.jpeg',
+        { month: 'January', day: 5 },
+        { month: 'January', day: 25 },
+        { month: 'January', day: 28 },
+        { month: 'February', day: 10 }
+      ),
+      build(
+        'Rising Stars Cup',
+        'eFootball',
+        'assets/Efootball.jpeg',
+        { month: 'February', day: 20 },
+        { month: 'March', day: 10 },
+        { month: 'March', day: 15 },
+        { month: 'March', day: 30 }
+      ),
+      build(
+        'Masters Championship',
+        'eFootball',
+        'assets/Efootball.jpeg',
+        { month: 'April', day: 5 },
+        { month: 'April', day: 25 },
+        { month: 'April', day: 28 },
+        { month: 'May', day: 15 }
+      ),
+      build(
+        'Summer Cup',
+        'eFootball',
+        'assets/Efootball.jpeg',
+        { month: 'June', day: 5 },
+        { month: 'June', day: 25 },
+        { month: 'June', day: 28 },
+        { month: 'July', day: 15 }
+      ),
+      build(
+        'Pro League',
+        'eFootball',
+        'assets/Efootball.jpeg',
+        { month: 'August', day: 5 },
+        { month: 'August', day: 25 },
+        { month: 'August', day: 28 },
+        { month: 'September', day: 15 }
+      ),
+      build(
+        'Global Championship',
+        'eFootball',
+        'assets/Efootball.jpeg',
+        { month: 'October', day: 5 },
+        { month: 'October', day: 25 },
+        { month: 'October', day: 28 },
+        { month: 'November', day: 15 }
+      ),
+      build(
+        'Champions Cup',
+        'eFootball',
+        'assets/Efootball.jpeg',
+        { month: 'December', day: 1 },
+        { month: 'December', day: 20 },
+        { month: 'December', day: 23 },
+        { month: 'January', day: 10, yearOffset: 1 }
+      ),
+      build(
+        'Winter Cup',
+        'FIFA',
+        'assets/FIFA.jpeg',
+        { month: 'January', day: 10 },
+        { month: 'January', day: 30 },
+        { month: 'February', day: 1 },
+        { month: 'February', day: 15 }
+      ),
+      build(
+        'Rising Stars Cup',
+        'FIFA',
+        'assets/FIFA.jpeg',
+        { month: 'February', day: 25 },
+        { month: 'March', day: 15 },
+        { month: 'March', day: 18 },
+        { month: 'April', day: 1 }
+      ),
+      build(
+        'Masters Championship',
+        'FIFA',
+        'assets/FIFA.jpeg',
+        { month: 'April', day: 10 },
+        { month: 'April', day: 30 },
+        { month: 'May', day: 2 },
+        { month: 'May', day: 20 }
+      ),
+      build(
+        'Summer Cup',
+        'FIFA',
+        'assets/FIFA.jpeg',
+        { month: 'June', day: 10 },
+        { month: 'June', day: 30 },
+        { month: 'July', day: 2 },
+        { month: 'July', day: 20 }
+      ),
+      build(
+        'Pro League',
+        'FIFA',
+        'assets/FIFA.jpeg',
+        { month: 'August', day: 10 },
+        { month: 'August', day: 30 },
+        { month: 'September', day: 2 },
+        { month: 'September', day: 20 }
+      ),
+      build(
+        'Global Championship',
+        'FIFA',
+        'assets/FIFA.jpeg',
+        { month: 'October', day: 10 },
+        { month: 'October', day: 30 },
+        { month: 'November', day: 2 },
+        { month: 'November', day: 20 }
+      ),
+      build(
+        'Champions Cup',
+        'FIFA',
+        'assets/FIFA.jpeg',
+        { month: 'December', day: 5 },
+        { month: 'December', day: 25 },
+        { month: 'December', day: 28 },
+        { month: 'January', day: 15, yearOffset: 1 }
+      ),
+    ];
+  }
+
+  private formatMonthDay(month: string, day: number) {
+    const shortMonth = month.slice(0, 3);
+    return `${shortMonth} ${day}`;
   }
 
   private pickPlayers(players: UserProfile[], count: number) {

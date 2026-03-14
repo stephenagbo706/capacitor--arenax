@@ -54,7 +54,10 @@
               <div><strong>Entry fee:</strong> ${{ tournament.entryFee }}</div>
               <div><strong>Prize pool:</strong> ${{ tournament.prizePool }}</div>
               <div><strong>Players:</strong> {{ tournament.players }}</div>
-              <div><strong>Start:</strong> {{ tournament.startDate | date:'MMM d, h:mm a' }}</div>
+              <div><strong>Registration open:</strong> {{ tournament.registrationOpen | date:'MMM d, h:mm a' }}</div>
+              <div><strong>Registration close:</strong> {{ tournament.registrationClose | date:'MMM d, h:mm a' }}</div>
+              <div><strong>Match start:</strong> {{ tournament.matchStart | date:'MMM d, h:mm a' }}</div>
+              <div><strong>Match end:</strong> {{ tournament.matchEnd | date:'MMM d, h:mm a' }}</div>
               <div><strong>Duration:</strong> {{ tournament.duration }}</div>
             </div>
             <ul class="feature-list">
