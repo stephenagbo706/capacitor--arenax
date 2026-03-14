@@ -333,6 +333,79 @@ ion-content {
   letter-spacing: 0.02em;
 }
 
+.ax-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 25, 0.75);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 30;
+}
+
+.ax-modal-card {
+  width: min(420px, 100%);
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+  background: rgba(11, 18, 48, 0.95);
+  border-radius: 18px;
+  border: 1px solid rgba(126, 244, 255, 0.2);
+  box-shadow: 0 20px 40px rgba(4, 10, 30, 0.6);
+}
+
+.confirm-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.confirm-details .muted {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.confirm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.confirm-grid p {
+  margin: 0 0 4px;
+  opacity: 0.7;
+}
+
+.confirm-grid strong {
+  font-size: 1rem;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.deposit-link {
+  color: #7ef4ff;
+  font-weight: 600;
+  text-align: right;
+  text-decoration: none;
+}
+
+.ax-status {
+  color: var(--t-accent-2);
+  font-weight: 600;
+}
+
+.ax-error {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
 @media (max-width: 380px) {
   .tourney__tabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -8,9 +8,54 @@ export type MatchStatus =
   | 'pending_verification'
   | 'verified'
   | 'rejected';
-export type TransactionType = 'deposit' | 'withdraw' | 'reward' | 'stake_lock' | 'entry_lock' | 'refund';
+export type TransactionType =
+  | 'deposit'
+  | 'withdraw'
+  | 'reward'
+  | 'stake_lock'
+  | 'entry_lock'
+  | 'tournament_entry_fee'
+  | 'refund';
 export type NotificationType = 'challenge' | 'match' | 'payment' | 'system' | 'tournament' | 'spotlight' | 'chat' | 'friend';
-export type TournamentStatus = 'live' | 'upcoming' | 'ended';
+export type TournamentStatus =
+  | 'live'
+  | 'upcoming'
+  | 'ended'
+  | 'open'
+  | 'full'
+  | 'ready'
+  | 'started'
+  | 'closed';
+
+export type TournamentEntryStatus = 'registered';
+
+export interface TournamentEntry {
+  id: string;
+  tournamentId: string;
+  userId: string;
+  username: string;
+  joinedAt: string;
+  status: TournamentEntryStatus;
+}
+
+export interface TournamentBracketMatch {
+  id: string;
+  player1Id?: string;
+  player2Id?: string;
+  winnerId?: string;
+  status: 'pending' | 'ready' | 'completed';
+}
+
+export interface TournamentBracketRound {
+  id: string;
+  name: string;
+  matches: TournamentBracketMatch[];
+}
+
+export interface TournamentBracket {
+  generatedAt: string;
+  rounds: TournamentBracketRound[];
+}
 
 export interface UserProfile {
   id: string;
@@ -80,6 +125,8 @@ export interface Tournament {
   status: TournamentStatus;
   prizePool: number;
   participants: string[];
+  entries?: TournamentEntry[];
+  bracket?: TournamentBracket;
   startsAt: string;
   image: string;
   winnerId?: string;

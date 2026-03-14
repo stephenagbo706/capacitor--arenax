@@ -54,8 +54,8 @@
               <strong>{{ statusLabel(featured.status) }}</strong>
             </div>
           </div>
-          <button type="button" [disabled]="isJoined(featured.participants) || featured.status === 'ended'" (click)="joinFeaturedTournament()">
-            {{ isJoined(featured.participants) ? 'Joined' : featured.status === 'ended' ? 'Closed' : 'Join Now' }}
+          <button type="button" [disabled]="isJoinDisabled(featured)" (click)="joinFeaturedTournament()">
+            {{ isJoined(featured.participants) ? 'Joined' : isJoinDisabled(featured) ? 'Closed' : 'Join Now' }}
           </button>
         </div>
         <button class="featured__link" type="button" [routerLink]="['/tournaments', featured.id]">
@@ -73,7 +73,12 @@
         <div class="mini-card__content">
           <div class="mini-card__head">
             <h3>{{ item.title }}</h3>
-            <span class="badge" [class.live]="item.status === 'live'" [class.upcoming]="item.status === 'upcoming'" [class.full]="item.status === 'ended'">
+            <span
+              class="badge"
+              [class.live]="item.status === 'live' || item.status === 'started'"
+              [class.upcoming]="item.status === 'upcoming' || item.status === 'open'"
+              [class.full]="item.status === 'ended' || item.status === 'closed' || item.status === 'full' || item.status === 'ready'"
+            >
               {{ statusLabel(item.status) }}
             </span>
           </div>
@@ -83,8 +88,8 @@
           </div>
           <div class="mini-card__row">
             <span><i class="fa-solid fa-user-group"></i> {{ item.participants.length }} / {{ item.maxPlayers }}</span>
-            <button class="mini-join-btn" type="button" [disabled]="isJoined(item.participants) || item.status === 'ended'" (click)="joinTournament(item.id)">
-              {{ isJoined(item.participants) ? 'Joined' : item.status === 'ended' ? 'Closed' : 'Join' }}
+            <button class="mini-join-btn" type="button" [disabled]="isJoinDisabled(item)" (click)="joinTournament(item.id)">
+              {{ isJoined(item.participants) ? 'Joined' : isJoinDisabled(item) ? 'Closed' : 'Join' }}
             </button>
             <button class="mini-details-btn" type="button" [routerLink]="['/tournaments', item.id]">Details</button>
           </div>
@@ -92,5 +97,46 @@
       </article>
     </section>
   </div>
+
+  <div class="ax-modal" *ngIf="confirmOpen && selectedTournament">
+    <div class="ax-modal-card ax-glass">
+      <h3>Confirm Tournament Entry</h3>
+      <div class="confirm-details">
+        <div>
+          <strong>{{ selectedTournament.title }}</strong>
+          <p class="muted">{{ selectedTournament.game }}</p>
+        </div>
+        <span class="badge" [class.upcoming]="selectedTournament.status === 'upcoming' || selectedTournament.status === 'open'">
+          {{ statusLabel(selectedTournament.status) }}
+        </span>
+      </div>
+      <div class="confirm-grid">
+        <div>
+          <p>Entry fee</p>
+          <strong>${{ selectedTournament.entryFee }}</strong>
+        </div>
+        <div>
+          <p>Prize pool</p>
+          <strong>${{ selectedTournament.prizePool }}</strong>
+        </div>
+        <div>
+          <p>Players</p>
+          <strong>{{ selectedTournament.participants.length }}/{{ selectedTournament.maxPlayers }}</strong>
+        </div>
+        <div>
+          <p>Wallet</p>
+          <strong>${{ currentBalance }}</strong>
+        </div>
+      </div>
+      <p class="ax-error" *ngIf="confirmError">{{ confirmError }}</p>
+      <p class="ax-status" *ngIf="confirmStatus">{{ confirmStatus }}</p>
+      <div class="confirm-actions">
+        <button class="ax-btn" type="button" (click)="closeJoinModal()">Cancel</button>
+        <button class="ax-btn ax-btn-primary" type="button" (click)="confirmJoin()">Confirm</button>
+      </div>
+      <a class="deposit-link" *ngIf="needsDeposit" routerLink="/wallet/deposit">Deposit funds</a>
+    </div>
+  </div>
+
   <ax-bottom-nav></ax-bottom-nav>
 </ion-content>

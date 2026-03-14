@@ -162,8 +162,13 @@ export class TournamentDetailsPage {
 
   formatStatus(status: string) {
     if (status === 'live') return 'LIVE';
-    if (status === 'upcoming') return 'UPCOMING';
-    return 'ENDED';
+    if (status === 'upcoming') return 'OPEN';
+    if (status === 'open') return 'OPEN';
+    if (status === 'ready') return 'READY';
+    if (status === 'full') return 'FULL';
+    if (status === 'started') return 'STARTED';
+    if (status === 'closed') return 'CLOSED';
+    return 'CLOSED';
   }
 
   findPlayer(players: UserProfile[], id: string) {

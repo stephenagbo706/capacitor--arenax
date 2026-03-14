@@ -569,27 +569,62 @@ export class ArenaService {
 
   joinTournament(tournamentId: string) {
     const current = this.getCurrentUser();
-    if (!current) return { ok: false, message: 'You must be logged in to join.' };
+    if (!current) return { ok: false, message: 'You must be logged in to join.', redirectTo: '/auth/login' };
 
     const tournament = this.state.tournaments.find((item) => item.id === tournamentId);
     if (!tournament) return { ok: false, message: 'Tournament not found.' };
-    if (tournament.status === 'ended') return { ok: false, message: 'Tournament already ended.' };
+    if (!this.isTournamentOpenForRegistration(tournament)) {
+      return { ok: false, message: 'Tournament registration is closed.' };
+    }
     if (tournament.participants.includes(current.id)) return { ok: false, message: 'You already joined this tournament.' };
     if (tournament.participants.length >= tournament.maxPlayers) return { ok: false, message: 'Tournament is full.' };
-    if (current.walletBalance < tournament.entryFee) return { ok: false, message: 'Insufficient wallet balance.' };
+    if (current.walletBalance < tournament.entryFee) {
+      return { ok: false, message: 'Insufficient wallet balance.', needsDeposit: true };
+    }
 
-    const lockResult = this.lockFunds(current.id, tournament.entryFee, 'entry_lock', `Tournament entry: ${tournament.title}`);
+    const createdAt = now();
+    const lockResult = this.lockFunds(
+      current.id,
+      tournament.entryFee,
+      'tournament_entry_fee',
+      `Tournament entry fee: ${tournament.title}`,
+      { transactionId: uid(), createdAt }
+    );
     if (!lockResult.ok) return lockResult;
 
     tournament.participants.push(current.id);
+    tournament.entries = [
+      {
+        id: uid(),
+        tournamentId: tournament.id,
+        userId: current.id,
+        username: current.username,
+        joinedAt: createdAt,
+        status: 'registered',
+      },
+      ...(tournament.entries || []),
+    ];
     tournament.prizePool = tournament.participants.length * tournament.entryFee;
-    if (tournament.status === 'upcoming') tournament.status = 'live';
+    if (tournament.participants.length >= tournament.maxPlayers) {
+      tournament.status = 'ready';
+      tournament.bracket = this.generateTournamentBracket(tournament);
+    } else if (tournament.status === 'upcoming') {
+      tournament.status = 'open';
+    }
 
     this.state.notifications.unshift({
       id: uid(),
       type: 'tournament',
       message: `Joined tournament: ${tournament.title}`,
-      createdAt: now(),
+      createdAt,
+      read: false,
+    });
+
+    this.state.notifications.unshift({
+      id: uid(),
+      type: 'tournament',
+      message: `Reminder set: ${tournament.title} starts ${tournament.startsAt}`,
+      createdAt,
       read: false,
     });
 
@@ -604,14 +639,10 @@ export class ArenaService {
       comments: [],
     });
 
-    if (tournament.participants.length === tournament.maxPlayers) {
-      this.completeTournament(tournament.id);
-    } else {
-      this.persist();
-      this.hydrateSubjects();
-    }
+    this.persist();
+    this.hydrateSubjects();
 
-    return { ok: true };
+    return { ok: true, transactionId: lockResult.transactionId, transactionAt: lockResult.createdAt };
   }
 
   completeTournament(tournamentId: string, forcedWinnerId?: string) {
@@ -1099,10 +1130,63 @@ export class ArenaService {
     return this.state.notifications.filter((note) => !note.userId || note.userId === currentUserId);
   }
 
-  private lockFunds(userId: string, amount: number, type: TransactionItem['type'], note: string) {
+  private isTournamentOpenForRegistration(tournament: Tournament) {
+    if (tournament.status === 'upcoming' || tournament.status === 'open') return true;
+    return false;
+  }
+
+  private generateTournamentBracket(tournament: Tournament) {
+    const participants = [...tournament.participants];
+    const totalPlayers = participants.length;
+    const rounds = [];
+    let roundSize = totalPlayers;
+
+    const roundNameForSize = (size: number) => {
+      if (size === 2) return 'Final';
+      if (size === 4) return 'Semifinals';
+      if (size === 8) return 'Quarterfinals';
+      return `Round of ${size}`;
+    };
+
+    while (roundSize >= 2) {
+      const matchCount = Math.ceil(roundSize / 2);
+      const matches = Array.from({ length: matchCount }, (_, index) => {
+        const player1Id = roundSize === totalPlayers ? participants[index * 2] : undefined;
+        const player2Id = roundSize === totalPlayers ? participants[index * 2 + 1] : undefined;
+        const ready = Boolean(player1Id && player2Id);
+        return {
+          id: uid(),
+          player1Id,
+          player2Id,
+          status: ready ? 'ready' : 'pending',
+        };
+      });
+
+      rounds.push({
+        id: uid(),
+        name: roundNameForSize(roundSize),
+        matches,
+      });
+
+      roundSize = Math.floor(roundSize / 2);
+    }
+
+    return { generatedAt: now(), rounds };
+  }
+
+  private lockFunds(
+    userId: string,
+    amount: number,
+    type: TransactionItem['type'],
+    note: string,
+    meta?: { transactionId?: string; createdAt?: string }
+  ) {
     const user = this.getUser(userId);
     if (!user) return { ok: false, message: 'User not found.' };
     if (user.walletBalance < amount) return { ok: false, message: 'Insufficient wallet balance.' };
+
+    const transactionId = meta?.transactionId || uid();
+    const createdAt = meta?.createdAt || now();
 
     this.state.users = this.state.users.map((entry) =>
       entry.id === userId
@@ -1115,15 +1199,15 @@ export class ArenaService {
     );
 
     this.state.transactions.unshift({
-      id: uid(),
+      id: transactionId,
       type,
       amount,
-      createdAt: now(),
+      createdAt,
       status: 'completed',
       note,
     });
 
-    return { ok: true };
+    return { ok: true, transactionId, createdAt };
   }
 
   private unlockFunds(userId: string, amount: number) {

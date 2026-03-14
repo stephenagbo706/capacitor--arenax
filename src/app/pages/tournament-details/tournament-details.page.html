@@ -6,7 +6,11 @@
       <section class="details-header">
         <div class="details-header__meta">
           <span class="pill">{{ tournament.game }}</span>
-          <span class="status-pill" [class.live]="tournament.status === 'live'" [class.upcoming]="tournament.status === 'upcoming'">
+          <span
+            class="status-pill"
+            [class.live]="tournament.status === 'live' || tournament.status === 'started'"
+            [class.upcoming]="tournament.status === 'upcoming' || tournament.status === 'open' || tournament.status === 'ready'"
+          >
             {{ formatStatus(tournament.status) }}
           </span>
         </div>
@@ -90,6 +94,19 @@
 
       <section class="tab-panel" *ngIf="activeTab === 'Matches'">
         <ng-container *ngIf="players$ | async as players">
+          <ng-container *ngIf="tournament$ | async as tournament">
+            <div class="bracket" *ngIf="tournament.bracket as bracket">
+              <h3>Bracket</h3>
+              <div class="bracket-round" *ngFor="let round of bracket.rounds">
+                <h4>{{ round.name }}</h4>
+                <div class="bracket-match" *ngFor="let match of round.matches">
+                  <span>{{ findPlayer(players, match.player1Id)?.username || 'TBD' }}</span>
+                  <span class="vs">vs</span>
+                  <span>{{ match.player2Id ? (findPlayer(players, match.player2Id)?.username || 'TBD') : 'TBD' }}</span>
+                </div>
+              </div>
+            </div>
+          </ng-container>
           <ng-container *ngIf="tournamentMatches$ | async as matches; else noMatches">
             <article class="match-card" *ngFor="let match of matches">
               <div>
