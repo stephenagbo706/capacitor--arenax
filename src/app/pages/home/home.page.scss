@@ -96,6 +96,63 @@ ion-content {
   gap: 12px;
 }
 
+.community-chat {
+  margin: 10px 0 18px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(126, 244, 255, 0.25);
+  background: linear-gradient(135deg, rgba(21, 32, 78, 0.9), rgba(12, 16, 40, 0.95));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 16px 30px rgba(9, 14, 36, 0.45);
+}
+
+.community-chat__copy {
+  display: grid;
+  gap: 4px;
+}
+
+.community-chat__eyebrow {
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.community-chat__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.community-chat__desc {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.community-chat__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(126, 244, 255, 0.45);
+  background: linear-gradient(120deg, rgba(143, 84, 255, 0.85), rgba(53, 210, 255, 0.9));
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 10px 18px rgba(126, 244, 255, 0.25);
+}
+
+.community-chat__btn i {
+  font-size: 0.9rem;
+}
+
 .wallet-chip {
   display: inline-flex;
   align-items: center;
