@@ -1311,6 +1311,8 @@ export class ArenaService {
       goals: typeof user.goals === 'number' ? user.goals : 0,
     }));
 
+    const seasons = this.normalizeSeasons(input.seasons || seeded.seasons, seeded.seasons);
+
     return {
       users,
       currentUserId: input.currentUserId || users[0]?.id,
@@ -1339,7 +1341,7 @@ export class ArenaService {
         player2GameId: match.player2GameId || (match.player2Id ? users.find((u) => u.id === match.player2Id)?.gameId : undefined),
       })),
       tournaments: input.tournaments || seeded.tournaments,
-      seasons: input.seasons || seeded.seasons,
+      seasons,
       spotlightPosts: this.withRequiredSpotlightPosts(input.spotlightPosts || seeded.spotlightPosts),
       chats: (input.chats || seeded.chats).map((chat) => ({
         ...chat,
@@ -1360,6 +1362,15 @@ export class ArenaService {
       transactions: input.transactions || seeded.transactions,
       commissionRate: typeof input.commissionRate === 'number' ? input.commissionRate : seeded.commissionRate,
     };
+  }
+
+  private normalizeSeasons(seasons: Season[], fallback: Season[]) {
+    const hasNewCalendarFields = seasons.every((season) =>
+      season.tournaments?.every(
+        (tournament) => Boolean(tournament.registrationOpen && tournament.registrationClose && tournament.matchStart && tournament.matchEnd)
+      )
+    );
+    return hasNewCalendarFields ? seasons : fallback;
   }
 
   private normalizeMatchStatus(status: string | undefined) {
