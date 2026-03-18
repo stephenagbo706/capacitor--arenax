@@ -57,6 +57,18 @@ export interface TournamentBracket {
   rounds: TournamentBracketRound[];
 }
 
+export interface ArenaActionResult {
+  ok: boolean;
+  message?: string;
+  redirectTo?: string;
+  needsDeposit?: boolean;
+  transactionId?: string;
+  transactionAt?: string;
+  createdAt?: string;
+  roomCode?: string;
+  matchId?: string;
+}
+
 export interface UserProfile {
   id: string;
   username: string;

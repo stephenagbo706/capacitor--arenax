@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import {
+  ArenaActionResult,
   ArenaState,
   ChatThread,
   Challenge,
@@ -10,6 +11,9 @@ import {
   SpotlightPost,
   SupportedGame,
   Tournament,
+  TournamentBracket,
+  TournamentBracketMatch,
+  TournamentBracketRound,
   TransactionItem,
   UserProfile,
   Season,
@@ -160,7 +164,7 @@ export class ArenaService {
     extraTime: boolean;
     penalties: boolean;
     roomCode?: string;
-  }) {
+  }): ArenaActionResult {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in to create a match.' };
     if (payload.stake <= 0 || Number.isNaN(payload.stake)) return { ok: false, message: 'Stake must be above zero.' };
@@ -218,7 +222,7 @@ export class ArenaService {
     return { ok: true, matchId: match.id, roomCode };
   }
 
-  joinStakeMatch(matchId: string) {
+  joinStakeMatch(matchId: string): ArenaActionResult {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in to join.' };
 
@@ -261,7 +265,7 @@ export class ArenaService {
     return { ok: true };
   }
 
-  joinStakeMatchByRoomCode(roomCode: string) {
+  joinStakeMatchByRoomCode(roomCode: string): ArenaActionResult {
     const normalized = roomCode.trim().toUpperCase();
     if (!normalized) return { ok: false, message: 'Enter a valid room ID.' };
 
@@ -567,7 +571,7 @@ export class ArenaService {
     return this.state.matches.filter((match) => match.status === 'pending_verification');
   }
 
-  joinTournament(tournamentId: string) {
+  joinTournament(tournamentId: string): ArenaActionResult {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in to join.', redirectTo: '/auth/login' };
 
@@ -1135,10 +1139,10 @@ export class ArenaService {
     return false;
   }
 
-  private generateTournamentBracket(tournament: Tournament) {
+  private generateTournamentBracket(tournament: Tournament): TournamentBracket {
     const participants = [...tournament.participants];
     const totalPlayers = participants.length;
-    const rounds = [];
+    const rounds: TournamentBracketRound[] = [];
     let roundSize = totalPlayers;
 
     const roundNameForSize = (size: number) => {
@@ -1150,7 +1154,7 @@ export class ArenaService {
 
     while (roundSize >= 2) {
       const matchCount = Math.ceil(roundSize / 2);
-      const matches = Array.from({ length: matchCount }, (_, index) => {
+      const matches: TournamentBracketMatch[] = Array.from({ length: matchCount }, (_, index) => {
         const player1Id = roundSize === totalPlayers ? participants[index * 2] : undefined;
         const player2Id = roundSize === totalPlayers ? participants[index * 2 + 1] : undefined;
         const ready = Boolean(player1Id && player2Id);
@@ -1180,7 +1184,7 @@ export class ArenaService {
     type: TransactionItem['type'],
     note: string,
     meta?: { transactionId?: string; createdAt?: string }
-  ) {
+  ): ArenaActionResult {
     const user = this.getUser(userId);
     if (!user) return { ok: false, message: 'User not found.' };
     if (user.walletBalance < amount) return { ok: false, message: 'Insufficient wallet balance.' };

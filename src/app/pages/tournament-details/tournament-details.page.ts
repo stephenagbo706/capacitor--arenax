@@ -171,7 +171,8 @@ export class TournamentDetailsPage {
     return 'CLOSED';
   }
 
-  findPlayer(players: UserProfile[], id: string) {
+  findPlayer(players: UserProfile[], id: string | undefined) {
+    if (!id) return undefined;
     return players.find((player) => player.id === id);
   }
 
