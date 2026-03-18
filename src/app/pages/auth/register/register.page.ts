@@ -17,6 +17,8 @@ export class RegisterPage {
   email = '';
   password = '';
   confirmPassword = '';
+  showPassword = false;
+  showConfirmPassword = false;
   error = '';
 
   constructor(private arena: ArenaService, private router: Router) {}

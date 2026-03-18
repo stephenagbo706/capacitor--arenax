@@ -10,8 +10,28 @@
       <div class="ax-grid">
         <input class="ax-input" type="text" placeholder="Username" [(ngModel)]="username" />
         <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
-        <input class="ax-input" type="password" placeholder="Password" [(ngModel)]="password" />
-        <input class="ax-input" type="password" placeholder="Confirm Password" [(ngModel)]="confirmPassword" />
+        <div class="ax-input-wrap">
+          <input
+            class="ax-input"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="Password"
+            [(ngModel)]="password"
+          />
+          <button class="ax-toggle-btn" type="button" (click)="showPassword = !showPassword">
+            {{ showPassword ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        <div class="ax-input-wrap">
+          <input
+            class="ax-input"
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            placeholder="Confirm Password"
+            [(ngModel)]="confirmPassword"
+          />
+          <button class="ax-toggle-btn" type="button" (click)="showConfirmPassword = !showConfirmPassword">
+            {{ showConfirmPassword ? 'Hide' : 'Show' }}
+          </button>
+        </div>
         <button class="ax-btn ax-btn-primary" (click)="submit()">Register</button>
         <p class="ax-error" *ngIf="error">{{ error }}</p>
       </div>
