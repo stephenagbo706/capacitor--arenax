@@ -30,22 +30,49 @@
       </div>
 
       <section class="tab-panel" *ngIf="activeTab === 'Overview'">
-        <div class="overview-grid">
-          <article class="stat-card">
-            <p>Prize pool</p>
-            <strong>${{ tournament.prizePool }}</strong>
-          </article>
-          <article class="stat-card">
-            <p>Entry fee</p>
-            <strong>${{ tournament.entryFee }}</strong>
-          </article>
-          <article class="stat-card">
-            <p>Prize distribution</p>
-            <div class="stat-note" *ngFor="let line of prizeDistribution">{{ line }}</div>
-          </article>
+        <div class="overview-economy">
+          <h3>Tournament Earnings Overview</h3>
+          <div class="overview-grid">
+            <article class="stat-card">
+              <p>Prize pool</p>
+              <strong>${{ tournament.prizePool | number:'1.0-2' }}</strong>
+            </article>
+            <article class="stat-card">
+              <p>Entry fee</p>
+              <strong>${{ tournament.entryFee | number:'1.0-2' }}</strong>
+            </article>
+            <article class="stat-card">
+              <p>Champion payout (70%)</p>
+              <strong>${{ (tournament.prizePool * 0.7) | number:'1.0-2' }}</strong>
+            </article>
+            <article class="stat-card">
+              <p>Runner-up payout (20%)</p>
+              <strong>${{ (tournament.prizePool * 0.2) | number:'1.0-2' }}</strong>
+            </article>
+          </div>
         </div>
+
         <div class="overview-notes">
-          <h3>Rules</h3>
+          <h3>Prize Distribution</h3>
+          <ul>
+            <li *ngFor="let line of prizeDistribution">{{ line }}</li>
+          </ul>
+        </div>
+
+        <div class="team-registration" *ngIf="getRegisteredTeamName(tournament) as teamName; else notRegistered">
+          <h3>Your Tournament Team</h3>
+          <p class="ax-muted">Registered successfully. Your team name for this tournament is:</p>
+          <strong class="team-name">{{ teamName }}</strong>
+        </div>
+        <ng-template #notRegistered>
+          <div class="team-registration">
+            <h3>Your Tournament Team</h3>
+            <p class="ax-muted">Register for this tournament to see your team name here.</p>
+          </div>
+        </ng-template>
+
+        <div class="overview-notes">
+          <h3>Rules and Regulations</h3>
           <ul>
             <li *ngFor="let rule of rules">{{ rule }}</li>
           </ul>
@@ -128,32 +155,61 @@
       </section>
 
       <section class="tab-panel" *ngIf="activeTab === 'Chat'">
-        <ng-container *ngIf="players$ | async as players">
-          <div class="chat-intro">
+        <ng-container *ngIf="(players$ | async) as players">
+          <ng-container *ngIf="(tournament$ | async) as tournament">
+          <div class="chat-intro chat-intro--enhanced">
             <div>
               <h3>Tournament Group Chat</h3>
-              <p class="ax-muted">Every tournament has a live chat for replies, mentions, and announcements.</p>
+              <p class="ax-muted">Live match-room updates, mentions, admin calls, and strategy banter in one place.</p>
             </div>
-            <span class="chat-pill">Group chat</span>
+            <span class="chat-pill">Live room</span>
           </div>
-          <div class="chat-features">
+          <div class="chat-features chat-features--enhanced">
             <span *ngFor="let feature of chatFeatures">{{ feature }}</span>
           </div>
-          <div class="chat-messages">
-            <article class="chat-message" *ngFor="let msg of chatMessages$ | async" [class.announcement]="msg.type === 'announcement'">
+
+          <div class="chat-shell" *ngIf="tournamentGroupChat$ | async as groupChat; else joinChat">
+            <article class="chat-message" *ngFor="let msg of groupChat.messages">
               <div class="chat-message__head">
-                <strong>{{ findPlayer(players, msg.senderId)?.username || 'Admin' }}</strong>
-                <small>{{ msg.timestamp | date:'shortTime' }}</small>
+                <div class="chat-user">
+                  <img
+                    class="chat-avatar"
+                    [src]="findPlayer(players, msg.senderId)?.avatar || getUser(msg.senderId)?.avatar || 'assets/ax-ui/logo.png'"
+                    [alt]="findPlayer(players, msg.senderId)?.username || getUser(msg.senderId)?.username || 'Player'"
+                  />
+                  <strong>{{ findPlayer(players, msg.senderId)?.username || getUser(msg.senderId)?.username || 'Player' }}</strong>
+                </div>
+                <small>{{ msg.sentAt | date:'shortTime' }}</small>
               </div>
               <p>{{ msg.text }}</p>
-              <div class="reply-chip" *ngIf="msg.replyTo">
-                <small>Replying to {{ msg.replyTo.sender }}</small>
-                <p>{{ msg.replyTo.text }}</p>
-              </div>
-              <span class="mention" *ngIf="msg.mention">{{ msg.mention }}</span>
-              <span class="chat-type" *ngIf="msg.type === 'announcement'">Admin announcement</span>
+              <img *ngIf="msg.image" [src]="msg.image" class="chat-inline-image" alt="Chat attachment" />
             </article>
+            <p class="ax-muted" *ngIf="!groupChat.messages.length">No messages yet. Start the conversation.</p>
           </div>
+          <ng-template #joinChat>
+            <div class="chat-join-card">
+              <p class="ax-muted">You are not in this tournament group chat yet.</p>
+              <button class="ax-btn ax-btn-primary" type="button" (click)="joinTournamentGroupChat(tournament)">
+                Join Group Chat
+              </button>
+            </div>
+          </ng-template>
+
+          <p class="ax-error" *ngIf="tournamentChatError">{{ tournamentChatError }}</p>
+          <p class="ax-muted" *ngIf="tournamentChatNotice">{{ tournamentChatNotice }}</p>
+
+          <div class="chat-composer" *ngIf="tournamentGroupChat$ | async">
+            <input
+              class="ax-input"
+              placeholder="Type your message to the tournament group"
+              [(ngModel)]="tournamentChatMessage"
+              (keyup.enter)="sendTournamentGroupMessage(tournament)"
+            />
+            <button class="ax-btn ax-btn-primary" type="button" (click)="sendTournamentGroupMessage(tournament)">
+              Send
+            </button>
+          </div>
+          </ng-container>
         </ng-container>
       </section>
     </ng-container>

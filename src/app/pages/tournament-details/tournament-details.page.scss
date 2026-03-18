@@ -118,6 +118,10 @@ ion-content {
   gap: 16px;
 }
 
+.overview-economy h3 {
+  margin: 0 0 10px;
+}
+
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -125,10 +129,10 @@ ion-content {
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.05);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(103, 206, 255, 0.06));
   border-radius: 14px;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(126, 244, 255, 0.2);
 }
 
 .stat-card p {
@@ -146,6 +150,30 @@ ion-content {
 .stat-note {
   font-size: 0.75rem;
   opacity: 0.8;
+}
+
+.team-registration {
+  border-radius: 16px;
+  border: 1px solid rgba(126, 244, 255, 0.25);
+  background: linear-gradient(145deg, rgba(15, 28, 74, 0.8), rgba(8, 16, 45, 0.9));
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.team-registration h3 {
+  margin: 0;
+}
+
+.team-name {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: linear-gradient(120deg, rgba(143, 84, 255, 0.85), rgba(72, 184, 255, 0.9));
+  color: #fff;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
 }
 
 .overview-notes ul,
@@ -296,17 +324,30 @@ ion-content {
   align-items: center;
 }
 
+.chat-intro--enhanced {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(126, 244, 255, 0.22);
+  background: linear-gradient(145deg, rgba(15, 28, 74, 0.78), rgba(8, 16, 45, 0.92));
+}
+
 .chat-pill {
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(130deg, rgba(143, 84, 255, 0.9), rgba(72, 184, 255, 0.9));
   padding: 6px 12px;
   font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .chat-features {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.chat-features--enhanced span {
+  border: 1px solid rgba(126, 244, 255, 0.28);
+  background: rgba(72, 184, 255, 0.1);
 }
 
 .chat-features span {
@@ -316,7 +357,13 @@ ion-content {
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.chat-messages {
+.chat-shell {
+  border-radius: 18px;
+  border: 1px solid rgba(126, 244, 255, 0.18);
+  background: radial-gradient(circle at 85% 10%, rgba(143, 84, 255, 0.16), transparent 40%),
+    radial-gradient(circle at 5% 90%, rgba(72, 184, 255, 0.14), transparent 42%),
+    rgba(5, 11, 30, 0.72);
+  padding: 12px;
   display: grid;
   gap: 10px;
 }
@@ -330,6 +377,14 @@ ion-content {
   gap: 6px;
 }
 
+.chat-inline-image {
+  width: 100%;
+  max-height: 180px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid rgba(126, 244, 255, 0.24);
+}
+
 .chat-message.announcement {
   border-color: rgba(143, 84, 255, 0.6);
   box-shadow: 0 0 12px rgba(143, 84, 255, 0.3);
@@ -338,7 +393,38 @@ ion-content {
 .chat-message__head {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.8rem;
+}
+
+.chat-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(126, 244, 255, 0.35);
+}
+
+.chat-join-card {
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px dashed rgba(126, 244, 255, 0.35);
+  background: rgba(8, 16, 45, 0.78);
+  display: grid;
+  gap: 10px;
+}
+
+.chat-composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
 }
 
 .reply-chip {

@@ -15,7 +15,6 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
 export class HomePage {
   user$ = this.arena.currentUser$;
   matches$ = this.arena.matches$;
-  chats$ = this.arena.chats$;
   players$ = this.arena.users$;
   notifications$ = this.arena.notifications$;
 

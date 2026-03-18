@@ -860,6 +860,59 @@ export class ArenaService {
     return chatId;
   }
 
+  joinTournamentGroupChat(tournamentId: string): ArenaActionResult {
+    const current = this.getCurrentUser();
+    if (!current) return { ok: false, message: 'You must be logged in.' };
+    const tournament = this.state.tournaments.find((item) => item.id === tournamentId);
+    if (!tournament) return { ok: false, message: 'Tournament not found.' };
+    if (!tournament.participants.includes(current.id)) {
+      return { ok: false, message: 'Join the tournament first before entering group chat.' };
+    }
+
+    const chatId = this.getTournamentGroupChatId(tournament.id);
+    let chat = this.state.chats.find((item) => item.id === chatId);
+
+    if (!chat) {
+      chat = {
+        id: chatId,
+        participantIds: [...new Set(tournament.participants)],
+        messages: [
+          {
+            id: uid(),
+            senderId: current.id,
+            text: `Welcome to ${tournament.title} group chat. Respect the rules and keep match updates here.`,
+            sentAt: now(),
+            status: 'delivered',
+          },
+        ],
+      };
+      this.state.chats.unshift(chat);
+    } else {
+      const wasMember = chat.participantIds.includes(current.id);
+      chat.participantIds = [...new Set([...chat.participantIds, ...tournament.participants, current.id])];
+      if (!wasMember) {
+        chat.messages.push({
+          id: uid(),
+          senderId: current.id,
+          text: `${current.username} joined the tournament group chat.`,
+          sentAt: now(),
+          status: 'delivered',
+        });
+      }
+    }
+
+    this.persist();
+    this.hydrateSubjects();
+    return { ok: true, message: 'Tournament group chat joined.', redirectTo: `/chat/${chatId}` };
+  }
+
+  getTournamentGroupChatForCurrentUser(tournamentId: string) {
+    const currentUserId = this.state.currentUserId;
+    if (!currentUserId) return undefined;
+    const chatId = this.getTournamentGroupChatId(tournamentId);
+    return this.state.chats.find((chat) => chat.id === chatId && chat.participantIds.includes(currentUserId));
+  }
+
   sendMessage(chatId: string, message: { text?: string; image?: string; replyToId?: string }) {
     const current = this.getCurrentUser();
     if (!current) return;
@@ -1132,6 +1185,10 @@ export class ArenaService {
     const currentUserId = this.state.currentUserId;
     if (!currentUserId) return [];
     return this.state.notifications.filter((note) => !note.userId || note.userId === currentUserId);
+  }
+
+  private getTournamentGroupChatId(tournamentId: string) {
+    return `tournament-chat-${tournamentId}`;
   }
 
   private isTournamentOpenForRegistration(tournament: Tournament) {

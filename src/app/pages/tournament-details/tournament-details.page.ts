@@ -1,35 +1,29 @@
 import { Component } from '@angular/core';
 import { AsyncPipe, CommonModule, DatePipe, NgForOf, NgIf } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { IonContent } from '@ionic/angular/standalone';
 import { combineLatest, interval, map, of, startWith, switchMap } from 'rxjs';
 import { distinctUntilChanged, filter, shareReplay } from 'rxjs/operators';
 import { ArenaService } from '../../core/services/arena.service';
 import { BottomNavComponent } from '../../shared/bottom-nav.component';
-import { UserProfile } from '../../core/models/arena.models';
+import { Tournament, UserProfile } from '../../core/models/arena.models';
 
 type TournamentTab = 'Overview' | 'Players' | 'Matches' | 'Chat';
-
-interface TournamentChatMessage {
-  id: string;
-  senderId: string;
-  text: string;
-  timestamp: Date;
-  type?: 'announcement';
-  replyTo?: { sender: string; text: string };
-  mention?: string;
-}
 
 @Component({
   selector: 'app-tournament-details',
   standalone: true,
-  imports: [CommonModule, IonContent, AsyncPipe, NgForOf, NgIf, DatePipe, RouterLink, BottomNavComponent],
+  imports: [CommonModule, IonContent, AsyncPipe, NgForOf, NgIf, DatePipe, RouterLink, FormsModule, BottomNavComponent],
   templateUrl: './tournament-details.page.html',
   styleUrls: ['./tournament-details.page.scss'],
 })
 export class TournamentDetailsPage {
   tabs: TournamentTab[] = ['Overview', 'Players', 'Matches', 'Chat'];
   activeTab: TournamentTab = 'Overview';
+  tournamentChatMessage = '';
+  tournamentChatNotice = '';
+  tournamentChatError = '';
 
   private tournamentId$ = this.route.paramMap.pipe(
     map((params) => params.get('id')),
@@ -90,38 +84,8 @@ export class TournamentDetailsPage {
     shareReplay(1)
   );
 
-  chatMessages$ = this.players$.pipe(
-    map((players) => {
-      if (!players.length) return [] as TournamentChatMessage[];
-      const primary = players[0];
-      const secondary = players[1] || primary;
-      const admin = players[2] || primary;
-      const messages: TournamentChatMessage[] = [
-        {
-          id: 'announcement',
-          senderId: admin.id,
-          text: 'Admin: Bracket locked. Please upload your screenshots before the first match.',
-          timestamp: new Date(Date.now() - 15 * 60 * 1000),
-          type: 'announcement',
-        },
-        {
-          id: 'message-1',
-          senderId: secondary.id,
-          text: `Match ready! Room RM-4B9F is prepped for round 1. @${primary.username} ping when you are in the lobby.`,
-          mention: `@${primary.username}`,
-          timestamp: new Date(Date.now() - 8 * 60 * 1000),
-          replyTo: { sender: admin.username, text: 'Screenshot verification required before match start.' },
-        },
-        {
-          id: 'message-2',
-          senderId: primary.id,
-          text: 'Opponent joined · queueing for loading screen. Screenshot capture done.',
-          timestamp: new Date(Date.now() - 2 * 60 * 1000),
-          replyTo: { sender: secondary.username, text: 'Match ready! Room RM-4B9F is prepped for round 1.' },
-        },
-      ];
-      return messages;
-    }),
+  tournamentGroupChat$ = combineLatest([this.tournament$, this.arena.chats$]).pipe(
+    map(([tournament]) => (tournament ? this.arena.getTournamentGroupChatForCurrentUser(tournament.id) : undefined)),
     shareReplay(1)
   );
 
@@ -151,7 +115,6 @@ export class TournamentDetailsPage {
   prizeDistribution = [
     '70% to the champion',
     '20% to the runner-up',
-    '10% reserved for ArenaX upkeep (automatically routed to the ArenaX wallet)',
   ];
 
   constructor(private arena: ArenaService, private route: ActivatedRoute) {}
@@ -174,6 +137,49 @@ export class TournamentDetailsPage {
   findPlayer(players: UserProfile[], id: string | undefined) {
     if (!id) return undefined;
     return players.find((player) => player.id === id);
+  }
+
+  getUser(id: string) {
+    return this.arena.getUser(id);
+  }
+
+  joinTournamentGroupChat(tournament: Tournament) {
+    const result = this.arena.joinTournamentGroupChat(tournament.id);
+    this.tournamentChatError = '';
+    this.tournamentChatNotice = '';
+    if (!result.ok) {
+      this.tournamentChatError = result.message || 'Unable to join tournament chat.';
+      return;
+    }
+    this.tournamentChatNotice = result.message || 'Joined tournament group chat.';
+  }
+
+  sendTournamentGroupMessage(tournament: Tournament) {
+    const text = this.tournamentChatMessage.trim();
+    if (!text) return;
+    const chat = this.arena.getTournamentGroupChatForCurrentUser(tournament.id);
+    if (!chat) {
+      this.tournamentChatError = 'Join the group chat first.';
+      return;
+    }
+    this.arena.sendMessage(chat.id, { text });
+    this.tournamentChatMessage = '';
+    this.tournamentChatError = '';
+  }
+
+  getRegisteredTeamName(tournament: { participants: string[]; entries?: { userId: string; username: string }[] }) {
+    const currentUser = this.arena.getCurrentUser();
+    if (!currentUser) return '';
+
+    const entry = tournament.entries?.find((item) => item.userId === currentUser.id);
+    if (entry?.username) return `Team ${entry.username}`;
+
+    if (tournament.participants.includes(currentUser.id)) {
+      const username = this.arena.getUser(currentUser.id)?.username || currentUser.username;
+      return `Team ${username}`;
+    }
+
+    return '';
   }
 
   private getCountdownLabel(startAt: string) {
