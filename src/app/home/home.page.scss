@@ -1281,6 +1281,152 @@ ion-content {
   display: none;
 }
 
+.admin-screen {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-home-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-kpi-card {
+  background: rgba(9, 13, 38, 0.74);
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid rgba(111, 169, 255, 0.2);
+}
+
+.admin-kpi-card p {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  color: rgba(214, 232, 255, 0.8);
+  letter-spacing: 0.03em;
+}
+
+.admin-kpi-card strong {
+  font-size: 1.25rem;
+}
+
+.admin-kpi-card.warning {
+  border-color: rgba(255, 159, 90, 0.45);
+}
+
+.admin-kpi-card.info {
+  border-color: rgba(126, 244, 255, 0.45);
+}
+
+.admin-kpi-card.accent {
+  border-color: rgba(173, 117, 255, 0.45);
+}
+
+.admin-filters {
+  margin-bottom: 0;
+}
+
+.admin-queue-card {
+  background: rgba(8, 12, 33, 0.75);
+  border-radius: 16px;
+  border: 1px solid rgba(111, 169, 255, 0.2);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.admin-queue-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.admin-queue-head h3 {
+  margin: 0 0 3px;
+  font-size: 0.95rem;
+}
+
+.admin-queue-head p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(212, 228, 255, 0.8);
+}
+
+.admin-queue-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-queue-meta p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(220, 235, 255, 0.85);
+}
+
+.admin-queue-meta i {
+  margin-right: 6px;
+}
+
+.admin-queue-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-feed-card {
+  margin-top: 6px;
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid rgba(111, 169, 255, 0.2);
+  background: rgba(9, 13, 38, 0.75);
+  display: grid;
+  gap: 10px;
+}
+
+.admin-feed-card header h3 {
+  margin: 0;
+}
+
+.admin-feed-card header p {
+  margin: 3px 0 0;
+}
+
+.admin-feed-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-feed-item {
+  border: 1px solid rgba(111, 169, 255, 0.18);
+  background: rgba(6, 10, 30, 0.82);
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 2px;
+}
+
+.admin-feed-item .time {
+  color: rgba(126, 244, 255, 0.9);
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.admin-feed-item p {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.admin-feed-item small {
+  color: rgba(205, 222, 250, 0.75);
+}
+
 .stats-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1303,7 +1449,7 @@ ion-content {
   transform: translateX(-50%);
   width: min(420px, calc(100% - 32px));
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
   padding: 10px;
   border-radius: 18px;

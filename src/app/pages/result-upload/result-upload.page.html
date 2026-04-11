@@ -32,6 +32,7 @@
       </label>
       <img *ngIf="screenshotDataUrl" class="proof-preview" [src]="screenshotDataUrl" alt="Screenshot preview" />
       <p class="ax-error" *ngIf="error">{{ error }}</p>
+      <p class="success" *ngIf="success">{{ success }}</p>
       <button class="ax-btn ax-btn-primary" [disabled]="isUploadLocked || !isParticipant(currentUserId)" (click)="submit()">Submit Result</button>
     </div>
     <ng-template #noMatch>

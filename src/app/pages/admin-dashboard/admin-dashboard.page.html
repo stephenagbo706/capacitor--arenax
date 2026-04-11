@@ -1,0 +1,128 @@
+<ion-content [fullscreen]="true">
+  <div class="ax-screen ax-admin ax-fade-in">
+    <header class="admin-header">
+      <div>
+        <p class="ax-muted">ArenaX Control Room</p>
+        <h2>Admin Dashboard</h2>
+      </div>
+      <a class="ax-btn home-link" routerLink="/home">Back Home</a>
+    </header>
+
+    <section class="ax-card access-card" *ngIf="!isAdmin">
+      <h3>Admin Access Required</h3>
+      <p class="ax-muted">Your account does not have admin privileges.</p>
+      <a class="ax-btn ax-btn-primary" routerLink="/home">Go to Home</a>
+    </section>
+
+    <ng-container *ngIf="isAdmin">
+      <div class="admin-summary">
+        <article class="ax-card">
+          <p class="ax-muted">Players</p>
+          <strong>{{ totalPlayers }}</strong>
+        </article>
+        <article class="ax-card">
+          <p class="ax-muted">Live Matches</p>
+          <strong>{{ liveMatchesCount }}</strong>
+        </article>
+        <article class="ax-card">
+          <p class="ax-muted">Pending Reviews</p>
+          <strong>{{ pendingVerificationCount }}</strong>
+        </article>
+        <article class="ax-card">
+          <p class="ax-muted">Waiting Matches</p>
+          <strong>{{ waitingMatchesCount }}</strong>
+        </article>
+        <article class="ax-card">
+          <p class="ax-muted">Escrow Locked</p>
+          <strong>${{ totalEscrowLocked | number : '1.0-2' }}</strong>
+        </article>
+      </div>
+
+      <section class="ax-card moderation-card">
+        <div class="section-head">
+          <h3>Pending Verification Queue</h3>
+          <span class="ax-badge">{{ pendingVerificationCount }} pending</span>
+        </div>
+        <p class="action-message" *ngIf="actionMessage">{{ actionMessage }}</p>
+        <p class="action-error" *ngIf="actionError">{{ actionError }}</p>
+
+        <div class="verify-list" *ngIf="pendingVerificationMatches.length; else noPending">
+          <article class="verify-item" *ngFor="let match of pendingVerificationMatches">
+            <div class="verify-main">
+              <div class="title-row">
+                <strong>{{ match.game }}</strong>
+                <small>{{ match.createdAt | date : 'medium' }}</small>
+              </div>
+              <div class="proof-row" *ngIf="match.screenshotUrl">
+                <img [src]="match.screenshotUrl" alt="Match proof screenshot" />
+                <div class="proof-meta">
+                  <p class="ax-muted">Winner: <strong>{{ getUser(match.winnerId || '')?.username || 'Pending' }}</strong></p>
+                  <p class="ax-muted">Uploaded: {{ match.uploadedAt | date : 'short' }}</p>
+                </div>
+              </div>
+              <p class="ax-muted">
+                {{ getUser(match.player1Id)?.username || 'Player 1' }} vs
+                {{ getUser(match.player2Id)?.username || 'Player 2' }}
+              </p>
+              <p class="ax-muted">Stake: ${{ match.stake | number : '1.0-2' }} · Escrow: ${{ match.escrowTotal | number : '1.0-2' }}</p>
+            </div>
+
+            <div class="verify-actions">
+              <button class="ax-btn preview" type="button" (click)="runPreview(match)" [disabled]="processingMatchId === match.id">AI Preview</button>
+              <button class="ax-btn approve" type="button" (click)="approveMatch(match)" [disabled]="processingMatchId === match.id">Approve</button>
+              <button class="ax-btn reject" type="button" (click)="rejectMatch(match)" [disabled]="processingMatchId === match.id">Reject</button>
+              <a class="ax-btn" [routerLink]="['/matches', match.id]">Open Match</a>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #noPending>
+          <p class="ax-muted">No matches are waiting for admin verification.</p>
+        </ng-template>
+      </section>
+
+      <section class="admin-grid">
+        <article class="ax-card">
+          <div class="section-head">
+            <h3>Tournament Operations</h3>
+            <a routerLink="/tournaments">Manage</a>
+          </div>
+          <div class="list">
+            <div class="list-row" *ngFor="let tournament of tournaments">
+              <div>
+                <strong>{{ tournament.title }}</strong>
+                <p class="ax-muted">{{ tournament.participants.length }}/{{ tournament.maxPlayers }} players</p>
+              </div>
+              <span
+                class="state-pill"
+                [class.live]="getTournamentStatusClass(tournament.status) === 'live'"
+                [class.upcoming]="getTournamentStatusClass(tournament.status) === 'upcoming'"
+                [class.ended]="getTournamentStatusClass(tournament.status) === 'ended'"
+              >
+                {{ tournament.status | uppercase }}
+              </span>
+            </div>
+          </div>
+        </article>
+
+        <article class="ax-card">
+          <div class="section-head">
+            <h3>Recent Transactions</h3>
+            <a routerLink="/wallet">Wallet</a>
+          </div>
+          <div class="list">
+            <div class="list-row" *ngFor="let tx of recentTransactions">
+              <div>
+                <strong>{{ tx.type | titlecase }}</strong>
+                <p class="ax-muted">{{ tx.createdAt | date : 'short' }}</p>
+              </div>
+              <span [class.positive]="getTransactionSign(tx) === '+'" [class.negative]="getTransactionSign(tx) === '-'">
+                {{ getTransactionSign(tx) }}${{ tx.amount | number : '1.0-2' }}
+              </span>
+            </div>
+          </div>
+        </article>
+      </section>
+    </ng-container>
+  </div>
+</ion-content>

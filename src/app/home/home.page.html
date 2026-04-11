@@ -109,6 +109,9 @@
         <button class="action-btn ghost" type="button" (click)="setScreen('scr-tournaments')">
           <i class="fa-solid fa-trophy"></i> Join Tournament
         </button>
+        <button class="action-btn ghost" type="button" (click)="setScreen('scr-admin')">
+          <i class="fa-solid fa-shield"></i> Admin Dashboard
+        </button>
       </div>
     </section>
 
@@ -500,6 +503,84 @@
       </div>
     </section>
 
+    <section class="screen admin-screen" [class.active]="activeScreen === 'scr-admin'" id="scr-admin">
+      <header class="top-row">
+        <h2>Admin Dashboard</h2>
+        <button class="chip admin-home-btn" type="button" (click)="setScreen('scr-home')">
+          <i class="fa-solid fa-house"></i> Home
+        </button>
+      </header>
+
+      <article class="admin-kpi-grid">
+        <div class="admin-kpi-card">
+          <p>Pending Reviews</p>
+          <strong>{{ adminPendingCount }}</strong>
+        </div>
+        <div class="admin-kpi-card warning">
+          <p>Disputes</p>
+          <strong>{{ adminDisputeCount }}</strong>
+        </div>
+        <div class="admin-kpi-card info">
+          <p>Escrow Cases</p>
+          <strong>{{ adminEscrowCount }}</strong>
+        </div>
+        <div class="admin-kpi-card accent">
+          <p>Escrow (USD)</p>
+          <strong>${{ adminEscrowTotalUsd | number:'1.0-2' }}</strong>
+        </div>
+      </article>
+
+      <div class="chip-row tournament-filters admin-filters">
+        <button class="chip" [class.active]="adminFilter === 'All'" type="button" (click)="setAdminFilter('All')">
+          All
+        </button>
+        <button class="chip" [class.active]="adminFilter === 'Pending'" type="button" (click)="setAdminFilter('Pending')">
+          Pending
+        </button>
+        <button class="chip" [class.active]="adminFilter === 'Disputed'" type="button" (click)="setAdminFilter('Disputed')">
+          Disputed
+        </button>
+        <button class="chip" [class.active]="adminFilter === 'Escrow'" type="button" (click)="setAdminFilter('Escrow')">
+          Escrow
+        </button>
+      </div>
+
+      <article class="admin-queue-card" *ngFor="let item of adminItemsInView">
+        <div class="admin-queue-head">
+          <div>
+            <h3>{{ item.type }}</h3>
+            <p>{{ item.id }} · {{ item.game }}</p>
+          </div>
+          <span class="state-pill" [class.live]="item.priority === 'High'" [class.upcoming]="item.priority === 'Medium'" [class.full]="item.priority === 'Low'">
+            {{ item.priority }}
+          </span>
+        </div>
+        <div class="admin-queue-meta">
+          <p><i class="fa-regular fa-clock"></i> Opened {{ item.openedAgo }}</p>
+          <p><i class="fa-solid fa-wallet"></i> {{ formatAdminAmount(item) }}</p>
+        </div>
+        <div class="admin-queue-actions">
+          <button class="action-btn" type="button" (click)="markAdminItemResolved(item.id)">Resolve</button>
+          <button class="action-btn ghost" type="button" (click)="escalateAdminItem(item.id)">Escalate</button>
+        </div>
+      </article>
+      <p class="ax-muted" *ngIf="!adminItemsInView.length">No active moderation tasks in this filter.</p>
+
+      <article class="admin-feed-card">
+        <header>
+          <h3>Live Moderation Feed</h3>
+          <p class="ax-muted">Latest platform actions</p>
+        </header>
+        <div class="admin-feed-list">
+          <div class="admin-feed-item" *ngFor="let entry of moderationFeed">
+            <span class="time">{{ entry.time }}</span>
+            <p>{{ entry.event }}</p>
+            <small>{{ entry.actor }}</small>
+          </div>
+        </div>
+      </article>
+    </section>
+
     <nav class="bottom-nav" aria-label="Primary">
       <button class="nav-item" [class.active]="activeScreen === 'scr-home'" type="button" (click)="setScreen('scr-home')" aria-label="Home">
         <i class="fa-solid fa-house"></i>
@@ -515,6 +596,9 @@
       </button>
       <button class="nav-item" [class.active]="activeScreen === 'scr-profile'" type="button" (click)="setScreen('scr-profile')" aria-label="Profile">
         <i class="fa-solid fa-user"></i>
+      </button>
+      <button class="nav-item" [class.active]="activeScreen === 'scr-admin'" type="button" (click)="setScreen('scr-admin')" aria-label="Admin">
+        <i class="fa-solid fa-shield"></i>
       </button>
     </nav>
   </main>

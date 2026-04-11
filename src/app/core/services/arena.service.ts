@@ -118,6 +118,17 @@ export class ArenaService {
     this.hydrateSubjects();
   }
 
+  enableCurrentUserAdmin(): ArenaActionResult {
+    const current = this.getCurrentUser();
+    if (!current) return { ok: false, message: 'You must be logged in.' };
+    if (current.isAdmin) return { ok: true };
+
+    this.state.users = this.state.users.map((user) => (user.id === current.id ? { ...user, isAdmin: true } : user));
+    this.persist();
+    this.hydrateSubjects();
+    return { ok: true };
+  }
+
   ensureLatestSeason(writeFn?: FirestoreWriteFn) {
     const currentYear = new Date().getFullYear();
     if (!this.state.seasons.find((season) => season.year === currentYear)) {
@@ -1360,7 +1371,9 @@ export class ArenaService {
 
   private normalizeState(input: Partial<ArenaState>): ArenaState {
     const seeded = this.seedState();
-    const users = (input.users || seeded.users).map((user) => ({
+    const sourceUsers = input.users || seeded.users;
+    const hasAdmin = sourceUsers.some((user) => !!user.isAdmin);
+    const users = sourceUsers.map((user, index) => ({
       ...user,
       gameIds: user.gameIds || {
         eFootball: user.gameId,
@@ -1370,6 +1383,7 @@ export class ArenaService {
       },
       lockedBalance: user.lockedBalance || 0,
       goals: typeof user.goals === 'number' ? user.goals : 0,
+      isAdmin: hasAdmin ? !!user.isAdmin : index === 0,
     }));
 
     const seasons = this.normalizeSeasons(input.seasons || seeded.seasons, seeded.seasons);
@@ -1482,6 +1496,7 @@ export class ArenaService {
         walletBalance: 245,
         lockedBalance: 0,
         online: true,
+        isAdmin: true,
       },
       {
         id: uid(),
@@ -1582,6 +1597,33 @@ export class ArenaService {
       commissionRate: 0.15,
     };
 
+    const pendingVerificationMatch: Match = {
+      id: uid(),
+      player1Id: players[1].id,
+      player2Id: players[3].id,
+      player1GameId: players[1].gameIds['Call of Duty Mobile'],
+      player2GameId: players[3].gameIds['Call of Duty Mobile'],
+      game: 'Call of Duty Mobile',
+      platform: 'Cross-platform',
+      matchType: '1v1',
+      duration: 10,
+      extraTime: false,
+      penalties: false,
+      stake: 15,
+      status: 'pending_verification',
+      scheduledAt: 'Today · 6:30 PM',
+      createdAt: now(),
+      startedAt: now(),
+      winnerId: players[1].id,
+      screenshotUrl: 'assets/Call-of-Duty-Mobile-groupe-de-guerriers.jpg',
+      screenshotFileName: 'codm-result.jpg',
+      screenshotMimeType: 'image/jpeg',
+      uploadedAt: now(),
+      escrowTotal: 30,
+      commissionRate: 0.15,
+      prize: 30,
+    };
+
     const seasons = [2026, 2027, 2028].map((year) => this.automation.generateSeason(year, players));
 
     return {
@@ -1602,6 +1644,7 @@ export class ArenaService {
       ],
       matches: [
         liveMatch,
+        pendingVerificationMatch,
         {
           id: uid(),
           player1Id: players[2].id,

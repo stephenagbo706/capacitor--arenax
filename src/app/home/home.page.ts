@@ -10,7 +10,8 @@ import { IonContent } from '@ionic/angular/standalone';
   imports: [IonContent, NgFor, NgIf, RouterLink],
 })
 export class HomePage {
-  activeScreen: 'scr-login' | 'scr-home' | 'scr-create' | 'scr-tournaments' | 'scr-wallet' | 'scr-profile' = 'scr-login';
+  activeScreen: 'scr-login' | 'scr-home' | 'scr-create' | 'scr-tournaments' | 'scr-wallet' | 'scr-profile' | 'scr-admin' =
+    'scr-login';
   activeGameIndex = 0;
   extraTime = true;
   penalties = true;
@@ -19,6 +20,7 @@ export class HomePage {
   selectedPlatform: 'PlayStation' | 'Xbox' | 'PC' = 'PlayStation';
   activeTournamentFilter: 'All' | 'Live' | 'Upcoming' | 'Ended' = 'All';
   stakeCurrency: 'NGN' | 'USD' = 'USD';
+  adminFilter: 'All' | 'Pending' | 'Disputed' | 'Escrow' = 'All';
   profileImageSrc = this.loadProfileImage();
   createError = '';
   nairaBalance = 0;
@@ -28,6 +30,62 @@ export class HomePage {
   activeMatches: Array<{ stake: number; label: string; timer: string; icon: string }> = [
     { stake: 50, label: 'FIFA 24', timer: '00:45:32', icon: 'fa-solid fa-futbol' },
     { stake: 20, label: 'Call of Duty', timer: '01:12:10', icon: 'fa-solid fa-gamepad' },
+  ];
+  adminQueue: Array<{
+    id: string;
+    game: string;
+    type: 'Result Review' | 'Dispute' | 'Escrow Release';
+    amount: number;
+    currency: 'USD' | 'NGN';
+    openedAgo: string;
+    priority: 'High' | 'Medium' | 'Low';
+    status: 'Pending' | 'Disputed' | 'Escrow' | 'Resolved';
+  }> = [
+    {
+      id: 'AX-4821',
+      game: 'FIFA 24',
+      type: 'Result Review',
+      amount: 120,
+      currency: 'USD',
+      openedAgo: '8 min ago',
+      priority: 'High',
+      status: 'Pending',
+    },
+    {
+      id: 'AX-4812',
+      game: 'Call of Duty',
+      type: 'Dispute',
+      amount: 75,
+      currency: 'USD',
+      openedAgo: '22 min ago',
+      priority: 'High',
+      status: 'Disputed',
+    },
+    {
+      id: 'AX-4764',
+      game: 'NBA 2K24',
+      type: 'Escrow Release',
+      amount: 65000,
+      currency: 'NGN',
+      openedAgo: '45 min ago',
+      priority: 'Medium',
+      status: 'Escrow',
+    },
+    {
+      id: 'AX-4699',
+      game: 'eFootball',
+      type: 'Result Review',
+      amount: 40,
+      currency: 'USD',
+      openedAgo: '1 hr ago',
+      priority: 'Low',
+      status: 'Pending',
+    },
+  ];
+  moderationFeed: Array<{ time: string; event: string; actor: string }> = [
+    { time: '2m', event: 'Result verified for AX-4818', actor: 'Admin Rex' },
+    { time: '9m', event: 'Escrow released to winner (AX-4803)', actor: 'System' },
+    { time: '17m', event: 'Dispute escalated to video review (AX-4791)', actor: 'Admin Nova' },
   ];
 
   private readonly profileImageKey = 'arenax_profile_image';
@@ -69,6 +127,20 @@ export class HomePage {
 
   setTournamentFilter(filter: HomePage['activeTournamentFilter']) {
     this.activeTournamentFilter = filter;
+  }
+
+  setAdminFilter(filter: HomePage['adminFilter']) {
+    this.adminFilter = filter;
+  }
+
+  markAdminItemResolved(itemId: string) {
+    this.adminQueue = this.adminQueue.map((item) => (item.id === itemId ? { ...item, status: 'Resolved' } : item));
+  }
+
+  escalateAdminItem(itemId: string) {
+    this.adminQueue = this.adminQueue.map((item) =>
+      item.id === itemId ? { ...item, status: 'Disputed', priority: 'High' } : item
+    );
   }
 
   createStakeMatch() {
@@ -157,5 +229,35 @@ export class HomePage {
   get selectedGameImage() {
     const images = ['assets/ax-ui/tournament-area.jpg', 'assets/ax-ui/summit-section.jpg', 'assets/ax-ui/wel.jpg'];
     return images[this.activeGameIndex] || images[0];
+  }
+
+  get adminItemsInView() {
+    return this.adminQueue.filter((item) => {
+      if (item.status === 'Resolved') return false;
+      if (this.adminFilter === 'All') return true;
+      return item.status === this.adminFilter;
+    });
+  }
+
+  get adminPendingCount() {
+    return this.adminQueue.filter((item) => item.status === 'Pending').length;
+  }
+
+  get adminDisputeCount() {
+    return this.adminQueue.filter((item) => item.status === 'Disputed').length;
+  }
+
+  get adminEscrowCount() {
+    return this.adminQueue.filter((item) => item.status === 'Escrow').length;
+  }
+
+  get adminEscrowTotalUsd() {
+    return this.adminQueue
+      .filter((item) => item.status === 'Escrow' && item.currency === 'USD')
+      .reduce((sum, item) => sum + item.amount, 0);
+  }
+
+  formatAdminAmount(item: HomePage['adminQueue'][number]) {
+    return item.currency === 'USD' ? `$${item.amount.toFixed(2)}` : `₦${item.amount.toLocaleString()}`;
   }
 }

@@ -21,6 +21,7 @@ export class ResultUploadPage {
   screenshotMimeType = '';
   screenshotSize = 0;
   error = '';
+  success = '';
   clock$ = timer(0, 1000);
   currentUserId = this.arena.getCurrentUser()?.id || '';
 
@@ -82,6 +83,7 @@ export class ResultUploadPage {
   }
 
   submit() {
+    this.success = '';
     if (this.isUploadLocked) {
       this.error = `You can upload only when match time is complete. Time left: ${this.uploadLockTimeLeft}.`;
       return;
@@ -116,14 +118,11 @@ export class ResultUploadPage {
       return;
     }
 
-    const verifyResult = this.arena.autoVerifyPendingMatch(this.matchId);
-    if (!verifyResult?.ok) {
-      this.error = verifyResult?.message || 'Could not verify match automatically.';
-      return;
-    }
-
     this.error = '';
-    this.router.navigateByUrl('/matches');
+    this.success = 'Result submitted. Your match is now pending admin verification.';
+    setTimeout(() => {
+      this.router.navigate(['/matches', this.matchId]);
+    }, 700);
   }
 
   onScreenshotSelected(event: Event) {
