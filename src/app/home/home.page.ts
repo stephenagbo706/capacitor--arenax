@@ -16,7 +16,7 @@ export class HomePage {
   extraTime = true;
   penalties = true;
   matchDuration = 10;
-  stakeAmount = 25;
+  stakeAmount = 0;
   selectedPlatform: 'PlayStation' | 'Xbox' | 'PC' = 'PlayStation';
   activeTournamentFilter: 'All' | 'Live' | 'Upcoming' | 'Ended' = 'All';
   stakeCurrency: 'NGN' | 'USD' = 'USD';
