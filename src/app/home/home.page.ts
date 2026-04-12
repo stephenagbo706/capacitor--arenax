@@ -2,6 +2,10 @@ import { Component } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
+import { Capacitor } from '@capacitor/core';
+import { Camera } from '@capacitor/camera';
+import { Geolocation } from '@capacitor/geolocation';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 @Component({
   selector: 'app-home',
@@ -89,6 +93,35 @@ export class HomePage {
   ];
 
   private readonly profileImageKey = 'arenax_profile_image';
+
+  constructor() {
+    this.requestNativePermissions();
+  }
+
+  private async requestNativePermissions() {
+    if (Capacitor.getPlatform() !== 'android') return;
+
+    try {
+      await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
+    } catch (error) {
+      console.warn('Camera permission request failed', error);
+    }
+
+    try {
+      await Geolocation.requestPermissions();
+    } catch (error) {
+      console.warn('Location permission request failed', error);
+    }
+
+    try {
+      const notificationPermission = await PushNotifications.checkPermissions();
+      if (notificationPermission.receive === 'prompt') {
+        await PushNotifications.requestPermissions();
+      }
+    } catch (error) {
+      console.warn('Notification permission request failed', error);
+    }
+  }
 
   setScreen(screen: HomePage['activeScreen']) {
     this.activeScreen = screen;
