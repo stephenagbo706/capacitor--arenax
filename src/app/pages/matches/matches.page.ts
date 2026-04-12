@@ -31,7 +31,7 @@ export class MatchesPage {
   extraTime = true;
   penalties = true;
   duration = 10;
-  stake = 25;
+  stake = 0;
   selectedPlatform: 'PlayStation' | 'Xbox' | 'PC' = 'PlayStation';
   createdRoomGameId = '';
 
