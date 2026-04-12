@@ -53,9 +53,22 @@ export class ArenaService {
     this.ensureLatestSeason();
   }
 
-  login(email: string, _password: string) {
-    const user = this.state.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  login(email: string, password: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+    if (!normalizedEmail) return { ok: false, message: 'Email is required.' };
+    if (!normalizedPassword) return { ok: false, message: 'Password is required.' };
+
+    const user = this.state.users.find((u) => u.email.toLowerCase() === normalizedEmail);
     if (!user) return { ok: false, message: 'No account found for this email.' };
+
+    const savedHash = this.state.credentials[user.id];
+    if (!savedHash) return { ok: false, message: 'This account has no password set. Please reset your account.' };
+
+    if (savedHash !== this.hashPassword(normalizedPassword)) {
+      return { ok: false, message: 'Incorrect password.' };
+    }
+
     this.state.currentUserId = user.id;
     this.persist();
     this.hydrateSubjects();
@@ -70,6 +83,7 @@ export class ArenaService {
     if (!username) return { ok: false, message: 'Username is required.' };
     if (!email) return { ok: false, message: 'Email is required.' };
     if (!password) return { ok: false, message: 'Password is required.' };
+    if (password.length < 6) return { ok: false, message: 'Password must be at least 6 characters.' };
 
     const usernameExists = this.state.users.some((u) => u.username.toLowerCase() === username.toLowerCase());
     if (usernameExists) return { ok: false, message: 'Username is already taken.' };
@@ -99,6 +113,7 @@ export class ArenaService {
     };
 
     this.state.users.unshift(newUser);
+    this.state.credentials[newUser.id] = this.hashPassword(password);
     this.state.currentUserId = newUser.id;
     this.state.notifications.unshift({
       id: uid(),
@@ -114,6 +129,57 @@ export class ArenaService {
 
   logout() {
     this.state.currentUserId = undefined;
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  syncFromAuthUser(payload: { uid: string; email: string; username: string }) {
+    const email = payload.email.trim().toLowerCase();
+    if (!email) return;
+
+    const existing = this.state.users.find((user) => user.email.toLowerCase() === email);
+    if (existing) {
+      this.state.currentUserId = existing.id;
+      const nextUsername = payload.username.trim();
+      if (nextUsername && nextUsername !== existing.username) {
+        this.state.users = this.state.users.map((user) =>
+          user.id === existing.id
+            ? {
+                ...user,
+                username: nextUsername,
+              }
+            : user
+        );
+      }
+      this.persist();
+      this.hydrateSubjects();
+      return;
+    }
+
+    const randomCode = () => Math.floor(100000 + Math.random() * 900000);
+    const profileId = `AX-${randomCode()}`;
+    const newUser: UserProfile = {
+      id: payload.uid || uid(),
+      username: payload.username.trim() || email.split('@')[0] || 'ArenaX Player',
+      email,
+      gameId: profileId,
+      gameIds: {
+        eFootball: `EFB-${randomCode()}`,
+        'Dream League Soccer': `DLS-${randomCode()}`,
+        FIFA: `FIFA-${randomCode()}`,
+        'Call of Duty Mobile': `CODM-${randomCode()}`,
+      },
+      avatar: 'assets/ax-ui/logo.png',
+      wins: 0,
+      losses: 0,
+      goals: 0,
+      walletBalance: 120,
+      lockedBalance: 0,
+      online: true,
+    };
+
+    this.state.users.unshift(newUser);
+    this.state.currentUserId = newUser.id;
     this.persist();
     this.hydrateSubjects();
   }
@@ -1387,10 +1453,15 @@ export class ArenaService {
     }));
 
     const seasons = this.normalizeSeasons(input.seasons || seeded.seasons, seeded.seasons);
+    const credentials = this.normalizeCredentials(input.credentials || {}, users);
 
     return {
       users,
-      currentUserId: input.currentUserId || users[0]?.id,
+      credentials,
+      currentUserId:
+        typeof input.currentUserId === 'string' && users.some((user) => user.id === input.currentUserId)
+          ? input.currentUserId
+          : undefined,
       friendRequests: (input.friendRequests || seeded.friendRequests).map((request) => ({
         ...request,
         status:
@@ -1473,6 +1544,27 @@ export class ArenaService {
       likeUserIds: [],
       comments: [],
     };
+  }
+
+  private normalizeCredentials(inputCredentials: Record<string, string>, users: UserProfile[]) {
+    const normalized: Record<string, string> = {};
+    const fallbackHash = this.hashPassword('password');
+
+    users.forEach((user) => {
+      const savedHash = inputCredentials[user.id];
+      normalized[user.id] = typeof savedHash === 'string' && savedHash.trim() ? savedHash : fallbackHash;
+    });
+
+    return normalized;
+  }
+
+  private hashPassword(password: string) {
+    // Lightweight local hash for demo auth persistence (not for production security).
+    let hash = 5381;
+    for (let i = 0; i < password.length; i += 1) {
+      hash = (hash * 33) ^ password.charCodeAt(i);
+    }
+    return `ax_${(hash >>> 0).toString(16).padStart(8, '0')}`;
   }
 
   private seedState(): ArenaState {
@@ -1575,6 +1667,10 @@ export class ArenaService {
         online: true,
       },
     ];
+    const credentials = players.reduce<Record<string, string>>((acc, player) => {
+      acc[player.id] = this.hashPassword('password');
+      return acc;
+    }, {});
 
     const liveMatch: Match = {
       id: uid(),
@@ -1628,7 +1724,8 @@ export class ArenaService {
 
     return {
       users: players,
-      currentUserId: userId,
+      credentials,
+      currentUserId: undefined,
       friendRequests: [],
       challenges: [
         {

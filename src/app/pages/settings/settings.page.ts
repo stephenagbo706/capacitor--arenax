@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
-import { ArenaService } from '../../core/services/arena.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-settings',
@@ -14,7 +14,7 @@ import { ArenaService } from '../../core/services/arena.service';
 export class SettingsPage {
   twoFactorEnabled = localStorage.getItem('ax-twofactor') === 'true';
 
-  constructor(private arena: ArenaService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) {}
 
   manageTwoFactor() {
     this.twoFactorEnabled = !this.twoFactorEnabled;
@@ -23,18 +23,18 @@ export class SettingsPage {
     window.alert(`Two-factor authentication ${status}.`);
   }
 
-  confirmDeleteAccount() {
+  async confirmDeleteAccount() {
     const confirmed = window.confirm(
       'Deleting your account will sign you out and clear local data. Continue?'
     );
     if (!confirmed) return;
     localStorage.clear();
-    this.arena.logout();
+    await this.auth.logout();
     this.router.navigateByUrl('/auth/login');
   }
 
-  logout() {
-    this.arena.logout();
+  async logout() {
+    await this.auth.logout();
     this.router.navigateByUrl('/auth/login');
   }
 }

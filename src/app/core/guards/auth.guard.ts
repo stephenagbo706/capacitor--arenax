@@ -1,12 +1,13 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { ArenaService } from '../services/arena.service';
+import { AuthService } from '../services/auth.service';
 
-export const authGuard: CanActivateFn = () => {
-  const arena = inject(ArenaService);
+export const authGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
   const router = inject(Router);
-  const user = arena.getCurrentUser();
-  if (!user) {
+
+  await auth.waitUntilReady();
+  if (!auth.isAuthenticated()) {
     router.navigateByUrl('/auth/login');
     return false;
   }

@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { IonContent } from '@ionic/angular/standalone';
-import { ArenaService } from '../../../core/services/arena.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -21,18 +21,19 @@ export class RegisterPage {
   showConfirmPassword = false;
   error = '';
 
-  constructor(private arena: ArenaService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) {}
 
-  submit() {
+  async submit() {
     if (this.password !== this.confirmPassword) {
       this.error = 'Passwords do not match.';
       return;
     }
-    const result = this.arena.register({ username: this.username, email: this.email, password: this.password });
+    const result = await this.auth.register(this.username, this.email, this.password);
     if (!result.ok) {
       this.error = result.message || 'Registration failed.';
       return;
     }
+    this.error = '';
     this.router.navigateByUrl('/home');
   }
 }

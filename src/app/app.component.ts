@@ -5,6 +5,7 @@ import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { Subscription } from 'rxjs';
 import { NotificationItem } from './core/models/arena.models';
 import { ArenaService } from './core/services/arena.service';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -18,7 +19,8 @@ export class AppComponent implements OnDestroy {
   private readonly notificationsSub: Subscription;
   private hidePopupTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private arena: ArenaService, private router: Router) {
+  constructor(private arena: ArenaService, private auth: AuthService, private router: Router) {
+    void this.auth.waitUntilReady();
     this.notificationsSub = this.arena.notifications$.subscribe((notifications) => {
       const incoming = notifications.find(
         (note) => note.type === 'chat' && !note.read && !this.seenNotificationIds.has(note.id)

@@ -12,6 +12,7 @@
         <button class="ax-btn ax-btn-primary" (click)="submit()">Send Reset Link</button>
       </div>
 
+      <p class="ax-error" *ngIf="error">{{ error }}</p>
       <p class="ax-success" *ngIf="sent">Reset link sent! Check your inbox.</p>
 
       <div class="ax-auth-links">

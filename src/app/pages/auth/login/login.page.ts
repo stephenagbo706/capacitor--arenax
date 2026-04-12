@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { IonContent } from '@ionic/angular/standalone';
-import { ArenaService } from '../../../core/services/arena.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -13,18 +13,19 @@ import { ArenaService } from '../../../core/services/arena.service';
   styleUrls: ['./login.page.scss'],
 })
 export class LoginPage {
-  email = 'stephen@arenax.app';
-  password = 'password';
+  email = '';
+  password = '';
   error = '';
 
-  constructor(private arena: ArenaService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) {}
 
-  submit() {
-    const result = this.arena.login(this.email, this.password);
+  async submit() {
+    const result = await this.auth.login(this.email, this.password);
     if (!result.ok) {
       this.error = result.message || 'Login failed.';
       return;
     }
+    this.error = '';
     this.router.navigateByUrl('/home');
   }
 }

@@ -215,6 +215,7 @@ export interface TransactionItem {
 
 export interface ArenaState {
   users: UserProfile[];
+  credentials: Record<string, string>;
   currentUserId?: string;
   friendRequests: FriendRequest[];
   challenges: Challenge[];
