@@ -3,10 +3,14 @@ import { initializeApp, getApp, getApps } from 'firebase/app';
 import {
   Auth,
   User,
+  browserLocalPersistence,
   createUserWithEmailAndPassword,
   getAuth,
+  indexedDBLocalPersistence,
+  inMemoryPersistence,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  setPersistence,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -32,15 +36,7 @@ export class AuthService {
     const app = getApps().length ? getApp() : initializeApp(environment.firebase);
     this.auth = getAuth(app);
 
-    this.ready = new Promise((resolve) => {
-      onAuthStateChanged(this.auth!, (user) => {
-        this.syncArenaUser(user);
-        if (!this.didResolveInitialAuthState) {
-          this.didResolveInitialAuthState = true;
-          resolve();
-        }
-      });
-    });
+    this.ready = this.initializeAuthState();
   }
 
   async waitUntilReady() {
@@ -110,6 +106,30 @@ export class AuthService {
     } else {
       this.arena.logout();
     }
+  }
+
+  private async initializeAuthState() {
+    if (!this.auth) return;
+
+    try {
+      await setPersistence(this.auth, indexedDBLocalPersistence);
+    } catch {
+      try {
+        await setPersistence(this.auth, browserLocalPersistence);
+      } catch {
+        await setPersistence(this.auth, inMemoryPersistence);
+      }
+    }
+
+    await new Promise<void>((resolve) => {
+      onAuthStateChanged(this.auth!, (user) => {
+        this.syncArenaUser(user);
+        if (!this.didResolveInitialAuthState) {
+          this.didResolveInitialAuthState = true;
+          resolve();
+        }
+      });
+    });
   }
 
   private syncArenaUser(user: User | null, usernameOverride?: string) {
