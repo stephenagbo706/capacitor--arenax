@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -13,8 +13,6 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrls: ['./login.page.scss'],
 })
 export class LoginPage {
-  @ViewChild('pageContent', { static: true }) pageContent?: IonContent;
-
   email = '';
   password = '';
   showPassword = false;
@@ -30,25 +28,5 @@ export class LoginPage {
     }
     this.error = '';
     this.router.navigateByUrl('/home');
-  }
-
-  async onInputFocus(event: FocusEvent) {
-    const target = event.target as HTMLElement | null;
-    if (!target || !this.pageContent) {
-      return;
-    }
-
-    setTimeout(async () => {
-      const rect = target.getBoundingClientRect();
-      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-      const safeBottom = viewportHeight - 24;
-
-      if (rect.bottom <= safeBottom) {
-        return;
-      }
-
-      const scrollDelta = rect.bottom - safeBottom;
-      await this.pageContent?.scrollByPoint(0, scrollDelta, 250);
-    }, 180);
   }
 }
