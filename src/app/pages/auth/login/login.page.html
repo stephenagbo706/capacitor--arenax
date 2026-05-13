@@ -1,4 +1,4 @@
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" #pageContent>
   <div class="ax-screen ax-auth">
     <div class="ax-auth-card ax-glass ax-fade-in">
       <div class="ax-auth-brand">
@@ -8,13 +8,20 @@
       </div>
 
       <div class="ax-grid">
-        <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
+        <input
+          class="ax-input"
+          type="email"
+          placeholder="Email"
+          [(ngModel)]="email"
+          (focus)="onInputFocus($event)"
+        />
         <div class="ax-input-wrap">
           <input
             class="ax-input"
             [type]="showPassword ? 'text' : 'password'"
             placeholder="Password"
             [(ngModel)]="password"
+            (focus)="onInputFocus($event)"
           />
           <button
             class="ax-eye-btn"
