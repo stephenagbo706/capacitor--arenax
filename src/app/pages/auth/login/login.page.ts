@@ -15,6 +15,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class LoginPage {
   email = '';
   password = '';
+  showPassword = false;
   error = '';
 
   constructor(private auth: AuthService, private router: Router) {}

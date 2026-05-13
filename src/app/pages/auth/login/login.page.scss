@@ -40,6 +40,34 @@
   box-shadow: 0 0 22px rgba(59, 130, 246, 0.35);
 }
 
+.ax-input-wrap {
+  position: relative;
+}
+
+.ax-input-wrap .ax-input {
+  padding-right: 52px;
+}
+
+.ax-eye-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: rgba(245, 247, 251, 0.86);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ax-eye-btn i {
+  font-size: 1rem;
+}
+
 .ax-auth-links {
   margin-top: 18px;
   display: grid;

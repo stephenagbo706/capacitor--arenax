@@ -17,8 +17,13 @@
             placeholder="Password"
             [(ngModel)]="password"
           />
-          <button class="ax-toggle-btn" type="button" (click)="showPassword = !showPassword">
-            {{ showPassword ? 'Hide' : 'Show' }}
+          <button
+            class="ax-eye-btn"
+            type="button"
+            (click)="showPassword = !showPassword"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            <i class="fa-solid" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
           </button>
         </div>
         <div class="ax-input-wrap">
@@ -28,8 +33,13 @@
             placeholder="Confirm Password"
             [(ngModel)]="confirmPassword"
           />
-          <button class="ax-toggle-btn" type="button" (click)="showConfirmPassword = !showConfirmPassword">
-            {{ showConfirmPassword ? 'Hide' : 'Show' }}
+          <button
+            class="ax-eye-btn"
+            type="button"
+            (click)="showConfirmPassword = !showConfirmPassword"
+            [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
+          >
+            <i class="fa-solid" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
           </button>
         </div>
         <button class="ax-btn ax-btn-primary" (click)="submit()">Register</button>

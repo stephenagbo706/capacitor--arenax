@@ -9,7 +9,22 @@
 
       <div class="ax-grid">
         <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
-        <input class="ax-input" type="password" placeholder="Password" [(ngModel)]="password" />
+        <div class="ax-input-wrap">
+          <input
+            class="ax-input"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="Password"
+            [(ngModel)]="password"
+          />
+          <button
+            class="ax-eye-btn"
+            type="button"
+            (click)="showPassword = !showPassword"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            <i class="fa-solid" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+          </button>
+        </div>
         <button class="ax-btn ax-btn-primary" (click)="submit()">Login</button>
         <p class="ax-error" *ngIf="error">{{ error }}</p>
       </div>
