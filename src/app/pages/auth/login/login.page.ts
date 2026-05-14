@@ -17,16 +17,19 @@ export class LoginPage {
   password = '';
   showPassword = false;
   error = '';
+  status = '';
 
   constructor(private auth: AuthService, private router: Router) {}
 
   async submit() {
+    this.status = '';
     const result = await this.auth.login(this.email, this.password);
     if (!result.ok) {
       this.error = result.message || 'Login failed.';
       return;
     }
     this.error = '';
-    this.router.navigateByUrl('/home');
+    this.status = 'Login successful.';
+    setTimeout(() => this.router.navigateByUrl('/home'), 900);
   }
 }

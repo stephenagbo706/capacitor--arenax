@@ -20,10 +20,12 @@ export class RegisterPage {
   showPassword = false;
   showConfirmPassword = false;
   error = '';
+  status = '';
 
   constructor(private auth: AuthService, private router: Router) {}
 
   async submit() {
+    this.status = '';
     if (this.password !== this.confirmPassword) {
       this.error = 'Passwords do not match.';
       return;
@@ -34,6 +36,7 @@ export class RegisterPage {
       return;
     }
     this.error = '';
-    this.router.navigateByUrl('/home');
+    this.status = 'Registration successful. You are now logged in.';
+    setTimeout(() => this.router.navigateByUrl('/home'), 900);
   }
 }

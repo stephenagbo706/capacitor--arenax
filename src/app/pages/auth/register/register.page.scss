@@ -1,9 +1,44 @@
 @use '../login/login.page.scss' as *;
 
+.ax-register-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ax-register-col {
+  display: grid;
+  gap: 10px;
+}
+
 .ax-input-wrap {
   position: relative;
 }
 
 .ax-input-wrap .ax-input {
   padding-right: 52px;
+}
+
+@media (max-width: 720px) {
+  .ax-register-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ax-register-col {
+    gap: 8px;
+  }
+
+  .ax-register-grid .ax-input {
+    font-size: 0.95rem;
+    min-height: 46px;
+    padding-left: 12px;
+    padding-right: 42px;
+  }
+
+  .ax-register-grid .ax-eye-btn {
+    right: 8px;
+    width: 28px;
+    height: 28px;
+  }
 }

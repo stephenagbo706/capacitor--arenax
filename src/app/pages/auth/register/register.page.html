@@ -8,42 +8,50 @@
       </div>
 
       <div class="ax-grid">
-        <input class="ax-input" type="text" placeholder="Username" [(ngModel)]="username" />
-        <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
-        <div class="ax-input-wrap">
-          <input
-            class="ax-input"
-            [type]="showPassword ? 'text' : 'password'"
-            placeholder="Password"
-            [(ngModel)]="password"
-          />
-          <button
-            class="ax-eye-btn"
-            type="button"
-            (click)="showPassword = !showPassword"
-            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
-          >
-            <i class="fa-solid" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
-          </button>
-        </div>
-        <div class="ax-input-wrap">
-          <input
-            class="ax-input"
-            [type]="showConfirmPassword ? 'text' : 'password'"
-            placeholder="Confirm Password"
-            [(ngModel)]="confirmPassword"
-          />
-          <button
-            class="ax-eye-btn"
-            type="button"
-            (click)="showConfirmPassword = !showConfirmPassword"
-            [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
-          >
-            <i class="fa-solid" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
-          </button>
+        <div class="ax-register-grid">
+          <div class="ax-register-col">
+            <input class="ax-input" type="text" placeholder="Username" [(ngModel)]="username" />
+            <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
+          </div>
+
+          <div class="ax-register-col">
+            <div class="ax-input-wrap">
+              <input
+                class="ax-input"
+                [type]="showPassword ? 'text' : 'password'"
+                placeholder="Password"
+                [(ngModel)]="password"
+              />
+              <button
+                class="ax-eye-btn"
+                type="button"
+                (click)="showPassword = !showPassword"
+                [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              >
+                <i class="fa-solid" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+              </button>
+            </div>
+            <div class="ax-input-wrap">
+              <input
+                class="ax-input"
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                placeholder="Confirm Password"
+                [(ngModel)]="confirmPassword"
+              />
+              <button
+                class="ax-eye-btn"
+                type="button"
+                (click)="showConfirmPassword = !showConfirmPassword"
+                [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
+              >
+                <i class="fa-solid" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
+              </button>
+            </div>
+          </div>
         </div>
         <button class="ax-btn ax-btn-primary" (click)="submit()">Register</button>
         <p class="ax-error" *ngIf="error">{{ error }}</p>
+        <p class="ax-status" *ngIf="status">{{ status }}</p>
       </div>
 
       <div class="ax-auth-links">
