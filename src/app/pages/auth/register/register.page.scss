@@ -1,5 +1,9 @@
 @use '../login/login.page.scss' as *;
 
+:host ion-content {
+  --padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+}
+
 .ax-register-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -20,6 +24,24 @@
 }
 
 @media (max-width: 720px) {
+  :host ion-content {
+    --padding-bottom: calc(env(safe-area-inset-bottom) + 240px);
+  }
+
+  .ax-auth {
+    place-items: start;
+    align-content: start;
+    min-height: 100%;
+    padding-top: 16px;
+    padding-bottom: 12px;
+  }
+
+  .ax-auth-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 18px 14px 16px;
+  }
+
   .ax-register-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
