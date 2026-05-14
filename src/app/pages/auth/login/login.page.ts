@@ -21,6 +21,11 @@ export class LoginPage {
 
   constructor(private auth: AuthService, private router: Router) {}
 
+  ionViewWillEnter() {
+    this.status = '';
+    this.error = '';
+  }
+
   async submit() {
     this.status = '';
     const result = await this.auth.login(this.email, this.password);

@@ -21,6 +21,7 @@
                 [type]="showPassword ? 'text' : 'password'"
                 placeholder="Password"
                 [(ngModel)]="password"
+                (focus)="scrollFieldIntoView($event)"
               />
               <button
                 class="ax-eye-btn"
@@ -37,6 +38,7 @@
                 [type]="showConfirmPassword ? 'text' : 'password'"
                 placeholder="Confirm Password"
                 [(ngModel)]="confirmPassword"
+                (focus)="scrollFieldIntoView($event)"
               />
               <button
                 class="ax-eye-btn"

@@ -24,6 +24,19 @@ export class RegisterPage {
 
   constructor(private auth: AuthService, private router: Router) {}
 
+  scrollFieldIntoView(event: FocusEvent) {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    setTimeout(() => {
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      });
+    }, 180);
+  }
+
   async submit() {
     this.status = '';
     if (this.password !== this.confirmPassword) {

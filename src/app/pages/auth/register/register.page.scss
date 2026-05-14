@@ -1,7 +1,7 @@
 @use '../login/login.page.scss' as *;
 
 :host ion-content {
-  --padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+  --padding-bottom: calc(env(safe-area-inset-bottom) + var(--keyboard-offset, 0px) + 20px);
 }
 
 .ax-register-grid {
@@ -24,10 +24,6 @@
 }
 
 @media (max-width: 720px) {
-  :host ion-content {
-    --padding-bottom: calc(env(safe-area-inset-bottom) + 240px);
-  }
-
   .ax-auth {
     place-items: start;
     align-content: start;
