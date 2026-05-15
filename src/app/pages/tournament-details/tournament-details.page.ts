@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, CommonModule, DatePipe, NgForOf, NgIf } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -19,6 +19,9 @@ type TournamentTab = 'Overview' | 'Players' | 'Matches' | 'Chat';
   styleUrls: ['./tournament-details.page.scss'],
 })
 export class TournamentDetailsPage {
+  private arena = inject(ArenaService);
+  private route = inject(ActivatedRoute);
+
   tabs: TournamentTab[] = ['Overview', 'Players', 'Matches', 'Chat'];
   activeTab: TournamentTab = 'Overview';
   tournamentChatMessage = '';
@@ -116,8 +119,6 @@ export class TournamentDetailsPage {
     '70% to the champion',
     '20% to the runner-up',
   ];
-
-  constructor(private arena: ArenaService, private route: ActivatedRoute) {}
 
   setTab(tab: TournamentTab) {
     this.activeTab = tab;

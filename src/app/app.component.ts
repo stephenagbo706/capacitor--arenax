@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
@@ -14,12 +14,16 @@ import { AuthService } from './core/services/auth.service';
   imports: [IonApp, IonRouterOutlet, NgIf],
 })
 export class AppComponent implements OnDestroy {
+  private arena = inject(ArenaService);
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
   chatPopup: NotificationItem | null = null;
   private readonly seenNotificationIds = new Set<string>();
   private readonly notificationsSub: Subscription;
   private hidePopupTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private arena: ArenaService, private auth: AuthService, private router: Router) {
+  constructor() {
     void this.auth.waitUntilReady();
     this.notificationsSub = this.arena.notifications$.subscribe((notifications) => {
       const incoming = notifications.find(

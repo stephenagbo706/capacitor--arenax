@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import {
   Auth,
@@ -22,11 +22,13 @@ type AuthResult = { ok: true } | { ok: false; message: string };
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private arena = inject(ArenaService);
+
   private readonly auth: Auth | null;
   private readonly ready: Promise<void>;
   private didResolveInitialAuthState = false;
 
-  constructor(private arena: ArenaService) {
+  constructor() {
     if (!this.hasFirebaseConfig()) {
       this.auth = null;
       this.ready = Promise.resolve();

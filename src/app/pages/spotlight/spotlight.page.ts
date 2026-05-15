@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, NgForOf, NgIf, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent } from '@ionic/angular/standalone';
@@ -13,10 +13,10 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
   styleUrls: ['./spotlight.page.scss'],
 })
 export class SpotlightPage {
+  private arena = inject(ArenaService);
+
   spotlightPosts$ = this.arena.spotlightPosts$;
   comments: Record<string, string> = {};
-
-  constructor(private arena: ArenaService) {}
 
   hasLiked(postId: string) {
     const currentUserId = this.arena.getCurrentUser()?.id;

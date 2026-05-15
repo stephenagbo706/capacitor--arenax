@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -13,11 +13,12 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./join-game.page.scss'],
 })
 export class JoinGamePage {
+  private arena = inject(ArenaService);
+  private router = inject(Router);
+
   roomGameId = '';
   statusMessage = '';
   errorMessage = '';
-
-  constructor(private arena: ArenaService, private router: Router) {}
 
   setRoomGameId(event: Event) {
     this.roomGameId = (event.target as HTMLInputElement).value.toUpperCase();

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, DatePipe, NgForOf } from '@angular/common';
 import { IonContent } from '@ionic/angular/standalone';
 import { ArenaService } from '../../core/services/arena.service';
@@ -11,9 +11,9 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./notifications.page.scss'],
 })
 export class NotificationsPage {
-  notifications$ = this.arena.notifications$;
+  private arena = inject(ArenaService);
 
-  constructor(private arena: ArenaService) {}
+  notifications$ = this.arena.notifications$;
 
   markRead(id: string) {
     this.arena.markNotificationRead(id);

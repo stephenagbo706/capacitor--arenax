@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent } from '@ionic/angular/standalone';
@@ -12,6 +12,8 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./withdraw.page.scss'],
 })
 export class WithdrawPage {
+  private arena = inject(ArenaService);
+
   amount = 1000;
   error = '';
   referenceId = '';
@@ -25,8 +27,6 @@ export class WithdrawPage {
   maxAmount = 200000;
   cooldownMs = 24 * 60 * 60 * 1000;
   lastWithdrawalTimestamp?: number;
-
-  constructor(private arena: ArenaService) {}
 
   submit() {
     this.error = '';

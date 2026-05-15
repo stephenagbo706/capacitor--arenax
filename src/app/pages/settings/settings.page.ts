@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -12,9 +12,10 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./settings.page.scss'],
 })
 export class SettingsPage {
-  twoFactorEnabled = localStorage.getItem('ax-twofactor') === 'true';
+  private auth = inject(AuthService);
+  private router = inject(Router);
 
-  constructor(private auth: AuthService, private router: Router) {}
+  twoFactorEnabled = localStorage.getItem('ax-twofactor') === 'true';
 
   manageTwoFactor() {
     this.twoFactorEnabled = !this.twoFactorEnabled;

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -13,11 +13,11 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrls: ['./forgot.page.scss'],
 })
 export class ForgotPage {
+  private auth = inject(AuthService);
+
   email = '';
   sent = false;
   error = '';
-
-  constructor(private auth: AuthService) {}
 
   async submit() {
     const result = await this.auth.sendPasswordReset(this.email);

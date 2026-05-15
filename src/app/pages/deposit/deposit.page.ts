@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent } from '@ionic/angular/standalone';
@@ -12,6 +12,8 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./deposit.page.scss'],
 })
 export class DepositPage {
+  private arena = inject(ArenaService);
+
   amount = 500;
   error = '';
   referenceId = '';
@@ -22,8 +24,6 @@ export class DepositPage {
   selectedMethod = this.paymentMethods[0];
   minAmount = 100;
   maxAmount = 500000;
-
-  constructor(private arena: ArenaService) {}
 
   submit() {
     this.error = '';

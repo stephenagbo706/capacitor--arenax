@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 import { DatePipe, NgForOf, NgIf } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -14,6 +14,9 @@ import { Tournament } from '../../core/models/arena.models';
   styleUrls: ['./tournaments.page.scss'],
 })
 export class TournamentsPage {
+  private arena = inject(ArenaService);
+  private router = inject(Router);
+
   tabs = ['All', 'Live', 'Upcoming', 'Ended'];
   activeTab = 'All';
 
@@ -26,8 +29,6 @@ export class TournamentsPage {
   confirmStatus = '';
   needsDeposit = false;
   currentBalance = 0;
-
-  constructor(private arena: ArenaService, private router: Router) {}
 
   setTab(tab: string) {
     this.activeTab = tab;

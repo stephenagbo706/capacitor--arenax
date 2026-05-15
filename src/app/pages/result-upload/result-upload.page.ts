@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, CommonModule, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -14,6 +14,10 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./result-upload.page.scss'],
 })
 export class ResultUploadPage {
+  private route = inject(ActivatedRoute);
+  private arena = inject(ArenaService);
+  private router = inject(Router);
+
   matchId = '';
   winnerId = '';
   screenshotDataUrl = '';
@@ -25,7 +29,7 @@ export class ResultUploadPage {
   clock$ = timer(0, 1000);
   currentUserId = this.arena.getCurrentUser()?.id || '';
 
-  constructor(private route: ActivatedRoute, private arena: ArenaService, private router: Router) {
+  constructor() {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
     const match = this.match;
     const currentId = this.arena.getCurrentUser()?.id || '';

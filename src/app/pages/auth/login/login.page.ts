@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -13,13 +13,14 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrls: ['./login.page.scss'],
 })
 export class LoginPage {
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
   email = '';
   password = '';
   showPassword = false;
   error = '';
   status = '';
-
-  constructor(private auth: AuthService, private router: Router) {}
 
   ionViewWillEnter() {
     this.status = '';

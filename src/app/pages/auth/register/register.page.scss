@@ -4,59 +4,81 @@
   --padding-bottom: calc(env(safe-area-inset-bottom) + var(--keyboard-offset, 0px) + 20px);
 }
 
-.ax-register-grid {
+.ax-auth {
+  padding-top: 60px;
+}
+
+.ax-auth-card {
+  width: min(420px, 100%);
+  padding: 26px;
+}
+
+.ax-auth-brand {
+  margin-bottom: 20px;
+}
+
+.ax-auth-brand h1 {
+  margin: 0;
+  letter-spacing: 0.08em;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.ax-auth-brand p {
+  margin-top: 8px;
+}
+
+.ax-logo {
+  width: 78px;
+  height: 78px;
+  margin: 0 auto 12px;
+}
+
+.ax-slider-viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.ax-slider {
+  display: flex;
+  width: 100%;
+  transition: transform 260ms ease;
+}
+
+.ax-slider.slide-two {
+  transform: translateX(-100%);
+}
+
+.ax-slide {
+  min-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.ax-slide-brand {
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.ax-slide-brand h2 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.ax-logo-mini {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 2px;
+}
+
+.ax-row-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-.ax-register-col {
-  display: grid;
-  gap: 10px;
-}
-
-.ax-input-wrap {
-  position: relative;
-}
-
-.ax-input-wrap .ax-input {
-  padding-right: 52px;
-}
-
-@media (max-width: 720px) {
-  .ax-auth {
-    place-items: start;
-    align-content: start;
-    min-height: 100%;
-    padding-top: 16px;
-    padding-bottom: 12px;
-  }
-
-  .ax-auth-card {
-    width: 100%;
-    max-width: 100%;
-    padding: 18px 14px 16px;
-  }
-
-  .ax-register-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .ax-register-col {
-    gap: 8px;
-  }
-
-  .ax-register-grid .ax-input {
-    font-size: 0.95rem;
-    min-height: 46px;
-    padding-left: 12px;
-    padding-right: 42px;
-  }
-
-  .ax-register-grid .ax-eye-btn {
-    right: 8px;
-    width: 28px;
-    height: 28px;
-  }
+.ax-register-btn {
+  margin-top: 0;
 }

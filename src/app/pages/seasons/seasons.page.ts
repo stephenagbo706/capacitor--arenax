@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, CommonModule, DatePipe, NgForOf, NgIf } from '@angular/common';
 import { IonContent } from '@ionic/angular/standalone';
 import { BehaviorSubject, combineLatest } from 'rxjs';
@@ -17,6 +17,8 @@ type GameFilter = SupportedGame | 'All';
   styleUrls: ['./seasons.page.scss'],
 })
 export class SeasonsPage {
+  private arena = inject(ArenaService);
+
   scoringRules = ['Win match = 10 points', 'Tournament win = 100 points', 'Runner-up = 50 points', 'Semi-final = 25 points'];
   gameFilters: GameFilter[] = ['All', 'FIFA', 'eFootball', 'Dream League Soccer'];
   activeSeasonId: string | null = null;
@@ -56,7 +58,7 @@ export class SeasonsPage {
 
   awards$ = this.currentSeason$.pipe(map((season) => season?.awards || []));
 
-  constructor(private arena: ArenaService) {
+  constructor() {
     this.seasons$
       .pipe(filter((list) => list.length > 0), take(1))
       .subscribe((list) => this.selectedSeasonId$.next(list[0].id));

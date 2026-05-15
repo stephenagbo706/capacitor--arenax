@@ -7,14 +7,19 @@
         <p>Join the elite esports challenge network.</p>
       </div>
 
-      <div class="ax-grid">
-        <div class="ax-register-grid">
-          <div class="ax-register-col">
-            <input class="ax-input" type="text" placeholder="Username" [(ngModel)]="username" />
-            <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
-          </div>
+      <div class="ax-slider-viewport">
+        <div class="ax-slider" [class.slide-two]="currentSlide === 1">
+          <section class="ax-grid ax-slide" aria-label="Registration step 1">
+            <input class="ax-input" type="text" placeholder="Full Name" [(ngModel)]="username" />
+            <input class="ax-input" type="email" placeholder="Email Address" [(ngModel)]="email" />
+            <button class="ax-btn ax-btn-primary ax-register-btn" type="button" (click)="nextSlide()">Next</button>
+          </section>
 
-          <div class="ax-register-col">
+          <section class="ax-grid ax-slide" aria-label="Registration step 2">
+            <div class="ax-slide-brand">
+               <h2>Secure Your Account</h2>
+            </div>
+
             <div class="ax-input-wrap">
               <input
                 class="ax-input"
@@ -32,6 +37,7 @@
                 <i class="fa-solid" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
               </button>
             </div>
+
             <div class="ax-input-wrap">
               <input
                 class="ax-input"
@@ -49,12 +55,17 @@
                 <i class="fa-solid" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
               </button>
             </div>
-          </div>
+
+            <div class="ax-row-actions">
+              <button class="ax-btn ax-btn-muted ax-back-btn" type="button" (click)="previousSlide()">Back</button>
+              <button class="ax-btn ax-btn-primary ax-register-btn" type="button" (click)="submit()">Register</button>
+            </div>
+          </section>
         </div>
-        <button class="ax-btn ax-btn-primary" (click)="submit()">Register</button>
-        <p class="ax-error" *ngIf="error">{{ error }}</p>
-        <p class="ax-status" *ngIf="status">{{ status }}</p>
       </div>
+
+      <p class="ax-error" *ngIf="error">{{ error }}</p>
+      <p class="ax-status" *ngIf="status">{{ status }}</p>
 
       <div class="ax-auth-links">
         <span>Already have an account? <a routerLink="/auth/login">Login</a></span>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -13,6 +13,9 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./matches.page.scss'],
 })
 export class MatchesPage {
+  private router = inject(Router);
+  private arena = inject(ArenaService);
+
   readonly totalSteps = 4;
   activeStep = 2;
 
@@ -39,8 +42,6 @@ export class MatchesPage {
   currentUserId = this.arena.getCurrentUser()?.id || '';
   statusMessage = '';
   errorMessage = '';
-
-  constructor(private router: Router, private arena: ArenaService) {}
 
   get progressWidth() {
     if (this.totalSteps <= 1) return '0%';

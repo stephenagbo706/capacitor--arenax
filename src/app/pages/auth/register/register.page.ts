@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -13,6 +13,9 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrls: ['./register.page.scss'],
 })
 export class RegisterPage {
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
   username = '';
   email = '';
   password = '';
@@ -21,8 +24,23 @@ export class RegisterPage {
   showConfirmPassword = false;
   error = '';
   status = '';
+  currentSlide = 0;
 
-  constructor(private auth: AuthService, private router: Router) {}
+  nextSlide() {
+    this.status = '';
+    if (!this.username.trim() || !this.email.trim()) {
+      this.error = 'Please enter your full name and email.';
+      return;
+    }
+    this.error = '';
+    this.currentSlide = 1;
+  }
+
+  previousSlide() {
+    this.status = '';
+    this.error = '';
+    this.currentSlide = 0;
+  }
 
   scrollFieldIntoView(event: FocusEvent) {
     const target = event.target as HTMLElement | null;

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DatePipe, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,9 @@ import { ChatMessage, ChatThread, UserProfile } from '../../core/models/arena.mo
   styleUrls: ['./chat.page.scss'],
 })
 export class ChatPage implements OnInit {
+  private route = inject(ActivatedRoute);
+  private arena = inject(ArenaService);
+
   chatId = '';
   message = '';
   currentUserId = this.arena.getCurrentUser()?.id || '';
@@ -25,7 +28,7 @@ export class ChatPage implements OnInit {
   longPressTimer?: any;
   toast?: string;
 
-  constructor(private route: ActivatedRoute, private arena: ArenaService) {
+  constructor() {
     this.chatId = this.route.snapshot.paramMap.get('id') || '';
   }
 

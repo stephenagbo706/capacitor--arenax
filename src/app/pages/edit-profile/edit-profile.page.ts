@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -12,6 +12,9 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./edit-profile.page.scss'],
 })
 export class EditProfilePage {
+  private arena = inject(ArenaService);
+  private router = inject(Router);
+
   username = '';
   avatar = '';
   avatarPreview = '';
@@ -20,7 +23,7 @@ export class EditProfilePage {
   fifaId = '';
   codmId = '';
 
-  constructor(private arena: ArenaService, private router: Router) {
+  constructor() {
     const user = this.arena.getCurrentUser();
     if (user) {
       this.username = user.username;

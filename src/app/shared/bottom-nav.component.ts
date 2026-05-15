@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'ax-bottom-nav',
+  selector: 'app-bottom-nav',
   standalone: true,
   imports: [RouterLink],
   template: `
@@ -31,7 +31,8 @@ import { Router, RouterLink } from '@angular/router';
   `,
 })
 export class BottomNavComponent {
-  constructor(private router: Router) {}
+  private router = inject(Router);
+
 
   isActive(path: string) {
     return this.router.url.startsWith(path);

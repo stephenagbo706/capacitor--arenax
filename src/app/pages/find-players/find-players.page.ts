@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { DecimalPipe, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,6 +14,9 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
   styleUrls: ['./find-players.page.scss'],
 })
 export class FindPlayersPage {
+  private arena = inject(ArenaService);
+  private router = inject(Router);
+
   players$ = this.arena.users$;
   searchTerm = '';
   modalOpen = false;
@@ -24,8 +27,6 @@ export class FindPlayersPage {
   matchTime = 'Tonight · 9:30 PM';
   statusMessage = '';
   errorMessage = '';
-
-  constructor(private arena: ArenaService, private router: Router) {}
 
   get currentUserId() {
     return this.arena.getCurrentUser()?.id || '';

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import {
   ArenaActionResult,
@@ -33,6 +33,8 @@ const uid = () => crypto.randomUUID();
 
 @Injectable({ providedIn: 'root' })
 export class ArenaService {
+  private automation = inject(SeasonAutomationService);
+
   private state: ArenaState;
 
   users$ = new BehaviorSubject<UserProfile[]>([]);
@@ -47,7 +49,7 @@ export class ArenaService {
   transactions$ = new BehaviorSubject<TransactionItem[]>([]);
   seasons$ = new BehaviorSubject<Season[]>([]);
 
-  constructor(private automation: SeasonAutomationService) {
+  constructor() {
     this.state = this.loadState();
     this.hydrateSubjects();
     this.ensureLatestSeason();

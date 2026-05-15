@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, CommonModule, DatePipe, NgForOf, TitleCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IonContent, IonToggle } from '@ionic/angular/standalone';
@@ -13,13 +13,13 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
   styleUrls: ['./wallet.page.scss'],
 })
 export class WalletPage {
+  private arena = inject(ArenaService);
+
   user$ = this.arena.currentUser$;
   transactions$ = this.arena.transactions$;
   nairaBalance = 0;
   usdBalance = 0;
   preferredCurrency: 'NGN' | 'USD' = this.loadPreferredCurrency();
-
-  constructor(private arena: ArenaService) {}
 
   setPreferredCurrency(currency: WalletPage['preferredCurrency']) {
     this.preferredCurrency = currency;

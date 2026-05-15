@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, CommonModule, DecimalPipe, NgForOf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -14,6 +14,8 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
   styleUrls: ['./profile.page.scss'],
 })
 export class ProfilePage {
+  private arena = inject(ArenaService);
+
   user$ = this.arena.currentUser$;
   matches$ = this.arena.matches$;
   users$ = this.arena.users$;
@@ -23,8 +25,6 @@ export class ProfilePage {
     'assets/ax-ui/summit-section.jpg',
     'assets/ax-ui/tournament-area.jpg',
   ];
-
-  constructor(private arena: ArenaService) {}
 
   cycleProfileIcon(user: UserProfile) {
     const current = this.avatarCycle.indexOf(user.avatar);

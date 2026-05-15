@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { DatePipe, DecimalPipe, NgFor, NgIf, TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -13,11 +13,11 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./admin-dashboard.page.scss'],
 })
 export class AdminDashboardPage {
+  private arena = inject(ArenaService);
+
   actionMessage = '';
   actionError = '';
   processingMatchId = '';
-
-  constructor(private arena: ArenaService) {}
 
   get currentUser() {
     return this.arena.currentUser$.value;

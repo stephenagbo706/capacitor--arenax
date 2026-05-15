@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AsyncPipe, DecimalPipe, NgIf } from '@angular/common';
 import { IonContent } from '@ionic/angular/standalone';
@@ -14,12 +14,16 @@ import { ArenaService } from '../../core/services/arena.service';
   styleUrls: ['./match-details.page.scss'],
 })
 export class MatchDetailsPage {
+  private route = inject(ActivatedRoute);
+  private arena = inject(ArenaService);
+  private router = inject(Router);
+
   matchId = '';
   currentUserId = this.arena.getCurrentUser()?.id || '';
   error = '';
   clock$ = timer(0, 1000);
 
-  constructor(private route: ActivatedRoute, private arena: ArenaService, private router: Router) {
+  constructor() {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
   }
 

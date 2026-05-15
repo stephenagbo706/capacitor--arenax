@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -15,14 +15,15 @@ import { ChatThread, FriendRequest, UserProfile } from '../../core/models/arena.
   styleUrls: ['./chat-list.page.scss'],
 })
 export class ChatListPage {
+  private arena = inject(ArenaService);
+  private router = inject(Router);
+
   chats$ = this.arena.chats$;
   users$ = this.arena.users$;
   friendRequests$ = this.arena.friendRequests$;
   searchTerm = '';
   statusMessage = '';
   errorMessage = '';
-
-  constructor(private arena: ArenaService, private router: Router) {}
 
   get currentUserId() {
     return this.arena.getCurrentUser()?.id || '';

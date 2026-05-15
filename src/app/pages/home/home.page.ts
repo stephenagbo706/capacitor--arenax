@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { AsyncPipe, CommonModule, NgForOf, NgIf } from '@angular/common';
@@ -13,12 +13,12 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage {
+  private arena = inject(ArenaService);
+
   user$ = this.arena.currentUser$;
   matches$ = this.arena.matches$;
   players$ = this.arena.users$;
   notifications$ = this.arena.notifications$;
-
-  constructor(private arena: ArenaService) {}
 
   get activeMatches() {
     const nowMs = Date.now();
