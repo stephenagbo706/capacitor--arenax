@@ -20,6 +20,8 @@ import {
   Currency,
 } from '../models/arena.models';
 import { SeasonAutomationService, FirestoreWriteFn } from './season-automation.service';
+import { RealtimeService } from './realtime.service';
+import { InvitePlayerPayload, MatchUpdatePayload, SendMessagePayload } from '../models/realtime.models';
 
 const STORAGE_KEY = 'arenax_state_v2';
 const DEFAULT_CHAT_TEXTS = new Set([
@@ -34,6 +36,7 @@ const uid = () => crypto.randomUUID();
 @Injectable({ providedIn: 'root' })
 export class ArenaService {
   private automation = inject(SeasonAutomationService);
+  private realtime = inject(RealtimeService);
 
   private state: ArenaState;
 
@@ -53,6 +56,18 @@ export class ArenaService {
     this.state = this.loadState();
     this.hydrateSubjects();
     this.ensureLatestSeason();
+    this.bindRealtimeEvents();
+    this.currentUser$.subscribe((user) => {
+      if (!user) {
+        this.realtime.disconnect();
+        return;
+      }
+      this.realtime.connect({
+        userId: user.id,
+        email: user.email,
+        username: user.username,
+      });
+    });
   }
 
   login(email: string, password: string) {
@@ -298,6 +313,7 @@ export class ArenaService {
 
     this.persist();
     this.hydrateSubjects();
+    this.emitMatchRealtimeUpdate(match, 'created');
     return { ok: true, matchId: match.id, roomCode };
   }
 
@@ -341,6 +357,7 @@ export class ArenaService {
 
     this.persist();
     this.hydrateSubjects();
+    this.emitMatchRealtimeUpdate(match, 'started');
     return { ok: true };
   }
 
@@ -396,6 +413,15 @@ export class ArenaService {
       message: `Challenge sent to ${this.getUser(toUserId)?.username || 'player'} · ${game} · $${stake}`,
       createdAt: now(),
       read: false,
+    });
+    this.realtime.invitePlayer({
+      fromUserId: current.id,
+      toUserId,
+      game,
+      matchId: created.matchId,
+      roomId: created.roomCode,
+      message: `${current.username} invited you to a ${game} challenge.`,
+      sentAt: now(),
     });
 
     this.persist();
@@ -485,6 +511,7 @@ export class ArenaService {
 
     this.persist();
     this.hydrateSubjects();
+    this.emitMatchRealtimeUpdate(match, 'result_submitted', winnerId);
     return { ok: true };
   }
 
@@ -934,6 +961,11 @@ export class ArenaService {
       participantIds: [current.id, userId],
       messages: [],
     });
+    this.realtime.joinRoom({
+      roomId: chatId,
+      roomType: 'private',
+      userId: current.id,
+    });
     this.persist();
     this.hydrateSubjects();
     return chatId;
@@ -982,6 +1014,11 @@ export class ArenaService {
 
     this.persist();
     this.hydrateSubjects();
+    this.realtime.joinRoom({
+      roomId: chatId,
+      roomType: 'team',
+      userId: current.id,
+    });
     return { ok: true, message: 'Tournament group chat joined.', redirectTo: `/chat/${chatId}` };
   }
 
@@ -1015,6 +1052,26 @@ export class ArenaService {
       this.pushIncomingChatNotification(chat.id, current.id, text || 'Sent you a message.', participantId);
     }
     setTimeout(() => this.markDelivered(chatId, newMessage.id), 400);
+    const roomType = chatId.startsWith('tournament-chat-') ? 'team' : chat.participantIds.length > 2 ? 'lobby' : 'private';
+    const payload: SendMessagePayload = {
+      chatId,
+      roomId: chatId,
+      senderId: current.id,
+      text,
+      image: message.image,
+      replyToId: message.replyToId,
+      sentAt: newMessage.sentAt,
+      messageId: newMessage.id,
+      scope: roomType === 'team' ? 'team' : roomType === 'private' ? 'private' : 'room',
+      recipientUserId: roomType === 'private' ? chat.participantIds.find((id) => id !== current.id) : undefined,
+    };
+    if (roomType === 'team') {
+      this.realtime.sendTeamMessage(payload);
+    } else if (roomType === 'private') {
+      this.realtime.sendPrivateMessage(payload);
+    } else {
+      this.realtime.sendMessage(payload);
+    }
     this.persist();
     this.hydrateSubjects();
     return newMessage.id;
@@ -1196,7 +1253,15 @@ export class ArenaService {
   getChatForCurrentUser(chatId: string) {
     const currentUserId = this.state.currentUserId;
     if (!currentUserId) return undefined;
-    return this.state.chats.find((chat) => chat.id === chatId && chat.participantIds.includes(currentUserId));
+    const chat = this.state.chats.find((item) => item.id === chatId && item.participantIds.includes(currentUserId));
+    if (chat) {
+      this.realtime.joinRoom({
+        roomId: chat.id,
+        roomType: chat.id.startsWith('tournament-chat-') ? 'team' : chat.participantIds.length > 2 ? 'lobby' : 'private',
+        userId: currentUserId,
+      });
+    }
+    return chat;
   }
 
   getGlobalRank(userId: string) {
@@ -1218,6 +1283,121 @@ export class ArenaService {
     const confidence = 0.82;
     const decision = confidence >= 0.75 ? 'verified' : 'rejected';
     return { ok: true, decision, confidence };
+  }
+
+  private bindRealtimeEvents() {
+    this.realtime.message$.subscribe((payload) => {
+      this.applyIncomingRealtimeMessage(payload);
+    });
+
+    this.realtime.matchUpdate$.subscribe((payload) => {
+      this.applyIncomingMatchUpdate(payload);
+    });
+
+    this.realtime.invite$.subscribe((payload) => {
+      this.applyIncomingInvite(payload);
+    });
+
+    this.realtime.notification$.subscribe((payload) => {
+      const currentUserId = this.state.currentUserId;
+      if (payload.userId && payload.userId !== currentUserId) return;
+      this.state.notifications.unshift({
+        id: payload.id,
+        type: payload.type === 'invite' ? 'friend' : payload.type === 'match' ? 'match' : 'system',
+        message: payload.message,
+        createdAt: payload.createdAt,
+        read: false,
+        userId: payload.userId,
+      });
+      this.persist();
+      this.hydrateSubjects();
+    });
+  }
+
+  private applyIncomingRealtimeMessage(payload: SendMessagePayload) {
+    const current = this.getCurrentUser();
+    if (!current) return;
+    if (payload.senderId === current.id) return;
+
+    let chat = this.state.chats.find((item) => item.id === payload.chatId);
+    if (!chat) {
+      chat = {
+        id: payload.chatId,
+        participantIds: [payload.senderId, current.id],
+        messages: [],
+      };
+      this.state.chats.unshift(chat);
+    }
+
+    if (!chat.participantIds.includes(current.id)) {
+      chat.participantIds = [...new Set([...chat.participantIds, current.id])];
+    }
+    if (!chat.participantIds.includes(payload.senderId)) {
+      chat.participantIds = [...new Set([...chat.participantIds, payload.senderId])];
+    }
+
+    if (chat.messages.some((item) => item.id === payload.messageId)) return;
+
+    chat.messages.push({
+      id: payload.messageId,
+      senderId: payload.senderId,
+      text: payload.text,
+      image: payload.image,
+      sentAt: payload.sentAt,
+      status: 'delivered',
+      replyToId: payload.replyToId,
+    });
+
+    this.pushIncomingChatNotification(payload.chatId, payload.senderId, payload.text || 'Sent you a message.', current.id);
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  private applyIncomingMatchUpdate(payload: MatchUpdatePayload) {
+    const match = this.state.matches.find((item) => item.id === payload.matchId);
+    if (!match) return;
+    if (payload.status) match.status = payload.status as Match['status'];
+    if (payload.winnerId) match.winnerId = payload.winnerId;
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  private applyIncomingInvite(payload: InvitePlayerPayload) {
+    const currentUserId = this.state.currentUserId;
+    if (!currentUserId || payload.toUserId !== currentUserId) return;
+    this.state.notifications.unshift({
+      id: uid(),
+      type: 'friend',
+      message: payload.message,
+      createdAt: payload.sentAt,
+      read: false,
+      userId: payload.toUserId,
+    });
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  private emitMatchRealtimeUpdate(
+    match: Match,
+    action: MatchUpdatePayload['action'],
+    winnerId?: string
+  ) {
+    const current = this.getCurrentUser();
+    if (!current) return;
+    this.realtime.joinRoom({
+      roomId: match.id,
+      roomType: 'match',
+      userId: current.id,
+    });
+    this.realtime.sendMatchUpdate({
+      matchId: match.id,
+      roomId: match.id,
+      action,
+      actorUserId: current.id,
+      status: match.status,
+      winnerId,
+      timestamp: now(),
+    });
   }
 
   private hydrateSubjects() {

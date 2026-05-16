@@ -4,6 +4,7 @@
 
 export const environment = {
   production: false,
+  socketUrl: 'http://localhost:3000',
   firebase: {
     apiKey: 'AIzaSyB7z1HkruJbwmTgSGq0nWjkVdEIxHVY_7c',
     authDomain: 'arenax-58f58.firebaseapp.com',

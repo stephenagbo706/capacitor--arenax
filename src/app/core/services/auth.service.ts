@@ -17,12 +17,14 @@ import {
 } from 'firebase/auth';
 import { environment } from '../../../environments/environment';
 import { ArenaService } from './arena.service';
+import { RealtimeService } from './realtime.service';
 
 type AuthResult = { ok: true } | { ok: false; message: string };
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private arena = inject(ArenaService);
+  private realtime = inject(RealtimeService);
 
   private readonly auth: Auth | null;
   private readonly ready: Promise<void>;
@@ -107,6 +109,7 @@ export class AuthService {
       await signOut(this.auth);
     } else {
       this.arena.logout();
+      this.realtime.disconnect();
     }
   }
 
@@ -134,20 +137,29 @@ export class AuthService {
     });
   }
 
-  private syncArenaUser(user: User | null, usernameOverride?: string) {
+  private async syncArenaUser(user: User | null, usernameOverride?: string) {
     if (!user) {
       this.arena.logout();
+      this.realtime.disconnect();
       return;
     }
 
     const email = user.email?.trim().toLowerCase();
     if (!email) {
       this.arena.logout();
+      this.realtime.disconnect();
       return;
     }
 
     const username = usernameOverride || user.displayName || email.split('@')[0] || 'ArenaX Player';
     this.arena.syncFromAuthUser({ uid: user.uid, email, username });
+    const token = await user.getIdToken().catch(() => '');
+    this.realtime.connect({
+      userId: user.uid,
+      email,
+      username,
+      token: token || undefined,
+    });
   }
 
   private hasFirebaseConfig() {
