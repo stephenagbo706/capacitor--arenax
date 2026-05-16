@@ -29,6 +29,16 @@ const DEFAULT_CHAT_TEXTS = new Set([
   'Ready for the rematch tonight?',
   'Let me wrap this match and I will join.',
 ]);
+const DEMO_USER_IDENTIFIERS = new Set([
+  'shadow@arenax.app',
+  'nova@arenax.app',
+  'blaze@arenax.app',
+  'community@arenax.app',
+  'ShadowLynx',
+  'NovaStrike',
+  'BlazeWolf',
+  'ArenaX Community',
+]);
 
 const now = () => new Date().toISOString();
 const uid = () => crypto.randomUUID();
@@ -1572,13 +1582,13 @@ export class ArenaService {
 
   private loadState(): ArenaState {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return this.seedState();
+    if (!raw) return this.removeDemoUsers(this.seedState());
 
     try {
       const parsed = JSON.parse(raw) as Partial<ArenaState>;
-      return this.normalizeState(parsed);
+      return this.removeDemoUsers(this.normalizeState(parsed));
     } catch {
-      return this.seedState();
+      return this.removeDemoUsers(this.seedState());
     }
   }
 
@@ -1703,6 +1713,54 @@ export class ArenaService {
     });
 
     return normalized;
+  }
+
+  private removeDemoUsers(state: ArenaState): ArenaState {
+    const currentUserId = state.currentUserId;
+    const removedIds = new Set<string>();
+    const users = state.users.filter((user) => {
+      const isDemo =
+        DEMO_USER_IDENTIFIERS.has(user.email) ||
+        DEMO_USER_IDENTIFIERS.has(user.username);
+      if (isDemo && user.id !== currentUserId) {
+        removedIds.add(user.id);
+        return false;
+      }
+      return true;
+    });
+
+    if (!removedIds.size) return state;
+
+    const keepUser = (id?: string) => !!id && !removedIds.has(id);
+
+    return {
+      ...state,
+      users,
+      credentials: Object.fromEntries(Object.entries(state.credentials).filter(([userId]) => !removedIds.has(userId))),
+      currentUserId: keepUser(state.currentUserId) ? state.currentUserId : undefined,
+      friendRequests: state.friendRequests.filter((item) => keepUser(item.fromUserId) && keepUser(item.toUserId)),
+      challenges: state.challenges.filter((item) => keepUser(item.fromUserId) && keepUser(item.toUserId)),
+      matches: state.matches.filter((item) => keepUser(item.player1Id) && (!item.player2Id || keepUser(item.player2Id))),
+      tournaments: state.tournaments
+        .map((tournament) => ({
+          ...tournament,
+          participants: tournament.participants.filter((participantId) => keepUser(participantId)),
+        }))
+        .filter((tournament) => tournament.participants.length > 0),
+      chats: state.chats
+        .map((chat) => ({
+          ...chat,
+          participantIds: chat.participantIds.filter((participantId) => keepUser(participantId)),
+          messages: chat.messages.filter((message) => keepUser(message.senderId)),
+        }))
+        .filter((chat) => chat.participantIds.length > 0),
+      notifications: state.notifications.filter((item) => !item.userId || keepUser(item.userId)),
+      spotlightPosts: state.spotlightPosts.map((post) => ({
+        ...post,
+        likeUserIds: (post.likeUserIds || []).filter((userId) => keepUser(userId)),
+        comments: (post.comments || []).filter((comment) => keepUser(comment.userId)),
+      })),
+    };
   }
 
   private hashPassword(password: string) {
