@@ -987,15 +987,7 @@ export class ArenaService {
       chat = {
         id: chatId,
         participantIds: [...new Set(tournament.participants)],
-        messages: [
-          {
-            id: uid(),
-            senderId: current.id,
-            text: `Welcome to ${tournament.title} group chat. Respect the rules and keep match updates here.`,
-            sentAt: now(),
-            status: 'delivered',
-          },
-        ],
+        messages: [],
       };
       this.state.chats.unshift(chat);
     } else {
@@ -1096,33 +1088,6 @@ export class ArenaService {
     const message = chat.messages.find((m) => m.id === messageId);
     if (!message) return;
     message.reaction = message.reaction === reaction ? undefined : reaction;
-    this.persist();
-    this.hydrateSubjects();
-  }
-
-  simulateReply(chatId: string) {
-    const chat = this.state.chats.find((c) => c.id === chatId);
-    if (!chat) return;
-    const currentUserId = this.getCurrentUser()?.id;
-    if (currentUserId && !chat.participantIds.includes(currentUserId)) return;
-    const opponentId = chat.participantIds.find((id) => id !== currentUserId) || chat.participantIds[0];
-    const sampleReplies = [
-      'On my way. Warming up the squad.',
-      'Give me two mins, finishing a match.',
-      'Send the lobby code when ready.',
-    ];
-    const replyText = sampleReplies[Math.floor(Math.random() * sampleReplies.length)];
-    chat.messages.push({
-      id: uid(),
-      senderId: opponentId,
-      text: replyText,
-      sentAt: now(),
-      status: 'delivered',
-    });
-    if (currentUserId) {
-      this.markAllUserMessagesSeen(chatId, currentUserId);
-      this.pushIncomingChatNotification(chat.id, opponentId, replyText, currentUserId);
-    }
     this.persist();
     this.hydrateSubjects();
   }

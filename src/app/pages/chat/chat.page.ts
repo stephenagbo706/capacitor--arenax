@@ -90,12 +90,6 @@ export class ChatPage implements OnInit {
     this.message = '';
     this.attachmentData = undefined;
     this.replyingTo = null;
-    this.typing = true;
-    setTimeout(() => {
-      this.typing = false;
-      this.arena.simulateReply(this.chatId);
-      this.markThreadSeen();
-    }, 1200);
     this.markThreadSeen();
   }
 
