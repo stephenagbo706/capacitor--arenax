@@ -2,13 +2,13 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, IonContent, FormsModule, RouterLink],
+  imports: [CommonModule, IonContent, IonGrid, IonRow, IonCol, IonButton, FormsModule, RouterLink],
   templateUrl: './register.page.html',
   styleUrls: ['./register.page.scss'],
 })

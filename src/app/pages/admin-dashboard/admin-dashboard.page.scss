@@ -1,9 +1,9 @@
 @use '../home/home.page.scss' as *;
 
 .ax-admin {
-  max-width: 720px;
+  max-width: 72rem;
   margin: 0 auto;
-  padding-bottom: 42px;
+  padding-bottom: calc(3rem + env(safe-area-inset-bottom));
 }
 
 .admin-header {
@@ -33,9 +33,9 @@
 
 .admin-summary {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
 }
 
 .admin-summary article {
@@ -90,15 +90,16 @@
 }
 
 .proof-row {
-  margin-top: 8px;
+  margin-top: 0.5rem;
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 10px;
+  grid-template-columns: minmax(0, 7.5rem) 1fr;
+  gap: 0.625rem;
 }
 
 .proof-row img {
-  width: 120px;
-  height: 78px;
+  width: 100%;
+  max-width: 7.5rem;
+  aspect-ratio: 20 / 13;
   border-radius: 10px;
   object-fit: cover;
   border: 1px solid rgba(112, 168, 255, 0.3);
@@ -126,7 +127,7 @@
 
 .verify-actions {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
@@ -157,7 +158,7 @@
 
 .admin-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
   gap: 12px;
 }
 
@@ -227,20 +228,13 @@
 }
 
 @media (max-width: 860px) {
-  .admin-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .admin-grid {
-    grid-template-columns: 1fr;
-  }
-
   .proof-row {
     grid-template-columns: 1fr;
   }
 
   .proof-row img {
     width: 100%;
-    height: 140px;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
   }
 }

@@ -1,14 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { DatePipe, DecimalPipe, NgFor, NgIf, TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { Match, Tournament, TransactionItem, UserProfile } from '../../core/models/arena.models';
 import { ArenaService } from '../../core/services/arena.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [IonContent, RouterLink, NgIf, NgFor, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe],
+  imports: [IonContent, IonGrid, IonRow, IonCol, RouterLink, NgIf, NgFor, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe],
   templateUrl: './admin-dashboard.page.html',
   styleUrls: ['./admin-dashboard.page.scss'],
 })

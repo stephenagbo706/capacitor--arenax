@@ -1,5 +1,8 @@
 <ion-content [fullscreen]="true">
   <div class="ax-screen ax-fade-in">
+    <ion-grid fixed>
+      <ion-row class="ion-justify-content-center">
+        <ion-col size="12" size-lg="10" size-xl="8">
     <ng-container *ngIf="chat as activeChat; else privateOnly">
       <header class="ax-row">
         <div class="ax-row">
@@ -126,5 +129,8 @@
     <ng-template #privateOnly>
       <div class="ax-empty-chat">This chat is private. Only participants can view messages.</div>
     </ng-template>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
   </div>
 </ion-content>

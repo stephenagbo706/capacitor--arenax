@@ -1,39 +1,45 @@
 <ion-content [fullscreen]="true">
   <div class="ax-screen ax-auth">
-    <div class="ax-auth-card ax-glass ax-fade-in">
-      <div class="ax-auth-brand">
-        <img class="ax-logo" src="assets/ax-ui/logo.png" alt="ArenaX logo" />
-        <h1>ARENA<span>X</span></h1>
-        <p>Enter the Arena. Prove Your Worth.</p>
-      </div>
+    <ion-grid fixed>
+      <ion-row class="ion-justify-content-center">
+        <ion-col size="12" size-sm="11" size-md="8" size-lg="6" size-xl="5">
+          <div class="ax-auth-card ax-glass ax-fade-in">
+            <div class="ax-auth-brand">
+              <img class="ax-logo" src="assets/ax-ui/logo.png" alt="ArenaX logo" />
+              <h1>ARENA<span>X</span></h1>
+              <p>Enter the Arena. Prove Your Worth.</p>
+            </div>
 
-      <div class="ax-grid">
-        <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
-        <div class="ax-input-wrap">
-          <input
-            class="ax-input"
-            [type]="showPassword ? 'text' : 'password'"
-            placeholder="Password"
-            [(ngModel)]="password"
-          />
-          <button
-            class="ax-eye-btn"
-            type="button"
-            (click)="showPassword = !showPassword"
-            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
-          >
-            <i class="fa-solid" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
-          </button>
-        </div>
-        <button class="ax-btn ax-btn-primary" (click)="submit()">Login</button>
-        <p class="ax-error" *ngIf="error">{{ error }}</p>
-        <p class="ax-status" *ngIf="status">{{ status }}</p>
-      </div>
+            <div class="ax-grid">
+              <input class="ax-input" type="email" placeholder="Email" [(ngModel)]="email" />
+              <div class="ax-input-wrap">
+                <input
+                  class="ax-input"
+                  [type]="showPassword ? 'text' : 'password'"
+                  placeholder="Password"
+                  [(ngModel)]="password"
+                />
+                <button
+                  class="ax-eye-btn"
+                  type="button"
+                  (click)="showPassword = !showPassword"
+                  [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                >
+                  <i class="fa-solid" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+                </button>
+              </div>
+              <ion-button expand="block" class="ax-btn ax-btn-primary" (click)="submit()">Login</ion-button>
+              <p class="ax-error" *ngIf="error">{{ error }}</p>
+              <p class="ax-status" *ngIf="status">{{ status }}</p>
+            </div>
 
-      <div class="ax-auth-links">
-        <a routerLink="/auth/forgot">Forgot Password?</a>
-        <span>New here? <a routerLink="/auth/register">Create account</a></span>
-      </div>
-    </div>
+            <div class="ax-auth-links">
+              <a routerLink="/auth/forgot">Forgot Password?</a>
+              <span>New here? <a routerLink="/auth/register">Create account</a></span>
+            </div>
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
   </div>
 </ion-content>

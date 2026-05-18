@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { DatePipe, NgForOf, NgIf } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ArenaService } from '../../core/services/arena.service';
@@ -9,7 +9,7 @@ import { Tournament } from '../../core/models/arena.models';
 @Component({
   selector: 'app-tournaments',
   standalone: true,
-  imports: [IonContent, DatePipe, NgForOf, NgIf, RouterLink, BottomNavComponent],
+  imports: [IonContent, IonGrid, IonRow, IonCol, DatePipe, NgForOf, NgIf, RouterLink, BottomNavComponent],
   templateUrl: './tournaments.page.html',
   styleUrls: ['./tournaments.page.scss'],
 })

@@ -2,14 +2,14 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DatePipe, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { ArenaService } from '../../core/services/arena.service';
 import { ChatMessage, ChatThread, UserProfile } from '../../core/models/arena.models';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [IonContent, NgForOf, NgIf, DatePipe, FormsModule],
+  imports: [IonContent, IonGrid, IonRow, IonCol, NgForOf, NgIf, DatePipe, FormsModule],
   templateUrl: './chat.page.html',
   styleUrls: ['./chat.page.scss'],
 })

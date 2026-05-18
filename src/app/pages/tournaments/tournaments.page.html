@@ -1,4 +1,7 @@
 <ion-content [fullscreen]="true">
+  <ion-grid fixed>
+    <ion-row class="ion-justify-content-center">
+      <ion-col size="12" size-xl="10">
   <div class="tourney">
     <header class="tourney__head">
       <h1>Tournaments</h1>
@@ -97,6 +100,9 @@
       </article>
     </section>
   </div>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 
   <div class="ax-modal" *ngIf="confirmOpen && selectedTournament">
     <div class="ax-modal-card ax-glass">

@@ -1,75 +1,81 @@
 <ion-content [fullscreen]="true">
   <div class="ax-screen ax-auth">
-    <div class="ax-auth-card ax-glass ax-fade-in">
-      <div class="ax-auth-brand">
-        <img class="ax-logo" src="assets/ax-ui/logo.png" alt="ArenaX logo" />
-        <h1>Create Arena<span>X</span></h1>
-        <p>Join the elite esports challenge network.</p>
-      </div>
-
-      <div class="ax-slider-viewport">
-        <div class="ax-slider" [class.slide-two]="currentSlide === 1">
-          <section class="ax-grid ax-slide" aria-label="Registration step 1">
-            <input class="ax-input" type="text" placeholder="Full Name" [(ngModel)]="username" />
-            <input class="ax-input" type="email" placeholder="Email Address" [(ngModel)]="email" />
-            <button class="ax-btn ax-btn-primary ax-register-btn" type="button" (click)="nextSlide()">Next</button>
-          </section>
-
-          <section class="ax-grid ax-slide" aria-label="Registration step 2">
-            <div class="ax-slide-brand">
-               <h2>Secure Your Account</h2>
+    <ion-grid fixed>
+      <ion-row class="ion-justify-content-center">
+        <ion-col size="12" size-sm="11" size-md="8" size-lg="6" size-xl="5">
+          <div class="ax-auth-card ax-glass ax-fade-in">
+            <div class="ax-auth-brand">
+              <img class="ax-logo" src="assets/ax-ui/logo.png" alt="ArenaX logo" />
+              <h1>Create Arena<span>X</span></h1>
+              <p>Join the elite esports challenge network.</p>
             </div>
 
-            <div class="ax-input-wrap">
-              <input
-                class="ax-input"
-                [type]="showPassword ? 'text' : 'password'"
-                placeholder="Password"
-                [(ngModel)]="password"
-                (focus)="scrollFieldIntoView($event)"
-              />
-              <button
-                class="ax-eye-btn"
-                type="button"
-                (click)="showPassword = !showPassword"
-                [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
-              >
-                <i class="fa-solid" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
-              </button>
+            <div class="ax-slider-viewport">
+              <div class="ax-slider" [class.slide-two]="currentSlide === 1">
+                <section class="ax-grid ax-slide" aria-label="Registration step 1">
+                  <input class="ax-input" type="text" placeholder="Full Name" [(ngModel)]="username" />
+                  <input class="ax-input" type="email" placeholder="Email Address" [(ngModel)]="email" />
+                  <ion-button expand="block" class="ax-btn ax-btn-primary ax-register-btn" type="button" (click)="nextSlide()">Next</ion-button>
+                </section>
+
+                <section class="ax-grid ax-slide" aria-label="Registration step 2">
+                  <div class="ax-slide-brand">
+                     <h2>Secure Your Account</h2>
+                  </div>
+
+                  <div class="ax-input-wrap">
+                    <input
+                      class="ax-input"
+                      [type]="showPassword ? 'text' : 'password'"
+                      placeholder="Password"
+                      [(ngModel)]="password"
+                      (focus)="scrollFieldIntoView($event)"
+                    />
+                    <button
+                      class="ax-eye-btn"
+                      type="button"
+                      (click)="showPassword = !showPassword"
+                      [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                    >
+                      <i class="fa-solid" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+                    </button>
+                  </div>
+
+                  <div class="ax-input-wrap">
+                    <input
+                      class="ax-input"
+                      [type]="showConfirmPassword ? 'text' : 'password'"
+                      placeholder="Confirm Password"
+                      [(ngModel)]="confirmPassword"
+                      (focus)="scrollFieldIntoView($event)"
+                    />
+                    <button
+                      class="ax-eye-btn"
+                      type="button"
+                      (click)="showConfirmPassword = !showConfirmPassword"
+                      [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
+                    >
+                      <i class="fa-solid" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
+                    </button>
+                  </div>
+
+                  <div class="ax-row-actions">
+                    <button class="ax-btn ax-btn-muted ax-back-btn" type="button" (click)="previousSlide()">Back</button>
+                    <ion-button expand="block" class="ax-btn ax-btn-primary ax-register-btn" type="button" (click)="submit()">Register</ion-button>
+                  </div>
+                </section>
+              </div>
             </div>
 
-            <div class="ax-input-wrap">
-              <input
-                class="ax-input"
-                [type]="showConfirmPassword ? 'text' : 'password'"
-                placeholder="Confirm Password"
-                [(ngModel)]="confirmPassword"
-                (focus)="scrollFieldIntoView($event)"
-              />
-              <button
-                class="ax-eye-btn"
-                type="button"
-                (click)="showConfirmPassword = !showConfirmPassword"
-                [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
-              >
-                <i class="fa-solid" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
-              </button>
+            <p class="ax-error" *ngIf="error">{{ error }}</p>
+            <p class="ax-status" *ngIf="status">{{ status }}</p>
+
+            <div class="ax-auth-links">
+              <span>Already have an account? <a routerLink="/auth/login">Login</a></span>
             </div>
-
-            <div class="ax-row-actions">
-              <button class="ax-btn ax-btn-muted ax-back-btn" type="button" (click)="previousSlide()">Back</button>
-              <button class="ax-btn ax-btn-primary ax-register-btn" type="button" (click)="submit()">Register</button>
-            </div>
-          </section>
-        </div>
-      </div>
-
-      <p class="ax-error" *ngIf="error">{{ error }}</p>
-      <p class="ax-status" *ngIf="status">{{ status }}</p>
-
-      <div class="ax-auth-links">
-        <span>Already have an account? <a routerLink="/auth/login">Login</a></span>
-      </div>
-    </div>
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
   </div>
 </ion-content>
