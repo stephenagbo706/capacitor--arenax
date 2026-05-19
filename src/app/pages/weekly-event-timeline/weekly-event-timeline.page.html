@@ -1,0 +1,21 @@
+<ion-content [fullscreen]="true">
+  <section class="timeline-shell">
+    <header class="glass-card hero">
+      <p class="label">ArenaX Event Planner</p>
+      <h1>Weekly Esports Event Timeline</h1>
+      <p class="sub">Full season flow from qualification to final showcase.</p>
+    </header>
+
+    <section class="glass-card timeline-wrap">
+      <article class="timeline-item" *ngFor="let item of timeline">
+        <span class="phase">{{ item.phase }}</span>
+        <div>
+          <strong>{{ item.event }}</strong>
+          <p>{{ item.start | date:'MMM d' }} - {{ item.end | date:'MMM d, y' }}</p>
+        </div>
+      </article>
+    </section>
+  </section>
+
+  <app-bottom-nav></app-bottom-nav>
+</ion-content>

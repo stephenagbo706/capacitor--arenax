@@ -50,6 +50,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/tournaments/tournaments.page').then((m) => m.TournamentsPage),
   },
   {
+    path: 'weekly-event-timeline',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/weekly-event-timeline/weekly-event-timeline.page').then((m) => m.WeeklyEventTimelinePage),
+  },
+  {
     path: 'tournaments/:id',
     canActivate: [authGuard],
     loadComponent: () =>

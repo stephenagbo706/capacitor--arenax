@@ -18,25 +18,18 @@
         <button type="button" *ngFor="let month of months" [class.active]="activeMonth === month" (click)="setMonth(month)">{{ month }}</button>
       </div>
 
+      <div class="timeline-entry">
+        <a routerLink="/weekly-event-timeline">Open Weekly Esports Event Timeline</a>
+      </div>
+
+      <section class="upcoming">
+        <h2>Upcoming Tournament Notifications</h2>
+        <p *ngFor="let note of upcomingNotifications()">{{ note }}</p>
+      </section>
+
       <p class="ok" *ngIf="actionMessage">{{ actionMessage }}</p>
       <p class="err" *ngIf="errorMessage">{{ errorMessage }}</p>
     </header>
-
-    <section class="glass-card timeline-wrap">
-      <h2>Weekly Esports Event Timeline</h2>
-      <article class="timeline-item" *ngFor="let item of timeline">
-        <span class="phase">{{ item.phase }}</span>
-        <div>
-          <strong>{{ item.event }}</strong>
-          <p>{{ item.start | date:'MMM d' }} - {{ item.end | date:'MMM d, y' }}</p>
-        </div>
-      </article>
-    </section>
-
-    <section class="glass-card upcoming">
-      <h2>Upcoming Tournament Notifications</h2>
-      <p *ngFor="let note of upcomingNotifications()">{{ note }}</p>
-    </section>
 
     <section class="month-section" *ngFor="let month of months" [id]="'month-' + month.toLowerCase()">
       <h2>{{ month }}</h2>

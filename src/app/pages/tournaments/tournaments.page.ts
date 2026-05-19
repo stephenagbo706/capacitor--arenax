@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass, NgForOf, NgIf } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { ArenaService } from '../../core/services/arena.service';
 import { BottomNavComponent } from '../../shared/bottom-nav.component';
@@ -25,32 +25,13 @@ interface CalendarCard {
 @Component({
   selector: 'app-tournaments',
   standalone: true,
-  imports: [IonContent, NgForOf, NgIf, NgClass, DatePipe, DecimalPipe, BottomNavComponent],
+  imports: [IonContent, NgForOf, NgIf, NgClass, DatePipe, DecimalPipe, RouterLink, BottomNavComponent],
   templateUrl: './tournaments.page.html',
   styleUrls: ['./tournaments.page.scss'],
 })
 export class TournamentsPage {
   private arena = inject(ArenaService);
   private router = inject(Router);
-
-  readonly timeline = [
-    { phase: 'Qualification', start: '2026-01-10', end: '2026-01-12', event: 'Registration Opens & Team Setup' },
-    { phase: 'Qualification', start: '2026-01-15', end: '2026-01-18', event: 'Qualifier Matches (Round 1)' },
-    { phase: 'Qualification', start: '2026-01-20', end: '2026-01-22', event: 'Qualifier Matches (Round 2)' },
-    { phase: 'Qualification', start: '2026-01-25', end: '2026-01-25', event: 'Qualified Teams Announcement' },
-    { phase: 'Group Stage', start: '2026-02-03', end: '2026-02-06', event: 'Group Stage Matchday 1' },
-    { phase: 'Group Stage', start: '2026-02-10', end: '2026-02-13', event: 'Group Stage Matchday 2' },
-    { phase: 'Group Stage', start: '2026-02-17', end: '2026-02-20', event: 'Group Stage Matchday 3' },
-    { phase: 'Group Stage', start: '2026-02-24', end: '2026-02-26', event: 'Knockout Qualification Check' },
-    { phase: 'Knockout', start: '2026-03-04', end: '2026-03-07', event: 'Round of 16' },
-    { phase: 'Knockout', start: '2026-03-10', end: '2026-03-13', event: 'Quarter Finals' },
-    { phase: 'Knockout', start: '2026-03-17', end: '2026-03-19', event: 'Semi Finals' },
-    { phase: 'Knockout', start: '2026-03-23', end: '2026-03-23', event: 'Final Match Setup' },
-    { phase: 'Knockout', start: '2026-03-25', end: '2026-03-25', event: 'GRAND FINAL' },
-    { phase: 'Final Showcase', start: '2026-04-05', end: '2026-04-05', event: 'Champions Showcase Match' },
-    { phase: 'Final Showcase', start: '2026-04-12', end: '2026-04-13', event: 'All-Star Exhibition Games' },
-    { phase: 'Final Showcase', start: '2026-04-20', end: '2026-04-20', event: 'Season Awards Ceremony' },
-  ];
 
   readonly months: Array<CalendarCard['month']> = ['January', 'February', 'March', 'April'];
   activeMonth: CalendarCard['month'] = 'January';
@@ -195,10 +176,10 @@ export class TournamentsPage {
 
   upcomingNotifications() {
     const now = Date.now();
-    return this.timeline
-      .filter((item) => Date.parse(item.start) >= now)
+    return this.cards
+      .filter((card) => Date.parse(card.matchStartDate) >= now)
       .slice(0, 4)
-      .map((item) => `${item.event} (${new Date(item.start).toDateString()})`);
+      .map((card) => `${card.tournamentName} starts (${new Date(card.matchStartDate).toDateString()})`);
   }
 
   private makeCard(
