@@ -1,148 +1,88 @@
 <ion-content [fullscreen]="true">
-  <ion-grid fixed>
-    <ion-row class="ion-justify-content-center">
-      <ion-col size="12" size-xl="10">
-  <div class="tourney">
-    <header class="tourney__head">
-      <h1>Tournaments</h1>
+  <section class="calendar-shell">
+    <div class="bg-flares"></div>
+
+    <header class="hero glass-card">
+      <p class="label">ArenaX Tournament Calendar</p>
+      <h1>Esports Season Management System</h1>
+      <p class="sub">Qualification (January) -> Group Stage (February) -> Knockouts (March) -> Finals + Events (April)</p>
+
+      <div class="filters">
+        <button type="button" [class.active]="selectedGame === 'All'" (click)="setGame('All')">All</button>
+        <button type="button" [class.active]="selectedGame === 'DLS'" (click)="setGame('DLS')">DLS</button>
+        <button type="button" [class.active]="selectedGame === 'eFootball'" (click)="setGame('eFootball')">eFootball</button>
+        <button type="button" [class.active]="selectedGame === 'FIFA'" (click)="setGame('FIFA')">FIFA</button>
+      </div>
+
+      <div class="month-nav">
+        <button type="button" *ngFor="let month of months" [class.active]="activeMonth === month" (click)="setMonth(month)">{{ month }}</button>
+      </div>
+
+      <p class="ok" *ngIf="actionMessage">{{ actionMessage }}</p>
+      <p class="err" *ngIf="errorMessage">{{ errorMessage }}</p>
     </header>
 
-    <div class="tourney__tabs">
-      <button
-        class="tab-pill"
-        *ngFor="let tab of tabs"
-        [class.active]="activeTab === tab"
-        (click)="setTab(tab)"
-        type="button"
-      >
-        <span *ngIf="tab === 'Live'" class="dot"></span>
-        <i *ngIf="tab === 'Upcoming'" class="fa-regular fa-calendar"></i>
-        <i *ngIf="tab === 'Ended'" class="fa-regular fa-clock"></i>
-        {{ tab }}
-      </button>
-    </div>
-
-    <section class="featured" *ngIf="featured">
-      <div class="featured__glow"></div>
-      <div class="featured__card">
-        <div class="featured__top">
-          <div class="featured__logo">
-            <img [src]="featured.image" [alt]="featured.title" />
-            <span>{{ featured.game }}</span>
-          </div>
-          <div class="featured__title">
-            <h2>{{ featured.title }}</h2>
-          </div>
-        </div>
-        <div class="featured__stats">
-          <div>
-            <p>PRIZE POOL</p>
-            <strong>${{ featured.prizePool }}</strong>
-          </div>
-          <div>
-            <p>Entry Fee</p>
-            <strong>${{ featured.entryFee }}</strong>
-            <p class="muted">Participants: {{ featured.participants.length }}/{{ featured.maxPlayers }}</p>
-          </div>
-          <div class="starts">
-            <p>Starts</p>
-            <strong>{{ featured.startsAt | date:'MMM d, h:mm a' }}</strong>
-          </div>
-        </div>
-        <div class="featured__footer">
-          <div class="round">
-            <i class="fa-solid fa-diagram-project"></i>
-            <div>
-              <p>Tournament</p>
-              <strong>{{ statusLabel(featured.status) }}</strong>
-            </div>
-          </div>
-          <button type="button" [disabled]="isJoinDisabled(featured)" (click)="joinFeaturedTournament()">
-            {{ isJoined(featured.participants) ? 'Joined' : isJoinDisabled(featured) ? 'Closed' : 'Join Now' }}
-          </button>
-        </div>
-        <button class="featured__link" type="button" [routerLink]="['/tournaments', featured.id]">
-          View tournament page
-        </button>
-      </div>
-    </section>
-
-    <p class="status-message" *ngIf="statusMessage">{{ statusMessage }}</p>
-    <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
-
-    <section class="list">
-      <article class="mini-card" *ngFor="let item of filteredTournaments">
-        <img [src]="item.image" [alt]="item.title" />
-        <div class="mini-card__content">
-          <div class="mini-card__head">
-            <h3>{{ item.title }}</h3>
-            <span
-              class="badge"
-              [class.live]="item.status === 'live' || item.status === 'started'"
-              [class.upcoming]="item.status === 'upcoming' || item.status === 'open'"
-              [class.full]="item.status === 'ended' || item.status === 'closed' || item.status === 'full' || item.status === 'ready'"
-            >
-              {{ statusLabel(item.status) }}
-            </span>
-          </div>
-          <div class="mini-card__row">
-            <span><i class="fa-solid fa-gamepad"></i> {{ item.game }}</span>
-            <span><i class="fa-solid fa-dollar-sign"></i> ${{ item.entryFee }}</span>
-          </div>
-          <div class="mini-card__row">
-            <span><i class="fa-solid fa-user-group"></i> {{ item.participants.length }} / {{ item.maxPlayers }}</span>
-            <button class="mini-join-btn" type="button" [disabled]="isJoinDisabled(item)" (click)="joinTournament(item.id)">
-              {{ isJoined(item.participants) ? 'Joined' : isJoinDisabled(item) ? 'Closed' : 'Join' }}
-            </button>
-            <button class="mini-details-btn" type="button" [routerLink]="['/tournaments', item.id]">Details</button>
-          </div>
+    <section class="glass-card timeline-wrap">
+      <h2>Weekly Esports Event Timeline</h2>
+      <article class="timeline-item" *ngFor="let item of timeline">
+        <span class="phase">{{ item.phase }}</span>
+        <div>
+          <strong>{{ item.event }}</strong>
+          <p>{{ item.start | date:'MMM d' }} - {{ item.end | date:'MMM d, y' }}</p>
         </div>
       </article>
     </section>
-  </div>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
 
-  <div class="ax-modal" *ngIf="confirmOpen && selectedTournament">
-    <div class="ax-modal-card ax-glass">
-      <h3>Confirm Tournament Entry</h3>
-      <div class="confirm-details">
-        <div>
-          <strong>{{ selectedTournament.title }}</strong>
-          <p class="muted">{{ selectedTournament.game }}</p>
-        </div>
-        <span class="badge" [class.upcoming]="selectedTournament.status === 'upcoming' || selectedTournament.status === 'open'">
-          {{ statusLabel(selectedTournament.status) }}
-        </span>
+    <section class="glass-card upcoming">
+      <h2>Upcoming Tournament Notifications</h2>
+      <p *ngFor="let note of upcomingNotifications()">{{ note }}</p>
+    </section>
+
+    <section class="month-section" *ngFor="let month of months" [id]="'month-' + month.toLowerCase()">
+      <h2>{{ month }}</h2>
+      <div class="card-grid">
+        <article class="t-card glass-card" *ngFor="let card of filteredCards(month)">
+          <img [src]="card.banner" [alt]="card.tournamentName" class="banner" />
+
+          <div class="head">
+            <h3>{{ card.tournamentName }}</h3>
+            <span class="badge" [ngClass]="getStatus(card).toLowerCase().replace(' ', '-')">{{ getStatus(card) }}</span>
+          </div>
+
+          <p class="category">{{ card.game }} tournament</p>
+
+          <div class="dates">
+            <p><span>Registration Open</span><strong>{{ card.registrationOpenDate | date:'MMM d, y' }}</strong></p>
+            <p><span>Registration Close</span><strong>{{ card.registrationCloseDate | date:'MMM d, y' }}</strong></p>
+            <p><span>Match Start</span><strong>{{ card.matchStartDate | date:'MMM d, y' }}</strong></p>
+            <p><span>Match End</span><strong>{{ card.matchEndDate | date:'MMM d, y' }}</strong></p>
+          </div>
+
+          <div class="info">
+            <p>Prize Pool: <strong>${{ card.prizePool | number:'1.0-0' }}</strong></p>
+            <p>Players Joined: <strong>{{ playersJoined(card) }}/{{ maxPlayers(card) }}</strong></p>
+          </div>
+
+          <div class="countdown-row">
+            <p>Registration closes in: {{ countdown(card.registrationCloseDate) }}</p>
+            <p>Match starts in: {{ countdown(card.matchStartDate) }}</p>
+          </div>
+
+          <div class="progress">
+            <div class="bar"><span [style.width.%]="progress(card)"></span></div>
+            <small>Progress tracker: {{ progress(card) }}%</small>
+          </div>
+
+          <div class="card-actions">
+            <button type="button" (click)="joinTournament(card)">Register</button>
+            <button type="button" (click)="viewTournament(card)">View</button>
+            <button type="button" (click)="setReminder(card)">Reminder</button>
+            <button type="button" (click)="addToCalendar(card)">Add to Calendar</button>
+          </div>
+        </article>
       </div>
-      <div class="confirm-grid">
-        <div>
-          <p>Entry fee</p>
-          <strong>${{ selectedTournament.entryFee }}</strong>
-        </div>
-        <div>
-          <p>Prize pool</p>
-          <strong>${{ selectedTournament.prizePool }}</strong>
-        </div>
-        <div>
-          <p>Players</p>
-          <strong>{{ selectedTournament.participants.length }}/{{ selectedTournament.maxPlayers }}</strong>
-        </div>
-        <div>
-          <p>Wallet</p>
-          <strong>${{ currentBalance }}</strong>
-        </div>
-      </div>
-      <p class="ax-error" *ngIf="confirmError">{{ confirmError }}</p>
-      <p class="ax-status" *ngIf="confirmStatus">{{ confirmStatus }}</p>
-      <div class="confirm-actions">
-        <button class="ax-btn" type="button" (click)="closeJoinModal()">Cancel</button>
-        <button class="ax-btn ax-btn-primary" type="button" (click)="confirmJoin()">Confirm</button>
-      </div>
-      <a class="deposit-link" *ngIf="needsDeposit" routerLink="/wallet/deposit">Deposit funds</a>
-    </div>
-  </div>
+    </section>
+  </section>
 
   <app-bottom-nav></app-bottom-nav>
 </ion-content>

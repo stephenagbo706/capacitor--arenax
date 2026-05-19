@@ -39,6 +39,7 @@ const DEMO_USER_IDENTIFIERS = new Set([
   'BlazeWolf',
   'ArenaX Community',
 ]);
+const DEFAULT_TOURNAMENT_ENTRY_FEE = 5;
 
 const now = () => new Date().toISOString();
 const uid = () => crypto.randomUUID();
@@ -64,6 +65,7 @@ export class ArenaService {
 
   constructor() {
     this.state = this.loadState();
+    this.state.tournaments = this.withArenaXCalendarTournaments(this.state.tournaments, this.state.users);
     this.hydrateSubjects();
     this.ensureLatestSeason();
     this.bindRealtimeEvents();
@@ -1643,7 +1645,7 @@ export class ArenaService {
         player1GameId: match.player1GameId || users.find((u) => u.id === match.player1Id)?.gameId || 'N/A',
         player2GameId: match.player2GameId || (match.player2Id ? users.find((u) => u.id === match.player2Id)?.gameId : undefined),
       })),
-      tournaments: input.tournaments || seeded.tournaments,
+      tournaments: this.withArenaXCalendarTournaments(input.tournaments || seeded.tournaments, users),
       seasons,
       spotlightPosts: this.withRequiredSpotlightPosts(input.spotlightPosts || seeded.spotlightPosts),
       chats: (input.chats || seeded.chats).map((chat) => ({
@@ -1721,7 +1723,8 @@ export class ArenaService {
     const users = state.users.filter((user) => {
       const isDemo =
         DEMO_USER_IDENTIFIERS.has(user.email) ||
-        DEMO_USER_IDENTIFIERS.has(user.username);
+        DEMO_USER_IDENTIFIERS.has(user.username) ||
+        user.email.toLowerCase().endsWith('@arenax.app');
       if (isDemo && user.id !== currentUserId) {
         removedIds.add(user.id);
         return false;
@@ -1732,11 +1735,15 @@ export class ArenaService {
     if (!removedIds.size) return state;
 
     const keepUser = (id?: string) => !!id && !removedIds.has(id);
+    const credentials = Object.entries(state.credentials).reduce<Record<string, string>>((acc, [userId, hash]) => {
+      if (!removedIds.has(userId)) acc[userId] = hash;
+      return acc;
+    }, {});
 
     return {
       ...state,
       users,
-      credentials: Object.fromEntries(Object.entries(state.credentials).filter(([userId]) => !removedIds.has(userId))),
+      credentials,
       currentUserId: keepUser(state.currentUserId) ? state.currentUserId : undefined,
       friendRequests: state.friendRequests.filter((item) => keepUser(item.fromUserId) && keepUser(item.toUserId)),
       challenges: state.challenges.filter((item) => keepUser(item.fromUserId) && keepUser(item.toUserId)),
@@ -1965,32 +1972,7 @@ export class ArenaService {
           commissionRate: 0.15,
         },
       ],
-      tournaments: [
-        {
-          id: uid(),
-          title: 'COD Mobile Weekly Clash',
-          game: 'Call of Duty Mobile',
-          entryFee: 5,
-          maxPlayers: 16,
-          status: 'upcoming',
-          prizePool: 20,
-          participants: [players[1].id, players[2].id, players[3].id, userId],
-          startsAt: '2026-03-01T20:00:00.000Z',
-          image: 'assets/Call-of-Duty-Mobile-groupe-de-guerriers.jpg',
-        },
-        {
-          id: uid(),
-          title: 'ArenaX FIFA Open',
-          game: 'FIFA',
-          entryFee: 10,
-          maxPlayers: 32,
-          status: 'live',
-          prizePool: 50,
-          participants: [players[0].id, players[1].id, players[3].id, players[2].id, userId],
-          startsAt: '2026-02-20T17:00:00.000Z',
-          image: 'assets/FIFA.jpeg',
-        },
-      ],
+      tournaments: this.withArenaXCalendarTournaments([], players),
       seasons,
       spotlightPosts: [
         this.createFakerSpotlightPost(),
@@ -2037,5 +2019,63 @@ export class ArenaService {
       ],
       commissionRate: 0.15,
     };
+  }
+
+  private withArenaXCalendarTournaments(existing: Tournament[], users: UserProfile[]) {
+    const baseParticipants = users.slice(0, 5).map((user) => user.id);
+    const create = (
+      title: string,
+      game: Tournament['game'],
+      startsAt: string,
+      image: string,
+      maxPlayers: number,
+      status: Tournament['status'],
+      participantsCount: number
+    ): Tournament => {
+      const participants = baseParticipants.slice(0, Math.min(participantsCount, baseParticipants.length));
+      return {
+        id: uid(),
+        title,
+        game,
+        entryFee: DEFAULT_TOURNAMENT_ENTRY_FEE,
+        maxPlayers,
+        status,
+        prizePool: participants.length * DEFAULT_TOURNAMENT_ENTRY_FEE,
+        participants,
+        startsAt,
+        image,
+      };
+    };
+
+    const calendarTournaments: Tournament[] = [
+      create('DLS Winter Cup', 'Dream League Soccer', '2026-01-15T18:00:00.000Z', 'assets/Dls 26.jpeg', 128, 'upcoming', 5),
+      create('eFootball Winter Cup', 'eFootball', '2026-01-15T18:00:00.000Z', 'assets/Efootball.jpeg', 128, 'upcoming', 5),
+      create('FIFA Winter Cup', 'FIFA', '2026-01-15T18:00:00.000Z', 'assets/FIFA.jpeg', 128, 'upcoming', 5),
+      create('DLS Rising Stars Cup', 'Dream League Soccer', '2026-02-10T18:00:00.000Z', 'assets/Dls.jpeg', 128, 'upcoming', 5),
+      create('eFootball Rising Stars Cup', 'eFootball', '2026-02-10T18:00:00.000Z', 'assets/Efootball.jpeg', 128, 'upcoming', 5),
+      create('FIFA Rising Stars Cup', 'FIFA', '2026-02-10T18:00:00.000Z', 'assets/FIFA.jpeg', 128, 'upcoming', 5),
+      create('DLS Knockout Masters', 'Dream League Soccer', '2026-03-04T18:00:00.000Z', 'assets/Dls 26.jpeg', 128, 'upcoming', 5),
+      create('eFootball Knockout Masters', 'eFootball', '2026-03-04T18:00:00.000Z', 'assets/Efootball.jpeg', 128, 'upcoming', 5),
+      create('FIFA Knockout Masters', 'FIFA', '2026-03-04T18:00:00.000Z', 'assets/FIFA.jpeg', 128, 'upcoming', 5),
+      create('DLS Champions Showcase', 'Dream League Soccer', '2026-04-05T18:00:00.000Z', 'assets/Dls.jpeg', 64, 'upcoming', 4),
+      create('eFootball All-Star Arena', 'eFootball', '2026-04-12T18:00:00.000Z', 'assets/Efootball.jpeg', 64, 'upcoming', 4),
+      create('FIFA Season Honors Clash', 'FIFA', '2026-04-12T18:00:00.000Z', 'assets/FIFA.jpeg', 64, 'upcoming', 4),
+    ];
+
+    const knownTitles = new Set(calendarTournaments.map((item) => item.title.toLowerCase()));
+    const preserved = (existing || []).filter((item) => !knownTitles.has(item.title.toLowerCase()));
+    const merged = [...calendarTournaments, ...preserved];
+
+    return merged.map((tournament) => ({
+      ...tournament,
+      entryFee:
+        typeof tournament.entryFee === 'number' && tournament.entryFee > 0
+          ? tournament.entryFee
+          : DEFAULT_TOURNAMENT_ENTRY_FEE,
+      prizePool:
+        typeof tournament.prizePool === 'number' && tournament.prizePool > 0
+          ? tournament.prizePool
+          : (tournament.participants?.length || 0) * (tournament.entryFee || DEFAULT_TOURNAMENT_ENTRY_FEE),
+    }));
   }
 }
