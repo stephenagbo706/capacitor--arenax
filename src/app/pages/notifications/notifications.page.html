@@ -8,10 +8,10 @@
     <div class="ax-grid">
       <div class="ax-card" *ngFor="let note of (notifications$ | async)">
         <div class="ax-row">
-          <div>
+          <button class="note-open-btn" type="button" (click)="openNotification(note)">
             <strong>{{ note.message }}</strong>
             <p class="ax-muted">{{ note.createdAt | date:'short' }}</p>
-          </div>
+          </button>
           <button class="ax-btn" [disabled]="note.read" (click)="markRead(note.id)">
             {{ note.read ? 'Read' : 'Mark' }}
           </button>

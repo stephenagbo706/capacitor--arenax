@@ -1,1 +1,11 @@
 @use '../home/home.page.scss' as *;
+
+.note-open-btn {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+  padding: 0;
+  cursor: pointer;
+}
