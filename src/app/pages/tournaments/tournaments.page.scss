@@ -55,6 +55,10 @@ h1 {
   backdrop-filter: blur(6px);
 }
 
+.sticky-filters-spacer {
+  display: none;
+}
+
 button,
 .calendar-btn {
   border: 1px solid rgba(146, 179, 255, 0.4);
@@ -280,6 +284,24 @@ button.active {
 }
 
 @media (max-width: 640px) {
+  .top-filters,
+  .game-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .top-filters::-webkit-scrollbar,
+  .game-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sticky-filters-spacer {
+    display: block;
+    height: 0.6rem;
+  }
+
   .featured-card {
     grid-template-columns: 1fr;
   }

@@ -20,6 +20,7 @@
         <button type="button" [class.active]="selectedGame === 'FIFA'" (click)="setGameFilter('FIFA')">FIFA</button>
       </div>
     </div>
+    <div class="sticky-filters-spacer"></div>
 
     <article class="featured-card" *ngIf="featuredCard as card">
       <img [src]="card.banner" [alt]="card.tournamentName" class="featured-art" />
