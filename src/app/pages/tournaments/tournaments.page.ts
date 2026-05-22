@@ -49,9 +49,13 @@ export class TournamentsPage implements OnInit, OnDestroy {
   actionMessage = '';
   errorMessage = '';
   nowMs = Date.now();
+  feedbackCardId = '';
+  feedbackType: 'error' | 'ok' | '' = '';
+  feedbackMessage = '';
 
   private timerSub?: Subscription;
   private realtimeSub?: Subscription;
+  private feedbackTimer?: ReturnType<typeof setTimeout>;
 
   private readonly seasonLabels: Record<SeasonKey, string> = {
     WINTER: 'Winter Season',
@@ -74,6 +78,10 @@ export class TournamentsPage implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
     this.realtimeSub?.unsubscribe();
+    if (this.feedbackTimer) {
+      clearTimeout(this.feedbackTimer);
+      this.feedbackTimer = undefined;
+    }
   }
 
   get cards(): CalendarCard[] {
@@ -174,20 +182,37 @@ export class TournamentsPage implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.actionMessage = '';
     if (!card.linkedTournamentId) {
-      this.errorMessage = `No active backend tournament found for ${card.tournamentName} yet.`;
+      this.setCardFeedback(card.id, 'error', `No active backend tournament found for ${card.tournamentName} yet.`);
       return;
     }
 
     const result = this.arena.joinTournament(card.linkedTournamentId);
     if (!result.ok) {
-      this.errorMessage = result.message || 'Unable to join tournament.';
+      this.setCardFeedback(card.id, 'error', result.message || 'Unable to join tournament.');
       if (result.redirectTo) {
         this.router.navigateByUrl(result.redirectTo);
       }
       return;
     }
 
-    this.actionMessage = `Registered for ${card.tournamentName}. Entry confirmed.`;
+    this.setCardFeedback(card.id, 'ok', `Registered for ${card.tournamentName}. Entry confirmed.`);
+  }
+
+  hasCardFeedback(cardId: string) {
+    return this.feedbackCardId === cardId && !!this.feedbackMessage;
+  }
+
+  private setCardFeedback(cardId: string, type: 'error' | 'ok', message: string) {
+    this.feedbackCardId = cardId;
+    this.feedbackType = type;
+    this.feedbackMessage = message;
+    if (this.feedbackTimer) clearTimeout(this.feedbackTimer);
+    this.feedbackTimer = setTimeout(() => {
+      this.feedbackCardId = '';
+      this.feedbackType = '';
+      this.feedbackMessage = '';
+      this.feedbackTimer = undefined;
+    }, 3500);
   }
 
   viewTournament(card: CalendarCard) {

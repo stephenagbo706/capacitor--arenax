@@ -46,6 +46,15 @@ h1 {
   margin-bottom: 0.8rem;
 }
 
+.sticky-filters {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding-top: 0.45rem;
+  background: linear-gradient(180deg, rgba(5, 12, 31, 0.96), rgba(5, 12, 31, 0.84));
+  backdrop-filter: blur(6px);
+}
+
 button,
 .calendar-btn {
   border: 1px solid rgba(146, 179, 255, 0.4);
@@ -235,6 +244,12 @@ button.active {
 .row-actions button {
   font-size: 0.82rem;
   padding: 0.42rem 0.62rem;
+}
+
+.row-feedback {
+  margin: 0.5rem 0 0;
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 
 .ok,

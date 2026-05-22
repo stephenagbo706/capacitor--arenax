@@ -4,19 +4,21 @@
     <p class="err top-alert" *ngIf="errorMessage">{{ errorMessage }}</p>
     <p class="ok top-alert" *ngIf="actionMessage">{{ actionMessage }}</p>
 
-    <div class="top-filters">
-      <button type="button" [class.active]="selectedStatus === 'All'" (click)="setStatusFilter('All')">All</button>
-      <button type="button" [class.active]="selectedStatus === 'Live'" (click)="setStatusFilter('Live')">Live</button>
-      <button type="button" [class.active]="selectedStatus === 'Upcoming'" (click)="setStatusFilter('Upcoming')">Upcoming</button>
-      <button type="button" [class.active]="selectedStatus === 'Ended'" (click)="setStatusFilter('Ended')">Ended</button>
-      <a class="calendar-btn" routerLink="/weekly-event-timeline">Calendar</a>
-    </div>
+    <div class="sticky-filters">
+      <div class="top-filters">
+        <button type="button" [class.active]="selectedStatus === 'All'" (click)="setStatusFilter('All')">All</button>
+        <button type="button" [class.active]="selectedStatus === 'Live'" (click)="setStatusFilter('Live')">Live</button>
+        <button type="button" [class.active]="selectedStatus === 'Upcoming'" (click)="setStatusFilter('Upcoming')">Upcoming</button>
+        <button type="button" [class.active]="selectedStatus === 'Ended'" (click)="setStatusFilter('Ended')">Ended</button>
+        <a class="calendar-btn" routerLink="/weekly-event-timeline">Calendar</a>
+      </div>
 
-    <div class="game-filters">
-      <button type="button" [class.active]="selectedGame === 'All'" (click)="setGameFilter('All')">All Games</button>
-      <button type="button" [class.active]="selectedGame === 'DLS'" (click)="setGameFilter('DLS')">DLS</button>
-      <button type="button" [class.active]="selectedGame === 'eFootball'" (click)="setGameFilter('eFootball')">eFootball</button>
-      <button type="button" [class.active]="selectedGame === 'FIFA'" (click)="setGameFilter('FIFA')">FIFA</button>
+      <div class="game-filters">
+        <button type="button" [class.active]="selectedGame === 'All'" (click)="setGameFilter('All')">All Games</button>
+        <button type="button" [class.active]="selectedGame === 'DLS'" (click)="setGameFilter('DLS')">DLS</button>
+        <button type="button" [class.active]="selectedGame === 'eFootball'" (click)="setGameFilter('eFootball')">eFootball</button>
+        <button type="button" [class.active]="selectedGame === 'FIFA'" (click)="setGameFilter('FIFA')">FIFA</button>
+      </div>
     </div>
 
     <article class="featured-card" *ngIf="featuredCard as card">
@@ -40,6 +42,9 @@
           <button type="button" (click)="joinTournament(card)">Join Now</button>
           <button type="button" (click)="viewTournament(card)">View</button>
         </div>
+        <p class="row-feedback" [class.err]="feedbackType === 'error'" [class.ok]="feedbackType === 'ok'" *ngIf="hasCardFeedback(card.id)">
+          {{ feedbackMessage }}
+        </p>
       </div>
     </article>
 
@@ -59,6 +64,9 @@
             <button type="button" (click)="setReminder(card)">Reminder</button>
             <button type="button" (click)="addToCalendar(card)">Add to Calendar</button>
           </div>
+          <p class="row-feedback" [class.err]="feedbackType === 'error'" [class.ok]="feedbackType === 'ok'" *ngIf="hasCardFeedback(card.id)">
+            {{ feedbackMessage }}
+          </p>
         </div>
       </article>
     </section>
