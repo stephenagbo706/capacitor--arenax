@@ -28,9 +28,17 @@
         </div>
 
         <div class="ax-grid" *ngIf="post.comments.length">
-          <div class="spot-reply" *ngFor="let comment of post.comments | slice:0:2">
+          <div class="spot-reply" *ngFor="let comment of post.comments | slice:0:5">
             <strong>{{ getUserName(comment.userId) }}</strong>
             <p>{{ comment.text }}</p>
+            <div class="spot-reply-actions">
+              <button class="ax-btn" type="button" [class.active]="hasReacted(comment)" (click)="toggleCommentReaction(post.id, comment.id)">
+                <i class="fa-regular fa-heart"></i> {{ comment.reactionUserIds?.length || 0 }}
+              </button>
+              <button class="ax-btn danger" type="button" *ngIf="canDeleteComment(comment)" (click)="deleteComment(post.id, comment.id)">
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </article>

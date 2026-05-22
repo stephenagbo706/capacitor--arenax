@@ -173,6 +173,7 @@ export interface SpotlightComment {
   userId: string;
   text: string;
   createdAt: string;
+  reactionUserIds?: string[];
 }
 
 export interface SpotlightPost {

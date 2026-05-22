@@ -72,6 +72,7 @@ export class ArenaService {
   notifications$ = new BehaviorSubject<NotificationItem[]>([]);
   transactions$ = new BehaviorSubject<TransactionItem[]>([]);
   seasons$ = new BehaviorSubject<Season[]>([]);
+  private spotlightLiveFeedTimer?: ReturnType<typeof setInterval>;
 
   constructor() {
     this.state = this.loadState();
@@ -79,6 +80,7 @@ export class ArenaService {
     this.hydrateSubjects();
     this.ensureLatestSeason();
     this.bindRealtimeEvents();
+    this.startSpotlightLiveFeed();
     this.currentUser$.subscribe((user) => {
       if (!user) {
         this.realtime.disconnect();
@@ -905,12 +907,60 @@ export class ArenaService {
                 userId: current.id,
                 text: text.trim(),
                 createdAt: now(),
+                reactionUserIds: [],
               },
               ...post.comments,
             ],
           }
         : post
     );
+    this.persist();
+    this.hydrateSubjects();
+    return { ok: true };
+  }
+
+  toggleSpotlightCommentReaction(postId: string, commentId: string) {
+    const current = this.getCurrentUser();
+    if (!current) return { ok: false, message: 'You must be logged in.' };
+
+    this.state.spotlightPosts = this.state.spotlightPosts.map((post) => {
+      if (post.id !== postId) return post;
+      return {
+        ...post,
+        comments: post.comments.map((comment) => {
+          if (comment.id !== commentId) return comment;
+          const reacted = (comment.reactionUserIds || []).includes(current.id);
+          return {
+            ...comment,
+            reactionUserIds: reacted
+              ? (comment.reactionUserIds || []).filter((id) => id !== current.id)
+              : [...(comment.reactionUserIds || []), current.id],
+          };
+        }),
+      };
+    });
+    this.persist();
+    this.hydrateSubjects();
+    return { ok: true };
+  }
+
+  deleteSpotlightComment(postId: string, commentId: string) {
+    const current = this.getCurrentUser();
+    if (!current) return { ok: false, message: 'You must be logged in.' };
+
+    let deleted = false;
+    this.state.spotlightPosts = this.state.spotlightPosts.map((post) => {
+      if (post.id !== postId) return post;
+      const target = post.comments.find((comment) => comment.id === commentId);
+      if (!target || target.userId !== current.id) return post;
+      deleted = true;
+      return {
+        ...post,
+        comments: post.comments.filter((comment) => comment.id !== commentId),
+      };
+    });
+
+    if (!deleted) return { ok: false, message: 'You can only delete your own comment.' };
     this.persist();
     this.hydrateSubjects();
     return { ok: true };
@@ -1895,7 +1945,13 @@ export class ArenaService {
   }
 
   private withRequiredSpotlightPosts(posts: SpotlightPost[]) {
-    const normalized = [...posts];
+    const normalized: SpotlightPost[] = [...posts].map((post) => ({
+      ...post,
+      comments: (post.comments || []).map((comment) => ({
+        ...comment,
+        reactionUserIds: comment.reactionUserIds || [],
+      })),
+    }));
     const hasFakerPost = normalized.some((post) => post.title === 'Faker Wins Best Esports Athlete at The Game Awards 2024');
     if (!hasFakerPost) normalized.unshift(this.createFakerSpotlightPost());
     return normalized;
@@ -1912,6 +1968,38 @@ export class ArenaService {
       likeUserIds: [],
       comments: [],
     };
+  }
+
+  private startSpotlightLiveFeed() {
+    if (this.spotlightLiveFeedTimer) return;
+    this.spotlightLiveFeedTimer = setInterval(() => {
+      const tournamentsLive = this.state.tournaments.filter((tournament) => tournament.status === 'live').length;
+      const activeMatches = this.state.matches.filter((match) => match.status === 'live').length;
+      const recentPost = this.state.spotlightPosts[0];
+      const nextBody = `Live now: ${tournamentsLive} tournament(s) and ${activeMatches} active match(es) across ArenaX.`;
+      if (recentPost?.body === nextBody) return;
+
+      this.state.spotlightPosts.unshift({
+        id: uid(),
+        title: 'ArenaX Live Update',
+        body: nextBody,
+        tag: 'Announcement',
+        createdAt: now(),
+        likeUserIds: [],
+        comments: [],
+      });
+
+      this.state.notifications.unshift({
+        id: uid(),
+        type: 'spotlight',
+        message: 'New Spotlight update is available.',
+        createdAt: now(),
+        read: false,
+      });
+
+      this.persist();
+      this.hydrateSubjects();
+    }, 120000);
   }
 
   private normalizeCredentials(inputCredentials: Record<string, string>, users: UserProfile[]) {

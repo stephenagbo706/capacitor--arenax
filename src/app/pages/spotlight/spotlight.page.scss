@@ -49,3 +49,23 @@
   margin: 4px 0 0;
   color: var(--ax-muted);
 }
+
+.spot-reply-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.spot-reply-actions .ax-btn {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+}
+
+.spot-reply-actions .ax-btn.active {
+  color: #f472b6;
+}
+
+.spot-reply-actions .ax-btn.danger {
+  border-color: rgba(255, 79, 109, 0.6);
+  color: #ff9fb0;
+}

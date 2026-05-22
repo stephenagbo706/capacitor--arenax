@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { AsyncPipe, NgForOf, NgIf, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent } from '@ionic/angular/standalone';
+import { SpotlightComment } from '../../core/models/arena.models';
 import { ArenaService } from '../../core/services/arena.service';
 import { BottomNavComponent } from '../../shared/bottom-nav.component';
 
@@ -36,5 +37,25 @@ export class SpotlightPage {
 
   getUserName(userId: string) {
     return this.arena.getUser(userId)?.username || 'Player';
+  }
+
+  get currentUserId() {
+    return this.arena.getCurrentUser()?.id || '';
+  }
+
+  canDeleteComment(comment: SpotlightComment) {
+    return comment.userId === this.currentUserId;
+  }
+
+  hasReacted(comment: SpotlightComment) {
+    return (comment.reactionUserIds || []).includes(this.currentUserId);
+  }
+
+  toggleCommentReaction(postId: string, commentId: string) {
+    this.arena.toggleSpotlightCommentReaction(postId, commentId);
+  }
+
+  deleteComment(postId: string, commentId: string) {
+    this.arena.deleteSpotlightComment(postId, commentId);
   }
 }
