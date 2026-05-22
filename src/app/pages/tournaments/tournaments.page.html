@@ -1,80 +1,74 @@
 <ion-content [fullscreen]="true">
-  <section class="calendar-shell">
-    <div class="bg-flares"></div>
+  <section class="tour-shell">
+    <h1>Tournaments</h1>
+    <p class="err top-alert" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="ok top-alert" *ngIf="actionMessage">{{ actionMessage }}</p>
 
-    <header class="hero glass-card">
-      <p class="label">ArenaX Tournament Calendar</p>
-      <h1>Esports Season Management System</h1>
-      <p class="sub">Qualification (January) -> Group Stage (February) -> Knockouts (March) -> Finals + Events (April)</p>
+    <div class="top-filters">
+      <button type="button" [class.active]="selectedStatus === 'All'" (click)="setStatusFilter('All')">All</button>
+      <button type="button" [class.active]="selectedStatus === 'Live'" (click)="setStatusFilter('Live')">Live</button>
+      <button type="button" [class.active]="selectedStatus === 'Upcoming'" (click)="setStatusFilter('Upcoming')">Upcoming</button>
+      <button type="button" [class.active]="selectedStatus === 'Ended'" (click)="setStatusFilter('Ended')">Ended</button>
+      <a class="calendar-btn" routerLink="/weekly-event-timeline">Calendar</a>
+    </div>
 
-      <div class="filters">
-        <button type="button" [class.active]="selectedGame === 'All'" (click)="setGame('All')">All</button>
-        <button type="button" [class.active]="selectedGame === 'DLS'" (click)="setGame('DLS')">DLS</button>
-        <button type="button" [class.active]="selectedGame === 'eFootball'" (click)="setGame('eFootball')">eFootball</button>
-        <button type="button" [class.active]="selectedGame === 'FIFA'" (click)="setGame('FIFA')">FIFA</button>
+    <div class="game-filters">
+      <button type="button" [class.active]="selectedGame === 'All'" (click)="setGameFilter('All')">All Games</button>
+      <button type="button" [class.active]="selectedGame === 'DLS'" (click)="setGameFilter('DLS')">DLS</button>
+      <button type="button" [class.active]="selectedGame === 'eFootball'" (click)="setGameFilter('eFootball')">eFootball</button>
+      <button type="button" [class.active]="selectedGame === 'FIFA'" (click)="setGameFilter('FIFA')">FIFA</button>
+    </div>
+
+    <article class="featured-card" *ngIf="featuredCard as card">
+      <img [src]="card.banner" [alt]="card.tournamentName" class="featured-art" />
+      <div class="featured-main">
+        <div class="featured-head">
+          <h2>{{ card.tournamentName }}</h2>
+          <span class="status-pill" [ngClass]="statusClass(card)">{{ lifecycleLabel(card) }}</span>
+        </div>
+        <p class="game">{{ card.seasonName }} • {{ card.game }} Tournament</p>
+        <div class="featured-stats">
+          <p><span>Prize Pool</span><strong>${{ card.prizePool | number:'1.0-0' }}</strong></p>
+          <p><span>Entry Fee</span><strong>${{ card.entryFee }}</strong></p>
+          <p><span>Participants</span><strong>{{ card.participants }}/{{ card.maxPlayers }}</strong></p>
+          <p><span>Starts In</span><strong>{{ startsIn(card) }}</strong></p>
+        </div>
+        <p class="meta">Registration: {{ card.registrationOpenDate | date:'MMM d' }} - {{ card.registrationCloseDate | date:'MMM d, y' }}</p>
+        <p class="meta">Tournament: {{ card.matchStartDate | date:'MMM d' }} - {{ card.matchEndDate | date:'MMM d, y' }}</p>
+        <p class="meta">Countdown: {{ countdownTo(card.matchStartDate) }}</p>
+        <div class="featured-actions">
+          <button type="button" (click)="joinTournament(card)">Join Now</button>
+          <button type="button" (click)="viewTournament(card)">View</button>
+        </div>
       </div>
+    </article>
 
-      <div class="month-nav">
-        <button type="button" *ngFor="let month of months" [class.active]="activeMonth === month" (click)="setMonth(month)">{{ month }}</button>
-      </div>
-
-      <div class="timeline-entry">
-        <a routerLink="/weekly-event-timeline">Open Weekly Esports Event Timeline</a>
-      </div>
-
-      <section class="upcoming">
-        <h2>Upcoming Tournament Notifications</h2>
-        <p *ngFor="let note of upcomingNotifications()">{{ note }}</p>
-      </section>
-
-      <p class="ok" *ngIf="actionMessage">{{ actionMessage }}</p>
-      <p class="err" *ngIf="errorMessage">{{ errorMessage }}</p>
-    </header>
-
-    <section class="month-section" *ngFor="let month of months" [id]="'month-' + month.toLowerCase()">
-      <h2>{{ month }}</h2>
-      <div class="card-grid">
-        <article class="t-card glass-card" *ngFor="let card of filteredCards(month)">
-          <img [src]="card.banner" [alt]="card.tournamentName" class="banner" />
-
-          <div class="head">
+    <section class="list-wrap" *ngIf="hasFilteredCards; else emptyState">
+      <article class="list-card" *ngFor="let card of listCards">
+        <img [src]="card.banner" [alt]="card.tournamentName" class="thumb" />
+        <div class="list-main">
+          <div class="row-head">
             <h3>{{ card.tournamentName }}</h3>
-            <span class="badge" [ngClass]="getStatus(card).toLowerCase().replace(' ', '-')">{{ getStatus(card) }}</span>
+            <span class="status-pill" [ngClass]="statusClass(card)">{{ lifecycleLabel(card) }}</span>
           </div>
-
-          <p class="category">{{ card.game }} tournament</p>
-
-          <div class="dates">
-            <p><span>Registration Open</span><strong>{{ card.registrationOpenDate | date:'MMM d, y' }}</strong></p>
-            <p><span>Registration Close</span><strong>{{ card.registrationCloseDate | date:'MMM d, y' }}</strong></p>
-            <p><span>Match Start</span><strong>{{ card.matchStartDate | date:'MMM d, y' }}</strong></p>
-            <p><span>Match End</span><strong>{{ card.matchEndDate | date:'MMM d, y' }}</strong></p>
-          </div>
-
-          <div class="info">
-            <p>Prize Pool: <strong>${{ card.prizePool | number:'1.0-0' }}</strong></p>
-            <p>Players Joined: <strong>{{ playersJoined(card) }}/{{ maxPlayers(card) }}</strong></p>
-          </div>
-
-          <div class="countdown-row">
-            <p>Registration closes in: {{ countdown(card.registrationCloseDate) }}</p>
-            <p>Match starts in: {{ countdown(card.matchStartDate) }}</p>
-          </div>
-
-          <div class="progress">
-            <div class="bar"><span [style.width.%]="progress(card)"></span></div>
-            <small>Progress tracker: {{ progress(card) }}%</small>
-          </div>
-
-          <div class="card-actions">
+          <p class="meta">{{ card.seasonName }} • {{ card.game }} • ${{ card.prizePool | number:'1.0-0' }} Prize Pool • ${{ card.entryFee }} Entry Fee</p>
+          <p class="meta">Participants: {{ card.participants }}/{{ card.maxPlayers }} • Starts: {{ card.matchStartDate | date:'MMM d, y' }}</p>
+          <p class="meta">Reg: {{ card.registrationOpenDate | date:'MMM d' }} - {{ card.registrationCloseDate | date:'MMM d' }} • Countdown: {{ countdownTo(card.matchStartDate) }}</p>
+          <div class="row-actions">
             <button type="button" (click)="joinTournament(card)">Register</button>
-            <button type="button" (click)="viewTournament(card)">View</button>
             <button type="button" (click)="setReminder(card)">Reminder</button>
             <button type="button" (click)="addToCalendar(card)">Add to Calendar</button>
           </div>
-        </article>
-      </div>
+        </div>
+      </article>
     </section>
+    <ng-template #emptyState>
+      <section class="empty-state">
+        <h2>No tournaments available</h2>
+        <p>{{ emptyStateMessage }}</p>
+      </section>
+    </ng-template>
+
   </section>
 
   <app-bottom-nav></app-bottom-nav>

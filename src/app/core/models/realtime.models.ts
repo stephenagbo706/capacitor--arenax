@@ -8,6 +8,14 @@ export const ARENAX_EVENTS = {
   teamMessage: 'team_message',
   privateMessage: 'private_message',
   matchUpdate: 'match_update',
+  tournamentUpdate: 'tournament_update',
+  tournamentCreated: 'tournament:created',
+  playerJoined: 'player:joined',
+  tournamentStarted: 'tournament:started',
+  matchLive: 'match:live',
+  scoreUpdate: 'score:update',
+  matchEnded: 'match:ended',
+  tournamentCompleted: 'tournament:completed',
   invitePlayer: 'invite_player',
   notification: 'notification',
 } as const;
@@ -52,6 +60,26 @@ export interface InvitePlayerPayload {
   roomId?: string;
   message: string;
   sentAt: string;
+}
+
+export interface TournamentUpdatePayload {
+  tournamentId: string;
+  action:
+    | 'tournament_created'
+    | 'player_joined'
+    | 'tournament_started'
+    | 'match_live'
+    | 'score_updated'
+    | 'match_ended'
+    | 'tournament_completed'
+    | 'registration_opened'
+    | 'registration_closed'
+    | 'bracket_updated'
+    | 'match_scheduled'
+    | 'lifecycle_updated';
+  lifecycleState?: 'upcoming' | 'registration_open' | 'registration_closed' | 'live' | 'completed';
+  message?: string;
+  timestamp: string;
 }
 
 export interface RealtimeNotificationPayload {

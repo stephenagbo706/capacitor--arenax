@@ -351,6 +351,21 @@ ion-content {
   color: #f5f2ff;
   background: linear-gradient(90deg, #8f56ff, #a56cff 55%, #9258ff);
   box-shadow: 0 12px 26px rgba(136, 96, 255, 0.3);
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  cursor: pointer;
+}
+
+.continue-btn:active {
+  transform: translateY(1px) scale(0.99);
+  filter: brightness(0.92);
+  box-shadow: 0 6px 16px rgba(136, 96, 255, 0.35);
+}
+
+.continue-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.1);
+  box-shadow: none;
 }
 
 .ax-status {

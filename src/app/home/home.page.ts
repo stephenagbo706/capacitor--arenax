@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { DecimalPipe, NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { Capacitor } from '@capacitor/core';
@@ -11,7 +11,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
   selector: 'app-home',
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
-  imports: [IonContent, NgFor, NgIf, RouterLink],
+  imports: [IonContent, NgFor, NgIf, RouterLink, DecimalPipe],
 })
 export class HomePage {
   activeScreen: 'scr-login' | 'scr-home' | 'scr-create' | 'scr-tournaments' | 'scr-wallet' | 'scr-profile' | 'scr-admin' =

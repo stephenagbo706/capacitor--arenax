@@ -9,6 +9,7 @@ import {
   MatchUpdatePayload,
   RealtimeNotificationPayload,
   SendMessagePayload,
+  TournamentUpdatePayload,
 } from '../models/realtime.models';
 
 interface RealtimeAuthContext {
@@ -30,6 +31,7 @@ export class RealtimeService {
   readonly message$ = new Subject<SendMessagePayload>();
   readonly matchUpdate$ = new Subject<MatchUpdatePayload>();
   readonly invite$ = new Subject<InvitePlayerPayload>();
+  readonly tournamentUpdate$ = new Subject<TournamentUpdatePayload>();
   readonly notification$ = new Subject<RealtimeNotificationPayload>();
 
   connect(context: RealtimeAuthContext) {
@@ -87,6 +89,12 @@ export class RealtimeService {
     this.socket?.emit(ARENAX_EVENTS.invitePlayer, payload);
   }
 
+  sendTournamentUpdate(payload: TournamentUpdatePayload) {
+    this.socket?.emit(ARENAX_EVENTS.tournamentUpdate, payload);
+    const eventName = this.resolveTournamentEventName(payload.action);
+    if (eventName) this.socket?.emit(eventName, payload);
+  }
+
   private initializeSocket() {
     const socketUrl = environment.socketUrl || 'http://localhost:3000';
     this.connectionState$.next('connecting');
@@ -126,6 +134,20 @@ export class RealtimeService {
     this.socket.on(ARENAX_EVENTS.teamMessage, (payload: SendMessagePayload) => this.message$.next(payload));
     this.socket.on(ARENAX_EVENTS.privateMessage, (payload: SendMessagePayload) => this.message$.next(payload));
     this.socket.on(ARENAX_EVENTS.matchUpdate, (payload: MatchUpdatePayload) => this.matchUpdate$.next(payload));
+    this.socket.on(ARENAX_EVENTS.tournamentUpdate, (payload: TournamentUpdatePayload) =>
+      this.tournamentUpdate$.next(payload)
+    );
+    this.socket.on(ARENAX_EVENTS.tournamentCreated, (payload: TournamentUpdatePayload) => this.tournamentUpdate$.next(payload));
+    this.socket.on(ARENAX_EVENTS.playerJoined, (payload: TournamentUpdatePayload) => this.tournamentUpdate$.next(payload));
+    this.socket.on(ARENAX_EVENTS.tournamentStarted, (payload: TournamentUpdatePayload) =>
+      this.tournamentUpdate$.next(payload)
+    );
+    this.socket.on(ARENAX_EVENTS.matchLive, (payload: TournamentUpdatePayload) => this.tournamentUpdate$.next(payload));
+    this.socket.on(ARENAX_EVENTS.scoreUpdate, (payload: TournamentUpdatePayload) => this.tournamentUpdate$.next(payload));
+    this.socket.on(ARENAX_EVENTS.matchEnded, (payload: TournamentUpdatePayload) => this.tournamentUpdate$.next(payload));
+    this.socket.on(ARENAX_EVENTS.tournamentCompleted, (payload: TournamentUpdatePayload) =>
+      this.tournamentUpdate$.next(payload)
+    );
     this.socket.on(ARENAX_EVENTS.invitePlayer, (payload: InvitePlayerPayload) => this.invite$.next(payload));
     this.socket.on(ARENAX_EVENTS.notification, (payload: RealtimeNotificationPayload) =>
       this.notification$.next(payload)
@@ -155,5 +177,16 @@ export class RealtimeService {
         userId: this.authContext.userId,
       });
     }
+  }
+
+  private resolveTournamentEventName(action: TournamentUpdatePayload['action']) {
+    if (action === 'tournament_created') return ARENAX_EVENTS.tournamentCreated;
+    if (action === 'player_joined') return ARENAX_EVENTS.playerJoined;
+    if (action === 'tournament_started') return ARENAX_EVENTS.tournamentStarted;
+    if (action === 'match_live') return ARENAX_EVENTS.matchLive;
+    if (action === 'score_updated') return ARENAX_EVENTS.scoreUpdate;
+    if (action === 'match_ended') return ARENAX_EVENTS.matchEnded;
+    if (action === 'tournament_completed') return ARENAX_EVENTS.tournamentCompleted;
+    return null;
   }
 }

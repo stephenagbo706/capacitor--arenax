@@ -1,4 +1,5 @@
 export type SupportedGame = 'eFootball' | 'Dream League Soccer' | 'FIFA' | 'Call of Duty Mobile';
+export type TournamentTier = 'LOW' | 'STANDARD' | 'PREMIUM';
 export type ChallengeStatus = 'pending' | 'accepted' | 'declined';
 export type FriendRequestStatus = 'pending' | 'accepted' | 'declined';
 export type MatchStatus =
@@ -26,6 +27,12 @@ export type TournamentStatus =
   | 'ready'
   | 'started'
   | 'closed';
+export type TournamentLifecycleState =
+  | 'upcoming'
+  | 'registration_open'
+  | 'registration_closed'
+  | 'live'
+  | 'completed';
 
 export type TournamentEntryStatus = 'registered';
 
@@ -132,14 +139,31 @@ export interface Tournament {
   id: string;
   title: string;
   game: SupportedGame;
+  tier?: TournamentTier;
   entryFee: number;
+  entryFeeNGN?: number;
+  entryFeeUSD?: number;
+  paymentCurrency?: Currency;
+  platformFeePercent?: number;
+  totalPool?: number;
+  platformFeeAmount?: number;
   maxPlayers: number;
   status: TournamentStatus;
   prizePool: number;
+  payoutBreakdown?: {
+    first: number;
+    second: number;
+    third: number;
+  };
   participants: string[];
   entries?: TournamentEntry[];
   bracket?: TournamentBracket;
   startsAt: string;
+  registrationOpenAt?: string;
+  registrationCloseAt?: string;
+  endsAt?: string;
+  seasonKey?: string;
+  lifecycleState?: TournamentLifecycleState;
   image: string;
   winnerId?: string;
 }

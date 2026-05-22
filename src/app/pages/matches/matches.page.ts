@@ -55,6 +55,14 @@ export class MatchesPage {
       .slice(0, 4);
   }
 
+  get hasActiveCreatedMatch() {
+    return this.matches$.value.some(
+      (match) =>
+        match.player1Id === this.currentUserId &&
+        (match.status === 'waiting' || match.status === 'live' || match.status === 'pending_verification')
+    );
+  }
+
   setStep(step: number) {
     this.activeStep = Math.max(1, Math.min(this.totalSteps, step));
   }
@@ -124,6 +132,11 @@ export class MatchesPage {
   continueSetup() {
     this.errorMessage = '';
     this.statusMessage = '';
+
+    if (this.hasActiveCreatedMatch) {
+      this.errorMessage = 'You can only create one active match at a time. Finish your current match first.';
+      return;
+    }
 
     if (this.activeStep < this.totalSteps) {
       this.activeStep += 1;

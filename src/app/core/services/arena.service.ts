@@ -11,9 +11,11 @@ import {
   SpotlightPost,
   SupportedGame,
   Tournament,
+  TournamentTier,
   TournamentBracket,
   TournamentBracketMatch,
   TournamentBracketRound,
+  TournamentLifecycleState,
   TransactionItem,
   UserProfile,
   Season,
@@ -21,7 +23,12 @@ import {
 } from '../models/arena.models';
 import { SeasonAutomationService, FirestoreWriteFn } from './season-automation.service';
 import { RealtimeService } from './realtime.service';
-import { InvitePlayerPayload, MatchUpdatePayload, SendMessagePayload } from '../models/realtime.models';
+import {
+  InvitePlayerPayload,
+  MatchUpdatePayload,
+  SendMessagePayload,
+  TournamentUpdatePayload,
+} from '../models/realtime.models';
 
 const STORAGE_KEY = 'arenax_state_v2';
 const DEFAULT_CHAT_TEXTS = new Set([
@@ -40,6 +47,9 @@ const DEMO_USER_IDENTIFIERS = new Set([
   'ArenaX Community',
 ]);
 const DEFAULT_TOURNAMENT_ENTRY_FEE = 5;
+const TOURNAMENT_PLATFORM_FEE_PERCENT = 0.1;
+const MATCHMAKING_MINIMUM_STAKE = 1;
+const MATCHMAKING_PLATFORM_FEE_RATE = 0.1;
 
 const now = () => new Date().toISOString();
 const uid = () => crypto.randomUUID();
@@ -273,7 +283,17 @@ export class ArenaService {
   }): ArenaActionResult {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in to create a match.' };
-    if (payload.stake <= 0 || Number.isNaN(payload.stake)) return { ok: false, message: 'Stake must be above zero.' };
+    const hasActiveOwnedMatch = this.state.matches.some(
+      (match) =>
+        match.player1Id === current.id &&
+        (match.status === 'waiting' || match.status === 'live' || match.status === 'pending_verification')
+    );
+    if (hasActiveOwnedMatch) {
+      return { ok: false, message: 'You already have an active created match. Complete it before creating another.' };
+    }
+    if (payload.stake < MATCHMAKING_MINIMUM_STAKE || Number.isNaN(payload.stake)) {
+      return { ok: false, message: 'Minimum stake is 1 unit.' };
+    }
     if (current.walletBalance < payload.stake) return { ok: false, message: 'Insufficient available balance.' };
 
     const lockResult = this.lockFunds(current.id, payload.stake, 'stake_lock', `Stake lock for ${payload.game}`);
@@ -301,7 +321,7 @@ export class ArenaService {
       createdAt: now(),
       startedAt: undefined,
       escrowTotal: payload.stake,
-      commissionRate: this.state.commissionRate,
+      commissionRate: Math.min(MATCHMAKING_PLATFORM_FEE_RATE, Math.max(0.05, this.state.commissionRate || 0.1)),
     };
 
     this.state.matches.unshift(match);
@@ -689,32 +709,46 @@ export class ArenaService {
     return this.state.matches.filter((match) => match.status === 'pending_verification');
   }
 
-  joinTournament(tournamentId: string): ArenaActionResult {
+  joinTournament(tournamentId: string, paymentCurrency: 'NGN' | 'USD' = 'USD'): ArenaActionResult {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in to join.', redirectTo: '/auth/login' };
 
     const tournament = this.state.tournaments.find((item) => item.id === tournamentId);
     if (!tournament) return { ok: false, message: 'Tournament not found.' };
+    this.applyTierPricing(tournament);
     if (!this.isTournamentOpenForRegistration(tournament)) {
       return { ok: false, message: 'Tournament registration is closed.' };
     }
     if (tournament.participants.includes(current.id)) return { ok: false, message: 'You already joined this tournament.' };
     if (tournament.participants.length >= tournament.maxPlayers) return { ok: false, message: 'Tournament is full.' };
-    if (current.walletBalance < tournament.entryFee) {
+    const requiredEntryFee = paymentCurrency === 'NGN' ? tournament.entryFeeNGN || 0 : tournament.entryFeeUSD || 0;
+    if (requiredEntryFee <= 0) return { ok: false, message: 'Tournament entry fee is not configured.' };
+    if (current.walletBalance < requiredEntryFee) {
       return { ok: false, message: 'Insufficient wallet balance.', needsDeposit: true };
     }
+
+    const paymentRef = this.createPaystackReference('TOUR');
+    const paymentResult = this.verifyPaystackPayment({
+      referenceId: paymentRef,
+      expectedAmount: requiredEntryFee,
+      currency: paymentCurrency,
+      context: `Tournament entry fee: ${tournament.title}`,
+      userId: current.id,
+    });
+    if (!paymentResult.ok) return paymentResult;
 
     const createdAt = now();
     const lockResult = this.lockFunds(
       current.id,
-      tournament.entryFee,
+      requiredEntryFee,
       'tournament_entry_fee',
-      `Tournament entry fee: ${tournament.title}`,
-      { transactionId: uid(), createdAt }
+      `Tournament entry fee (${paymentCurrency}): ${tournament.title}`,
+      { transactionId: paymentResult.transactionId || uid(), createdAt }
     );
     if (!lockResult.ok) return lockResult;
 
     tournament.participants.push(current.id);
+    tournament.paymentCurrency = paymentCurrency;
     tournament.entries = [
       {
         id: uid(),
@@ -726,10 +760,15 @@ export class ArenaService {
       },
       ...(tournament.entries || []),
     ];
-    tournament.prizePool = tournament.participants.length * tournament.entryFee;
+    this.recalculateTournamentPool(tournament);
     if (tournament.participants.length >= tournament.maxPlayers) {
       tournament.status = 'ready';
       tournament.bracket = this.generateTournamentBracket(tournament);
+      this.emitTournamentRealtimeUpdate(
+        tournament,
+        'bracket_updated',
+        `${tournament.title}: bracket generated with ${tournament.participants.length} players.`
+      );
     } else if (tournament.status === 'upcoming') {
       tournament.status = 'open';
     }
@@ -763,8 +802,13 @@ export class ArenaService {
 
     this.persist();
     this.hydrateSubjects();
+    this.emitTournamentRealtimeUpdate(
+      tournament,
+      'player_joined',
+      `${tournament.title}: registration updated (${tournament.participants.length}/${tournament.maxPlayers}).`
+    );
 
-    return { ok: true, transactionId: lockResult.transactionId, transactionAt: lockResult.createdAt };
+    return { ok: true, transactionId: paymentResult.transactionId || lockResult.transactionId, transactionAt: lockResult.createdAt };
   }
 
   completeTournament(tournamentId: string, forcedWinnerId?: string) {
@@ -777,10 +821,20 @@ export class ArenaService {
         ? forcedWinnerId
         : tournament.participants[Math.floor(Math.random() * tournament.participants.length)];
 
+    this.recalculateTournamentPool(tournament);
+
+    const participantEntryAmount =
+      (tournament.paymentCurrency || 'USD') === 'NGN' ? tournament.entryFeeNGN || 0 : tournament.entryFeeUSD || 0;
     for (const participantId of tournament.participants) {
-      this.unlockFunds(participantId, tournament.entryFee);
+      this.unlockFunds(participantId, participantEntryAmount);
     }
-    this.adjustAvailableBalance(winnerId, tournament.prizePool);
+
+    const prizePool = tournament.prizePool;
+    const firstPlace = Math.round(prizePool * 0.6 * 100) / 100;
+    const secondPlace = Math.round(prizePool * 0.25 * 100) / 100;
+    const thirdPlace = Math.round(prizePool * 0.15 * 100) / 100;
+    tournament.payoutBreakdown = { first: firstPlace, second: secondPlace, third: thirdPlace };
+    this.adjustAvailableBalance(winnerId, firstPlace);
 
     tournament.status = 'ended';
     tournament.winnerId = winnerId;
@@ -788,16 +842,16 @@ export class ArenaService {
     this.state.transactions.unshift({
       id: uid(),
       type: 'reward',
-      amount: tournament.prizePool,
+      amount: firstPlace,
       createdAt: now(),
       status: 'completed',
-      note: `Tournament payout: ${tournament.title}`,
+      note: `Tournament payout (1st place): ${tournament.title}`,
     });
 
     this.state.spotlightPosts.unshift({
       id: uid(),
       title: `${tournament.title} Champion`,
-      body: `${this.getUser(winnerId)?.username || 'A player'} won ${tournament.game} and earned $${tournament.prizePool}.`,
+      body: `${this.getUser(winnerId)?.username || 'A player'} won ${tournament.game} and earned ${firstPlace} (${(tournament.paymentCurrency || 'USD')}).`,
       tag: 'Result',
       createdAt: now(),
       image: tournament.image,
@@ -815,6 +869,7 @@ export class ArenaService {
 
     this.persist();
     this.hydrateSubjects();
+    this.emitTournamentRealtimeUpdate(tournament, 'tournament_completed', `${tournament.title} has been completed.`);
     return { ok: true };
   }
 
@@ -1275,6 +1330,10 @@ export class ArenaService {
       this.applyIncomingInvite(payload);
     });
 
+    this.realtime.tournamentUpdate$.subscribe((payload) => {
+      this.applyIncomingTournamentUpdate(payload);
+    });
+
     this.realtime.notification$.subscribe((payload) => {
       const currentUserId = this.state.currentUserId;
       if (payload.userId && payload.userId !== currentUserId) return;
@@ -1354,6 +1413,30 @@ export class ArenaService {
     this.hydrateSubjects();
   }
 
+  private applyIncomingTournamentUpdate(payload: TournamentUpdatePayload) {
+    const tournament = this.state.tournaments.find((item) => item.id === payload.tournamentId);
+    if (!tournament) return;
+    if (payload.lifecycleState) {
+      tournament.lifecycleState = payload.lifecycleState;
+      if (payload.lifecycleState === 'live') tournament.status = 'live';
+      if (payload.lifecycleState === 'completed') tournament.status = 'ended';
+      if (payload.lifecycleState === 'registration_open') tournament.status = 'open';
+      if (payload.lifecycleState === 'registration_closed') tournament.status = 'closed';
+      if (payload.lifecycleState === 'upcoming') tournament.status = 'upcoming';
+    }
+    if (payload.message) {
+      this.state.notifications.unshift({
+        id: uid(),
+        type: 'tournament',
+        message: payload.message,
+        createdAt: payload.timestamp,
+        read: false,
+      });
+    }
+    this.persist();
+    this.hydrateSubjects();
+  }
+
   private emitMatchRealtimeUpdate(
     match: Match,
     action: MatchUpdatePayload['action'],
@@ -1377,7 +1460,22 @@ export class ArenaService {
     });
   }
 
+  private emitTournamentRealtimeUpdate(
+    tournament: Tournament,
+    action: TournamentUpdatePayload['action'],
+    message?: string
+  ) {
+    this.realtime.sendTournamentUpdate({
+      tournamentId: tournament.id,
+      action,
+      lifecycleState: this.resolveLifecycleState(tournament),
+      message,
+      timestamp: now(),
+    });
+  }
+
   private hydrateSubjects() {
+    this.applyTournamentLifecycleStates();
     this.users$.next(this.state.users);
     this.currentUser$.next(this.getCurrentUser());
     this.friendRequests$.next(this.getCurrentUserFriendRequests());
@@ -1427,9 +1525,41 @@ export class ArenaService {
     return `tournament-chat-${tournamentId}`;
   }
 
+  private resolveLifecycleState(tournament: Tournament): TournamentLifecycleState {
+    const nowMs = Date.now();
+    const registrationOpenMs = Date.parse(tournament.registrationOpenAt || '');
+    const registrationCloseMs = Date.parse(tournament.registrationCloseAt || '');
+    const startMs = Date.parse(tournament.startsAt || '');
+    const endMs = Date.parse(tournament.endsAt || '');
+
+    if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
+      if (tournament.status === 'live') return 'live';
+      if (tournament.status === 'ended') return 'completed';
+      if (tournament.status === 'closed') return 'registration_closed';
+      return 'upcoming';
+    }
+    if (nowMs < registrationOpenMs) return 'upcoming';
+    if (nowMs >= registrationOpenMs && nowMs <= registrationCloseMs) return 'registration_open';
+    if (nowMs > registrationCloseMs && nowMs < startMs) return 'registration_closed';
+    if (nowMs >= startMs && nowMs <= endMs) return 'live';
+    return 'completed';
+  }
+
+  private applyTournamentLifecycleStates() {
+    for (const tournament of this.state.tournaments) {
+      const lifecycle = this.resolveLifecycleState(tournament);
+      tournament.lifecycleState = lifecycle;
+      if (lifecycle === 'registration_open') tournament.status = 'open';
+      if (lifecycle === 'registration_closed') tournament.status = 'closed';
+      if (lifecycle === 'live') tournament.status = 'live';
+      if (lifecycle === 'completed') tournament.status = 'ended';
+      if (lifecycle === 'upcoming') tournament.status = 'upcoming';
+    }
+  }
+
   private isTournamentOpenForRegistration(tournament: Tournament) {
-    if (tournament.status === 'upcoming' || tournament.status === 'open') return true;
-    return false;
+    const lifecycle = tournament.lifecycleState || this.resolveLifecycleState(tournament);
+    return lifecycle === 'registration_open';
   }
 
   private generateTournamentBracket(tournament: Tournament): TournamentBracket {
@@ -1469,6 +1599,85 @@ export class ArenaService {
     }
 
     return { generatedAt: now(), rounds };
+  }
+
+  private getTournamentTier(title: string): TournamentTier {
+    const normalized = title.toLowerCase();
+    if (normalized.includes('rising stars cup')) return 'LOW';
+    if (normalized.includes('winter cup') || normalized.includes('knockout masters')) return 'STANDARD';
+    if (
+      normalized.includes('champions showcase') ||
+      normalized.includes('all-star arena') ||
+      normalized.includes('season honors clash')
+    ) {
+      return 'PREMIUM';
+    }
+    return 'STANDARD';
+  }
+
+  private getTierFees(tier: TournamentTier) {
+    if (tier === 'LOW') return { ngn: 500, usd: 1 };
+    if (tier === 'PREMIUM') return { ngn: 2000, usd: 2 };
+    return { ngn: 1000, usd: 1 };
+  }
+
+  private applyTierPricing(tournament: Tournament) {
+    tournament.tier = this.getTournamentTier(tournament.title);
+    const fee = this.getTierFees(tournament.tier);
+    tournament.entryFeeNGN = fee.ngn;
+    tournament.entryFeeUSD = fee.usd;
+    tournament.platformFeePercent = TOURNAMENT_PLATFORM_FEE_PERCENT;
+    tournament.entryFee = (tournament.paymentCurrency || 'USD') === 'NGN' ? fee.ngn : fee.usd;
+    this.recalculateTournamentPool(tournament);
+  }
+
+  private recalculateTournamentPool(tournament: Tournament) {
+    const entryFee = (tournament.paymentCurrency || 'USD') === 'NGN' ? tournament.entryFeeNGN || 0 : tournament.entryFeeUSD || 0;
+    const totalPool = Math.round(entryFee * (tournament.participants?.length || 0) * 100) / 100;
+    const platformFeeAmount = Math.round(totalPool * (tournament.platformFeePercent || TOURNAMENT_PLATFORM_FEE_PERCENT) * 100) / 100;
+    const prizePool = Math.max(0, Math.round((totalPool - platformFeeAmount) * 100) / 100);
+
+    tournament.entryFee = entryFee;
+    tournament.totalPool = totalPool;
+    tournament.platformFeeAmount = platformFeeAmount;
+    tournament.prizePool = prizePool;
+    tournament.payoutBreakdown = {
+      first: Math.round(prizePool * 0.6 * 100) / 100,
+      second: Math.round(prizePool * 0.25 * 100) / 100,
+      third: Math.round(prizePool * 0.15 * 100) / 100,
+    };
+  }
+
+  private createPaystackReference(prefix: 'TOUR' | 'MATCH') {
+    return `${prefix}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
+  }
+
+  private verifyPaystackPayment(input: {
+    referenceId: string;
+    expectedAmount: number;
+    currency: Currency;
+    context: string;
+    userId: string;
+  }): ArenaActionResult {
+    if (!input.expectedAmount || input.expectedAmount <= 0) {
+      return { ok: false, message: 'Invalid payment amount.' };
+    }
+
+    const transactionId = uid();
+    this.state.transactions.unshift({
+      id: transactionId,
+      type: 'tournament_entry_fee',
+      amount: input.expectedAmount,
+      currency: input.currency,
+      method: 'Paystack',
+      referenceId: input.referenceId,
+      createdAt: now(),
+      status: 'completed',
+      note: `${input.context} (Paystack verified)`,
+      details: `Paystack reference ${input.referenceId}`,
+    });
+
+    return { ok: true, transactionId, transactionAt: now() };
   }
 
   private lockFunds(
@@ -2023,59 +2232,237 @@ export class ArenaService {
 
   private withArenaXCalendarTournaments(existing: Tournament[], users: UserProfile[]) {
     const baseParticipants = users.slice(0, 5).map((user) => user.id);
+    const year = new Date().getFullYear();
     const create = (
       title: string,
       game: Tournament['game'],
+      registrationOpenAt: string,
+      registrationCloseAt: string,
       startsAt: string,
+      endsAt: string,
+      seasonKey: string,
       image: string,
       maxPlayers: number,
       status: Tournament['status'],
       participantsCount: number
     ): Tournament => {
       const participants = baseParticipants.slice(0, Math.min(participantsCount, baseParticipants.length));
+      const tier = this.getTournamentTier(title);
+      const tierFees = this.getTierFees(tier);
+      const entryFeeUSD = tierFees.usd;
+      const totalPool = participants.length * entryFeeUSD;
+      const platformFeeAmount = totalPool * TOURNAMENT_PLATFORM_FEE_PERCENT;
+      const prizePool = totalPool - platformFeeAmount;
       return {
         id: uid(),
         title,
         game,
-        entryFee: DEFAULT_TOURNAMENT_ENTRY_FEE,
+        tier,
+        entryFee: entryFeeUSD,
+        entryFeeNGN: tierFees.ngn,
+        entryFeeUSD,
+        paymentCurrency: 'USD',
+        platformFeePercent: TOURNAMENT_PLATFORM_FEE_PERCENT,
         maxPlayers,
         status,
-        prizePool: participants.length * DEFAULT_TOURNAMENT_ENTRY_FEE,
+        totalPool,
+        platformFeeAmount,
+        prizePool,
+        payoutBreakdown: {
+          first: Math.round(prizePool * 0.6 * 100) / 100,
+          second: Math.round(prizePool * 0.25 * 100) / 100,
+          third: Math.round(prizePool * 0.15 * 100) / 100,
+        },
         participants,
         startsAt,
+        registrationOpenAt,
+        registrationCloseAt,
+        endsAt,
+        seasonKey,
+        lifecycleState: 'upcoming',
         image,
       };
     };
 
     const calendarTournaments: Tournament[] = [
-      create('DLS Winter Cup', 'Dream League Soccer', '2026-01-15T18:00:00.000Z', 'assets/Dls 26.jpeg', 128, 'upcoming', 5),
-      create('eFootball Winter Cup', 'eFootball', '2026-01-15T18:00:00.000Z', 'assets/Efootball.jpeg', 128, 'upcoming', 5),
-      create('FIFA Winter Cup', 'FIFA', '2026-01-15T18:00:00.000Z', 'assets/FIFA.jpeg', 128, 'upcoming', 5),
-      create('DLS Rising Stars Cup', 'Dream League Soccer', '2026-02-10T18:00:00.000Z', 'assets/Dls.jpeg', 128, 'upcoming', 5),
-      create('eFootball Rising Stars Cup', 'eFootball', '2026-02-10T18:00:00.000Z', 'assets/Efootball.jpeg', 128, 'upcoming', 5),
-      create('FIFA Rising Stars Cup', 'FIFA', '2026-02-10T18:00:00.000Z', 'assets/FIFA.jpeg', 128, 'upcoming', 5),
-      create('DLS Knockout Masters', 'Dream League Soccer', '2026-03-04T18:00:00.000Z', 'assets/Dls 26.jpeg', 128, 'upcoming', 5),
-      create('eFootball Knockout Masters', 'eFootball', '2026-03-04T18:00:00.000Z', 'assets/Efootball.jpeg', 128, 'upcoming', 5),
-      create('FIFA Knockout Masters', 'FIFA', '2026-03-04T18:00:00.000Z', 'assets/FIFA.jpeg', 128, 'upcoming', 5),
-      create('DLS Champions Showcase', 'Dream League Soccer', '2026-04-05T18:00:00.000Z', 'assets/Dls.jpeg', 64, 'upcoming', 4),
-      create('eFootball All-Star Arena', 'eFootball', '2026-04-12T18:00:00.000Z', 'assets/Efootball.jpeg', 64, 'upcoming', 4),
-      create('FIFA Season Honors Clash', 'FIFA', '2026-04-12T18:00:00.000Z', 'assets/FIFA.jpeg', 64, 'upcoming', 4),
+      create(
+        'DLS Winter Cup',
+        'Dream League Soccer',
+        `${year}-01-01T00:00:00.000Z`,
+        `${year}-01-10T23:59:59.000Z`,
+        `${year}-01-15T18:00:00.000Z`,
+        `${year}-01-30T21:00:00.000Z`,
+        'WINTER',
+        'assets/Dls 26.jpeg',
+        128,
+        'upcoming',
+        5
+      ),
+      create(
+        'eFootball Winter Cup',
+        'eFootball',
+        `${year}-01-01T00:00:00.000Z`,
+        `${year}-01-10T23:59:59.000Z`,
+        `${year}-01-15T18:00:00.000Z`,
+        `${year}-01-30T21:00:00.000Z`,
+        'WINTER',
+        'assets/Efootball.jpeg',
+        128,
+        'upcoming',
+        5
+      ),
+      create(
+        'FIFA Winter Cup',
+        'FIFA',
+        `${year}-01-01T00:00:00.000Z`,
+        `${year}-01-10T23:59:59.000Z`,
+        `${year}-01-15T18:00:00.000Z`,
+        `${year}-01-30T21:00:00.000Z`,
+        'WINTER',
+        'assets/FIFA.jpeg',
+        128,
+        'upcoming',
+        5
+      ),
+      create(
+        'DLS Rising Stars Cup',
+        'Dream League Soccer',
+        `${year}-04-01T00:00:00.000Z`,
+        `${year}-04-12T23:59:59.000Z`,
+        `${year}-04-18T18:00:00.000Z`,
+        `${year}-05-05T21:00:00.000Z`,
+        'RISING_STARS',
+        'assets/Dls.jpeg',
+        128,
+        'upcoming',
+        5
+      ),
+      create(
+        'eFootball Rising Stars Cup',
+        'eFootball',
+        `${year}-04-01T00:00:00.000Z`,
+        `${year}-04-12T23:59:59.000Z`,
+        `${year}-04-18T18:00:00.000Z`,
+        `${year}-05-05T21:00:00.000Z`,
+        'RISING_STARS',
+        'assets/Efootball.jpeg',
+        128,
+        'upcoming',
+        5
+      ),
+      create(
+        'FIFA Rising Stars Cup',
+        'FIFA',
+        `${year}-04-01T00:00:00.000Z`,
+        `${year}-04-12T23:59:59.000Z`,
+        `${year}-04-18T18:00:00.000Z`,
+        `${year}-05-05T21:00:00.000Z`,
+        'RISING_STARS',
+        'assets/FIFA.jpeg',
+        128,
+        'upcoming',
+        5
+      ),
+      create(
+        'DLS Knockout Masters',
+        'Dream League Soccer',
+        `${year}-07-01T00:00:00.000Z`,
+        `${year}-07-15T23:59:59.000Z`,
+        `${year}-07-20T18:00:00.000Z`,
+        `${year}-08-10T21:00:00.000Z`,
+        'KNOCKOUT',
+        'assets/Dls 26.jpeg',
+        128,
+        'upcoming',
+        5
+      ),
+      create(
+        'eFootball Knockout Masters',
+        'eFootball',
+        `${year}-07-01T00:00:00.000Z`,
+        `${year}-07-15T23:59:59.000Z`,
+        `${year}-07-20T18:00:00.000Z`,
+        `${year}-08-10T21:00:00.000Z`,
+        'KNOCKOUT',
+        'assets/Efootball.jpeg',
+        128,
+        'upcoming',
+        5
+      ),
+      create(
+        'FIFA Knockout Masters',
+        'FIFA',
+        `${year}-07-01T00:00:00.000Z`,
+        `${year}-07-15T23:59:59.000Z`,
+        `${year}-07-20T18:00:00.000Z`,
+        `${year}-08-10T21:00:00.000Z`,
+        'KNOCKOUT',
+        'assets/FIFA.jpeg',
+        128,
+        'upcoming',
+        5
+      ),
+      create(
+        'DLS Champions Showcase',
+        'Dream League Soccer',
+        `${year}-10-01T00:00:00.000Z`,
+        `${year}-10-12T23:59:59.000Z`,
+        `${year}-10-18T18:00:00.000Z`,
+        `${year}-11-10T21:00:00.000Z`,
+        'CHAMPIONS',
+        'assets/Dls.jpeg',
+        64,
+        'upcoming',
+        4
+      ),
+      create(
+        'eFootball All-Star Arena',
+        'eFootball',
+        `${year}-10-01T00:00:00.000Z`,
+        `${year}-10-12T23:59:59.000Z`,
+        `${year}-10-18T18:00:00.000Z`,
+        `${year}-11-10T21:00:00.000Z`,
+        'CHAMPIONS',
+        'assets/Efootball.jpeg',
+        64,
+        'upcoming',
+        4
+      ),
+      create(
+        'FIFA Season Honors Clash',
+        'FIFA',
+        `${year}-10-01T00:00:00.000Z`,
+        `${year}-10-12T23:59:59.000Z`,
+        `${year}-10-18T18:00:00.000Z`,
+        `${year}-11-10T21:00:00.000Z`,
+        'CHAMPIONS',
+        'assets/FIFA.jpeg',
+        64,
+        'upcoming',
+        4
+      ),
     ];
 
     const knownTitles = new Set(calendarTournaments.map((item) => item.title.toLowerCase()));
     const preserved = (existing || []).filter((item) => !knownTitles.has(item.title.toLowerCase()));
     const merged = [...calendarTournaments, ...preserved];
 
-    return merged.map((tournament) => ({
+    const normalized = merged.map((tournament) => ({
       ...tournament,
+      registrationOpenAt: tournament.registrationOpenAt || tournament.startsAt,
+      registrationCloseAt: tournament.registrationCloseAt || tournament.startsAt,
+      endsAt: tournament.endsAt || tournament.startsAt,
       entryFee:
         typeof tournament.entryFee === 'number' && tournament.entryFee > 0
           ? tournament.entryFee
           : DEFAULT_TOURNAMENT_ENTRY_FEE,
-      prizePool:
-        typeof tournament.prizePool === 'number' && tournament.prizePool > 0
-          ? tournament.prizePool
-          : (tournament.participants?.length || 0) * (tournament.entryFee || DEFAULT_TOURNAMENT_ENTRY_FEE),
+      lifecycleState: tournament.lifecycleState || 'upcoming',
     }));
+
+    for (const tournament of normalized) {
+      this.applyTierPricing(tournament);
+    }
+
+    return normalized;
   }
 }

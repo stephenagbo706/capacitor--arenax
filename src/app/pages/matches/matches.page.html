@@ -120,9 +120,12 @@
       </button>
     </div>
 
-    <button class="continue-btn" type="button" (click)="continueSetup()">Continue</button>
+    <button class="continue-btn" type="button" [disabled]="hasActiveCreatedMatch" (click)="continueSetup()">Continue</button>
     <p class="ax-error" *ngIf="errorMessage">{{ errorMessage }}</p>
     <p class="ax-status" *ngIf="statusMessage">{{ statusMessage }}</p>
+    <p class="ax-muted" *ngIf="hasActiveCreatedMatch">
+      You already have an active created match. Complete it before creating another one.
+    </p>
 
     <section class="room-card">
       <h3>Room Game ID</h3>
