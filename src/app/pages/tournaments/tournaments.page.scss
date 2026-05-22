@@ -51,8 +51,8 @@ h1 {
   top: 0;
   z-index: 30;
   padding-top: 0.45rem;
-  background: linear-gradient(180deg, rgba(5, 12, 31, 0.96), rgba(5, 12, 31, 0.84));
-  backdrop-filter: blur(6px);
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .sticky-filters-spacer {
