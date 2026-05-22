@@ -123,6 +123,29 @@
         <button class="ax-btn ax-btn-primary" (click)="send()">Send</button>
       </div>
 
+      <div class="reply-popup-backdrop" *ngIf="replyComposerOpen && replyingTo" (click)="clearReply()">
+        <div class="reply-popup-card" (click)="$event.stopPropagation()">
+          <div class="reply-popup-head">
+            <strong>Reply Message</strong>
+            <button type="button" class="ax-icon-btn" (click)="clearReply()">✕</button>
+          </div>
+          <p class="ax-muted">
+            Replying to {{ replyingTo.senderId === currentUserId ? 'you' : getUser(replyingTo.senderId)?.username }}
+          </p>
+          <p class="reply-preview">{{ replyingTo.text || 'Image message' }}</p>
+          <input
+            class="ax-input"
+            placeholder="Type your reply"
+            [(ngModel)]="replyMessage"
+            (keyup.enter)="sendReply()"
+          />
+          <div class="reply-popup-actions">
+            <button type="button" class="ax-btn" (click)="clearReply()">Cancel</button>
+            <button type="button" class="ax-btn ax-btn-primary" (click)="sendReply()">Send</button>
+          </div>
+        </div>
+      </div>
+
       <div class="ax-toast" *ngIf="toast">{{ toast }}</div>
     </ng-container>
 

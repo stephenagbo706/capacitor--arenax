@@ -23,6 +23,8 @@ export class ChatPage implements OnInit {
   showProfileCard = false;
   typing = false;
   replyingTo?: ChatMessage | null;
+  replyComposerOpen = false;
+  replyMessage = '';
   attachmentData?: string;
   swipeStart?: { x: number; y: number };
   longPressTimer?: any;
@@ -110,6 +112,8 @@ export class ChatPage implements OnInit {
 
   clearReply() {
     this.replyingTo = null;
+    this.replyComposerOpen = false;
+    this.replyMessage = '';
   }
 
   onPressStart(message: ChatMessage, event: TouchEvent | MouseEvent) {
@@ -137,7 +141,7 @@ export class ChatPage implements OnInit {
     const deltaY = Math.abs(touch.clientY - this.swipeStart.y);
     this.swipeStart = undefined;
     if (Math.abs(deltaX) > 60 && deltaY < 40) {
-      this.replyingTo = message;
+      this.openReplyComposer(message);
     }
   }
 
@@ -159,7 +163,25 @@ export class ChatPage implements OnInit {
   }
 
   replyTo(message: ChatMessage) {
+    this.openReplyComposer(message);
+  }
+
+  openReplyComposer(message: ChatMessage) {
     this.replyingTo = message;
+    this.replyComposerOpen = true;
+  }
+
+  sendReply() {
+    const text = this.replyMessage.trim();
+    if (!text || !this.replyingTo || !this.chat) return;
+    this.arena.sendMessage(this.chatId, {
+      text,
+      replyToId: this.replyingTo.id,
+    });
+    this.replyMessage = '';
+    this.replyingTo = null;
+    this.replyComposerOpen = false;
+    this.markThreadSeen();
   }
 
   deleteMessage(message: ChatMessage) {
