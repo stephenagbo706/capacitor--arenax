@@ -301,7 +301,7 @@ export class ArenaService {
     const lockResult = this.lockFunds(current.id, payload.stake, 'stake_lock', `Stake lock for ${payload.game}`);
     if (!lockResult.ok) return lockResult;
 
-    const roomCode = (payload.roomCode || this.createRoomCode()).trim().toUpperCase();
+    const roomCode = this.normalizeRoomCode(payload.roomCode || this.createRoomCode());
     const roomCodeInUse = this.state.matches.some((item) => item.roomCode === roomCode);
     if (roomCodeInUse) return { ok: false, message: 'Room ID already exists. Generate a new room.' };
 
@@ -396,7 +396,7 @@ export class ArenaService {
   }
 
   joinStakeMatchByRoomCode(roomCode: string): ArenaActionResult {
-    const normalized = roomCode.trim().toUpperCase();
+    const normalized = this.normalizeRoomCode(roomCode);
     if (!normalized) return { ok: false, message: 'Enter a valid room ID.' };
 
     const waitingMatch = this.state.matches.find((item) => item.roomCode === normalized && item.status === 'waiting');
@@ -1440,10 +1440,34 @@ export class ArenaService {
   }
 
   private applyIncomingMatchUpdate(payload: MatchUpdatePayload) {
-    const match = this.state.matches.find((item) => item.id === payload.matchId);
+    let match = this.state.matches.find((item) => item.id === payload.matchId);
+    if (!match && payload.action === 'created') {
+      const roomCode = (payload.roomCode || '').trim().toUpperCase();
+      if (!roomCode || !payload.game || typeof payload.stake !== 'number') return;
+      match = {
+        id: payload.matchId,
+        roomCode,
+        player1Id: payload.actorUserId,
+        player1GameId: 'N/A',
+        game: payload.game,
+        platform: payload.platform || 'Cross-platform',
+        matchType: payload.matchType || '1v1',
+        duration: typeof payload.duration === 'number' ? payload.duration : 10,
+        extraTime: typeof payload.extraTime === 'boolean' ? payload.extraTime : true,
+        penalties: typeof payload.penalties === 'boolean' ? payload.penalties : true,
+        stake: payload.stake,
+        status: (payload.status as Match['status']) || 'waiting',
+        scheduledAt: payload.scheduledAt || 'Upcoming',
+        createdAt: payload.timestamp || now(),
+        escrowTotal: payload.stake,
+        commissionRate: Math.min(MATCHMAKING_PLATFORM_FEE_RATE, Math.max(0.05, this.state.commissionRate || 0.1)),
+      };
+      this.state.matches.unshift(match);
+    }
     if (!match) return;
     if (payload.status) match.status = payload.status as Match['status'];
     if (payload.winnerId) match.winnerId = payload.winnerId;
+    if (payload.roomCode) match.roomCode = payload.roomCode.trim().toUpperCase();
     this.persist();
     this.hydrateSubjects();
   }
@@ -1506,6 +1530,15 @@ export class ArenaService {
       actorUserId: current.id,
       status: match.status,
       winnerId,
+      roomCode: match.roomCode,
+      game: match.game,
+      stake: match.stake,
+      scheduledAt: match.scheduledAt,
+      platform: match.platform,
+      matchType: match.matchType,
+      duration: match.duration,
+      extraTime: match.extraTime,
+      penalties: match.penalties,
       timestamp: now(),
     });
   }
@@ -1835,6 +1868,13 @@ export class ArenaService {
       .slice(0, 6)
       .padEnd(6, 'X');
     return `RM-${condensed}`;
+  }
+
+  private normalizeRoomCode(roomCode: string) {
+    return (roomCode || '')
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '');
   }
 
   private persist() {

@@ -49,6 +49,15 @@ export interface MatchUpdatePayload {
   actorUserId: string;
   status?: string;
   winnerId?: string;
+  roomCode?: string;
+  game?: string;
+  stake?: number;
+  scheduledAt?: string;
+  platform?: string;
+  matchType?: string;
+  duration?: number;
+  extraTime?: boolean;
+  penalties?: boolean;
   timestamp: string;
 }
 
