@@ -24,7 +24,7 @@ export class JoinGamePage {
     this.roomGameId = (event.target as HTMLInputElement).value.toUpperCase();
   }
 
-  joinGame() {
+  async joinGame() {
     this.errorMessage = '';
     this.statusMessage = '';
 
@@ -34,7 +34,7 @@ export class JoinGamePage {
       return;
     }
 
-    const result = this.arena.joinStakeMatchByRoomCode(roomCode);
+    const result = await this.arena.joinStakeMatchByRoomCode(roomCode);
     if (!result?.ok) {
       this.errorMessage = result?.message || 'Unable to join room.';
       return;
