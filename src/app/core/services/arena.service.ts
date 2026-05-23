@@ -64,6 +64,7 @@ export class ArenaService {
 
   private state: ArenaState;
   private firebaseDb = this.resolveFirebaseDb();
+  private lastRoomSyncIssue: string | null = null;
 
   users$ = new BehaviorSubject<UserProfile[]>([]);
   currentUser$ = new BehaviorSubject<UserProfile | null>(null);
@@ -352,7 +353,9 @@ export class ArenaService {
     this.persist();
     this.hydrateSubjects();
     this.emitMatchRealtimeUpdate(match, 'created');
-    this.syncMatchRoomToCloud(match).catch(() => {});
+    this.syncMatchRoomToCloud(match).catch((error) => {
+      this.lastRoomSyncIssue = this.getCloudRoomErrorMessage(error);
+    });
     return { ok: true, matchId: match.id, roomCode };
   }
 
@@ -408,7 +411,11 @@ export class ArenaService {
     const waitingMatch = this.state.matches.find((item) => item.roomCode === normalized && item.status === 'waiting');
     if (waitingMatch) return this.joinStakeMatch(waitingMatch.id);
 
-    const cloudMatch = await this.fetchCloudMatchRoom(normalized);
+    const cloudFetch = await this.fetchCloudMatchRoom(normalized);
+    if (!cloudFetch.ok) {
+      return { ok: false, message: cloudFetch.message };
+    }
+    const cloudMatch = cloudFetch.match;
     if (cloudMatch && cloudMatch.status === 'waiting') {
       const existing = this.state.matches.find((item) => item.id === cloudMatch.id);
       if (!existing) {
@@ -421,6 +428,9 @@ export class ArenaService {
 
     const existingMatch = this.state.matches.find((item) => item.roomCode === normalized);
     if (existingMatch) return { ok: false, message: 'Room found, but it is no longer waiting for an opponent.' };
+    if (this.lastRoomSyncIssue) {
+      return { ok: false, message: `Room not available yet: ${this.lastRoomSyncIssue}` };
+    }
     return { ok: false, message: 'Room ID not found.' };
   }
 
@@ -1896,42 +1906,68 @@ export class ArenaService {
 
   private resolveFirebaseDb() {
     const config = environment.firebase;
-    if (!config?.apiKey || !config?.projectId || !config?.appId) return null;
-    const app = getApps().length ? getApp() : initializeApp(config);
-    return getDatabase(app);
+    if (!config?.apiKey || !config?.projectId || !config?.appId || !config?.databaseURL) return null;
+    try {
+      const app = getApps().length ? getApp() : initializeApp(config);
+      return getDatabase(app);
+    } catch {
+      return null;
+    }
   }
 
   private async syncMatchRoomToCloud(match: Match) {
-    if (!this.firebaseDb || !match.roomCode) return;
+    if (!this.firebaseDb || !match.roomCode) {
+      this.lastRoomSyncIssue = 'Realtime database is not configured.';
+      return;
+    }
     const roomRef = ref(this.firebaseDb, `matchRooms/${match.roomCode}`);
-    await set(roomRef, {
-      id: match.id,
-      roomCode: match.roomCode,
-      player1Id: match.player1Id,
-      player1GameId: match.player1GameId,
-      game: match.game,
-      platform: match.platform || 'Cross-platform',
-      matchType: match.matchType || '1v1',
-      duration: typeof match.duration === 'number' ? match.duration : 10,
-      extraTime: typeof match.extraTime === 'boolean' ? match.extraTime : true,
-      penalties: typeof match.penalties === 'boolean' ? match.penalties : true,
-      stake: match.stake,
-      status: match.status,
-      scheduledAt: match.scheduledAt,
-      createdAt: match.createdAt || now(),
-      escrowTotal: match.escrowTotal || match.stake,
-      commissionRate: typeof match.commissionRate === 'number' ? match.commissionRate : MATCHMAKING_PLATFORM_FEE_RATE,
-    });
+    try {
+      await set(roomRef, {
+        id: match.id,
+        roomCode: match.roomCode,
+        player1Id: match.player1Id,
+        player1GameId: match.player1GameId,
+        game: match.game,
+        platform: match.platform || 'Cross-platform',
+        matchType: match.matchType || '1v1',
+        duration: typeof match.duration === 'number' ? match.duration : 10,
+        extraTime: typeof match.extraTime === 'boolean' ? match.extraTime : true,
+        penalties: typeof match.penalties === 'boolean' ? match.penalties : true,
+        stake: match.stake,
+        status: match.status,
+        scheduledAt: match.scheduledAt,
+        createdAt: match.createdAt || now(),
+        escrowTotal: match.escrowTotal || match.stake,
+        commissionRate: typeof match.commissionRate === 'number' ? match.commissionRate : MATCHMAKING_PLATFORM_FEE_RATE,
+      });
+      this.lastRoomSyncIssue = null;
+    } catch (error) {
+      this.lastRoomSyncIssue = this.getCloudRoomErrorMessage(error);
+      throw error;
+    }
   }
 
-  private async fetchCloudMatchRoom(roomCode: string): Promise<Match | null> {
-    if (!this.firebaseDb) return null;
+  private async fetchCloudMatchRoom(
+    roomCode: string
+  ): Promise<{ ok: true; match: Match | null } | { ok: false; message: string }> {
+    if (!this.firebaseDb) {
+      return { ok: false, message: 'Realtime database is not configured. Update app config and retry.' };
+    }
     const roomRef = ref(this.firebaseDb, `matchRooms/${roomCode}`);
-    const snapshot = await get(roomRef);
-    if (!snapshot.exists()) return null;
+    let snapshot;
+    try {
+      snapshot = await get(roomRef);
+    } catch (error) {
+      return { ok: false, message: this.getCloudRoomErrorMessage(error) };
+    }
+    if (!snapshot.exists()) return { ok: true, match: null };
     const data = snapshot.val() as Partial<Match>;
-    if (!data?.id || !data?.player1Id || !data?.game || typeof data.stake !== 'number') return null;
+    if (!data?.id || !data?.player1Id || !data?.game || typeof data.stake !== 'number') {
+      return { ok: false, message: 'Room data is incomplete. Create a new room and try again.' };
+    }
     return {
+      ok: true,
+      match: {
       id: data.id,
       roomCode: this.normalizeRoomCode(data.roomCode || roomCode),
       player1Id: data.player1Id,
@@ -1964,12 +2000,21 @@ export class ArenaService {
           : Math.min(MATCHMAKING_PLATFORM_FEE_RATE, Math.max(0.05, this.state.commissionRate || 0.1)),
       prize: data.prize,
       prizePaid: data.prizePaid,
+      },
     };
   }
 
   private async removeCloudRoomByCode(roomCode?: string) {
     if (!this.firebaseDb || !roomCode) return;
     await remove(ref(this.firebaseDb, `matchRooms/${this.normalizeRoomCode(roomCode)}`));
+  }
+
+  private getCloudRoomErrorMessage(error: unknown) {
+    const message = (error as { message?: string } | null)?.message?.toLowerCase() || '';
+    if (message.includes('permission')) return 'Database permission denied.';
+    if (message.includes('network')) return 'Network error while checking room.';
+    if (message.includes('unavailable')) return 'Database service unavailable.';
+    return 'Cloud room sync failed.';
   }
 
   private persist() {
