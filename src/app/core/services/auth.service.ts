@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
+import { FirebaseAuthentication, type User as NativeAuthUser } from '@capacitor-firebase/authentication';
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import {
   Auth,
@@ -14,7 +14,6 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   setPersistence,
-  signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -34,6 +33,7 @@ export class AuthService {
   private readonly auth: Auth | null;
   private readonly ready: Promise<void>;
   private didResolveInitialAuthState = false;
+  private currentNativeUser: NativeAuthUser | null = null;
 
   constructor() {
     if (!this.hasFirebaseConfig()) {
@@ -53,6 +53,7 @@ export class AuthService {
   }
 
   isAuthenticated() {
+    if (Capacitor.isNativePlatform()) return !!this.currentNativeUser;
     return !!this.auth?.currentUser;
   }
 
@@ -65,6 +66,15 @@ export class AuthService {
     if (!normalizedPassword) return { ok: false, message: 'Password is required.' };
 
     try {
+      if (Capacitor.isNativePlatform()) {
+        const result = await FirebaseAuthentication.signInWithEmailAndPassword({
+          email: normalizedEmail,
+          password: normalizedPassword,
+        });
+        await this.syncNativeArenaUser(result.user);
+        return { ok: true };
+      }
+
       await signInWithEmailAndPassword(this.auth, normalizedEmail, normalizedPassword);
       return { ok: true };
     } catch (error) {
@@ -79,16 +89,8 @@ export class AuthService {
       let signedInUser: User | null = null;
 
       if (Capacitor.isNativePlatform()) {
-        const result = await FirebaseAuthentication.signInWithGoogle({ skipNativeAuth: true });
-        const idToken = result.credential?.idToken;
-        const accessToken = result.credential?.accessToken;
-        if (!idToken) {
-          return { ok: false, message: 'Google Sign-In did not return a valid credential.' };
-        }
-
-        const credential = GoogleAuthProvider.credential(idToken, accessToken);
-        const userCredential = await signInWithCredential(this.auth, credential);
-        signedInUser = userCredential.user;
+        const result = await FirebaseAuthentication.signInWithGoogle();
+        await this.syncNativeArenaUser(result.user);
       } else {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
@@ -118,6 +120,16 @@ export class AuthService {
     if (!normalizedPassword) return { ok: false, message: 'Password is required.' };
 
     try {
+      if (Capacitor.isNativePlatform()) {
+        const credential = await FirebaseAuthentication.createUserWithEmailAndPassword({
+          email: normalizedEmail,
+          password: normalizedPassword,
+        });
+        await FirebaseAuthentication.updateProfile({ displayName: normalizedUsername });
+        await this.syncNativeArenaUser(credential.user, normalizedUsername);
+        return { ok: true };
+      }
+
       const credential = await createUserWithEmailAndPassword(this.auth, normalizedEmail, normalizedPassword);
       if (normalizedUsername) {
         await updateProfile(credential.user, { displayName: normalizedUsername });
@@ -136,6 +148,11 @@ export class AuthService {
     if (!normalizedEmail) return { ok: false, message: 'Email is required.' };
 
     try {
+      if (Capacitor.isNativePlatform()) {
+        await FirebaseAuthentication.sendPasswordResetEmail({ email: normalizedEmail });
+        return { ok: true };
+      }
+
       await sendPasswordResetEmail(this.auth, normalizedEmail);
       return { ok: true };
     } catch (error) {
@@ -144,7 +161,12 @@ export class AuthService {
   }
 
   async logout() {
-    if (this.auth) {
+    if (Capacitor.isNativePlatform()) {
+      await FirebaseAuthentication.signOut();
+      this.currentNativeUser = null;
+      this.arena.logout();
+      this.realtime.disconnect();
+    } else if (this.auth) {
       await signOut(this.auth);
     } else {
       this.arena.logout();
@@ -154,6 +176,17 @@ export class AuthService {
 
   private async initializeAuthState() {
     if (!this.auth) return;
+
+    if (Capacitor.isNativePlatform()) {
+      await FirebaseAuthentication.addListener('authStateChange', async ({ user }) => {
+        await this.syncNativeArenaUser(user);
+      });
+
+      const { user } = await FirebaseAuthentication.getCurrentUser();
+      await this.syncNativeArenaUser(user);
+      this.didResolveInitialAuthState = true;
+      return;
+    }
 
     try {
       await setPersistence(this.auth, indexedDBLocalPersistence);
@@ -193,6 +226,33 @@ export class AuthService {
     const username = usernameOverride || user.displayName || email.split('@')[0] || 'ArenaX Player';
     this.arena.syncFromAuthUser({ uid: user.uid, email, username, avatar: user.photoURL || undefined });
     const token = await user.getIdToken().catch(() => '');
+    this.realtime.connect({
+      userId: user.uid,
+      email,
+      username,
+      token: token || undefined,
+    });
+  }
+
+  private async syncNativeArenaUser(user: NativeAuthUser | null, usernameOverride?: string) {
+    this.currentNativeUser = user;
+
+    if (!user) {
+      this.arena.logout();
+      this.realtime.disconnect();
+      return;
+    }
+
+    const email = user.email?.trim().toLowerCase();
+    if (!email) {
+      this.arena.logout();
+      this.realtime.disconnect();
+      return;
+    }
+
+    const username = usernameOverride || user.displayName || email.split('@')[0] || 'ArenaX Player';
+    this.arena.syncFromAuthUser({ uid: user.uid, email, username, avatar: user.photoUrl || undefined });
+    const token = await FirebaseAuthentication.getIdToken({ forceRefresh: false }).then((result) => result.token).catch(() => '');
     this.realtime.connect({
       userId: user.uid,
       email,
