@@ -21,6 +21,7 @@ export class LoginPage {
   showPassword = false;
   error = '';
   status = '';
+  isGoogleLoading = false;
 
   ionViewWillEnter() {
     this.status = '';
@@ -37,5 +38,21 @@ export class LoginPage {
     this.error = '';
     this.status = 'Login successful.';
     setTimeout(() => this.router.navigateByUrl('/home'), 900);
+  }
+
+  async continueWithGoogle() {
+    if (this.isGoogleLoading) return;
+
+    this.isGoogleLoading = true;
+    this.error = '';
+    this.status = '';
+    const result = await this.auth.loginWithGoogle();
+    this.isGoogleLoading = false;
+    if (!result.ok) {
+      this.error = result.message || 'Google Sign-In failed.';
+      return;
+    }
+
+    await this.router.navigateByUrl('/home');
   }
 }

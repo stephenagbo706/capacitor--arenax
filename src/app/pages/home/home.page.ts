@@ -19,6 +19,11 @@ export class HomePage {
   matches$ = this.arena.matches$;
   players$ = this.arena.users$;
   notifications$ = this.arena.notifications$;
+  readonly defaultAvatar = 'assets/ax-ui/logo.png';
+
+  get fallbackUser() {
+    return this.arena.getCurrentUser() || this.players$.value[0] || null;
+  }
 
   get activeMatches() {
     const nowMs = Date.now();

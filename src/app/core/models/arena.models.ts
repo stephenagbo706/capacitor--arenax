@@ -193,13 +193,16 @@ export interface ChatMessage {
   text?: string;
   image?: string;
   sentAt: string;
-  status?: 'sent' | 'delivered' | 'seen';
+  status?: 'sending' | 'sent' | 'delivered' | 'seen' | 'failed';
   replyToId?: string;
   reaction?: string;
+  deletedAt?: string;
+  deletedBy?: string;
 }
 
 export interface ChatThread {
   id: string;
+  type?: 'PRIVATE' | 'MATCH' | 'TOURNAMENT' | 'GROUP';
   participantIds: string[];
   messages: ChatMessage[];
 }

@@ -26,28 +26,24 @@ import {
 } from '../models/arena.models';
 import { SeasonAutomationService, FirestoreWriteFn } from './season-automation.service';
 import { RealtimeService } from './realtime.service';
+import { ArenaApiService } from './arena-api.service';
+import { ChatApiService } from './chat-api.service';
 import {
+  BackendChatMessagePayload,
+  BackendChatRoomPayload,
+  ChatReadPayload,
   InvitePlayerPayload,
   MatchUpdatePayload,
   SendMessagePayload,
   TournamentUpdatePayload,
 } from '../models/realtime.models';
+import { ApiError, Wallet, WalletTransaction } from '../models/api.models';
 
 const STORAGE_KEY = 'arenax_state_v2';
 const DEFAULT_CHAT_TEXTS = new Set([
   'Hey! Ready to battle? I am online now.',
   'Ready for the rematch tonight?',
   'Let me wrap this match and I will join.',
-]);
-const DEMO_USER_IDENTIFIERS = new Set([
-  'shadow@arenax.app',
-  'nova@arenax.app',
-  'blaze@arenax.app',
-  'community@arenax.app',
-  'ShadowLynx',
-  'NovaStrike',
-  'BlazeWolf',
-  'ArenaX Community',
 ]);
 const DEFAULT_TOURNAMENT_ENTRY_FEE = 5;
 const TOURNAMENT_PLATFORM_FEE_PERCENT = 0.1;
@@ -61,6 +57,8 @@ const uid = () => crypto.randomUUID();
 export class ArenaService {
   private automation = inject(SeasonAutomationService);
   private realtime = inject(RealtimeService);
+  private api = inject(ArenaApiService);
+  private chatApi = inject(ChatApiService);
 
   private state: ArenaState;
   private firebaseDb = this.resolveFirebaseDb();
@@ -96,6 +94,7 @@ export class ArenaService {
         email: user.email,
         username: user.username,
       });
+      this.loadBackendChatRooms().catch(() => {});
     });
   }
 
@@ -179,7 +178,7 @@ export class ArenaService {
     this.hydrateSubjects();
   }
 
-  syncFromAuthUser(payload: { uid: string; email: string; username: string }) {
+  syncFromAuthUser(payload: { uid: string; email: string; username: string; avatar?: string }) {
     const email = payload.email.trim().toLowerCase();
     if (!email) return;
 
@@ -191,12 +190,14 @@ export class ArenaService {
         this.state.users = this.state.users.map((user) =>
           user.id === existing.id
             ? {
-                ...user,
-                username: nextUsername,
+              ...user,
+              username: nextUsername,
+              avatar: payload.avatar || user.avatar,
               }
             : user
         );
       }
+      this.repairContentState();
       this.persist();
       this.hydrateSubjects();
       return;
@@ -215,7 +216,7 @@ export class ArenaService {
         FIFA: `FIFA-${randomCode()}`,
         'Call of Duty Mobile': `CODM-${randomCode()}`,
       },
-      avatar: 'assets/ax-ui/logo.png',
+      avatar: payload.avatar || 'assets/ax-ui/logo.png',
       wins: 0,
       losses: 0,
       goals: 0,
@@ -226,19 +227,16 @@ export class ArenaService {
 
     this.state.users.unshift(newUser);
     this.state.currentUserId = newUser.id;
+    this.repairContentState();
     this.persist();
     this.hydrateSubjects();
   }
 
   enableCurrentUserAdmin(): ArenaActionResult {
-    const current = this.getCurrentUser();
-    if (!current) return { ok: false, message: 'You must be logged in.' };
-    if (current.isAdmin) return { ok: true };
-
-    this.state.users = this.state.users.map((user) => (user.id === current.id ? { ...user, isAdmin: true } : user));
-    this.persist();
-    this.hydrateSubjects();
-    return { ok: true };
+    return {
+      ok: false,
+      message: 'Admin access can only be granted by the ArenaX backend.',
+    };
   }
 
   ensureLatestSeason(writeFn?: FirestoreWriteFn) {
@@ -525,24 +523,18 @@ export class ArenaService {
     this.hydrateSubjects();
   }
 
-  submitResult(matchId: string, winnerId: string, proofImage: string) {
+  async submitResult(matchId: string, _winnerId: string, proofImage: string): Promise<ArenaActionResult> {
     const match = this.state.matches.find((m) => m.id === matchId);
     if (!match) return { ok: false, message: 'Match not found.' };
     if (!['live', 'rejected'].includes(match.status)) {
       return { ok: false, message: 'Only LIVE or REJECTED matches can upload results.' };
     }
     if (!match.player2Id) return { ok: false, message: 'Second player has not joined yet.' };
-    if (![match.player1Id, match.player2Id].includes(winnerId)) {
-      return { ok: false, message: 'Winner must be one of the match players.' };
-    }
 
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in.' };
     if (!this.isMatchParticipant(match, current.id)) {
       return { ok: false, message: 'Only players in this match can upload a screenshot.' };
-    }
-    if (current.id !== winnerId) {
-      return { ok: false, message: 'Only the winning player can submit this screenshot.' };
     }
     const timingStatus = this.getResultTimingStatus(match);
     if (!timingStatus.ready) {
@@ -552,111 +544,117 @@ export class ArenaService {
       };
     }
 
-    match.status = 'pending_verification';
-    match.winnerId = winnerId;
-    match.screenshotUrl = proofImage;
-    match.uploadedAt = now();
-    match.verifiedAt = undefined;
-    match.adminId = undefined;
-    match.verificationNote = undefined;
+    const response = await this.api.submitMatchResult(matchId, {
+      screenshotDataUrl: proofImage,
+      fileName: 'match-result.png',
+      mimeType: proofImage.startsWith('data:image/png') ? 'image/png' : 'image/jpeg',
+      size: this.estimateDataUrlBytes(proofImage),
+      idempotencyKey: this.createIdempotencyKey('RESULT', matchId),
+    });
+    if (!response.success) return this.fromApiError(response.error);
 
-    const prize = Math.round(match.escrowTotal * 100) / 100;
-    match.prize = prize;
+    if (response.data.match) {
+      this.state.matches = this.state.matches.map((item) => (item.id === matchId ? response.data.match! : item));
+    } else {
+      match.status = 'pending_verification';
+      match.screenshotUrl = response.data.resultSubmission.screenshotUrl;
+      match.uploadedAt = response.data.resultSubmission.createdAt;
+      match.verifiedAt = undefined;
+      match.adminId = undefined;
+      match.verificationNote = undefined;
+    }
     this.state.notifications.unshift({
       id: uid(),
       type: 'match',
-      message: `Result uploaded for ${match.game}. Match is pending verification.`,
+      message: `Result uploaded for ${match.game}. Match is pending backend verification.`,
       createdAt: now(),
       read: false,
     });
-
     this.persist();
     this.hydrateSubjects();
-    this.emitMatchRealtimeUpdate(match, 'result_submitted', winnerId);
+    this.emitMatchRealtimeUpdate(this.state.matches.find((item) => item.id === matchId) || match, 'result_submitted');
     return { ok: true };
   }
 
-  uploadMatchScreenshot(matchId: string, payload: { winnerId: string; fileName: string; mimeType: string; size: number; dataUrl: string }) {
+  async uploadMatchScreenshot(
+    matchId: string,
+    payload: { winnerId: string; fileName: string; mimeType: string; size: number; dataUrl: string }
+  ): Promise<ArenaActionResult> {
     if (!['image/png', 'image/jpeg', 'image/jpg'].includes(payload.mimeType)) {
       return { ok: false, message: 'Only PNG or JPG screenshots are allowed.' };
     }
     if (payload.size > 5 * 1024 * 1024) {
       return { ok: false, message: 'Screenshot must be 5MB or less.' };
     }
-    const result = this.submitResult(matchId, payload.winnerId, payload.dataUrl);
-    if (!result.ok) return result;
 
-    const match = this.state.matches.find((item) => item.id === matchId);
-    if (match) {
+    const match = this.state.matches.find((m) => m.id === matchId);
+    if (!match) return { ok: false, message: 'Match not found.' };
+    if (!['live', 'rejected'].includes(match.status)) {
+      return { ok: false, message: 'Only LIVE or REJECTED matches can upload results.' };
+    }
+    if (!match.player2Id) return { ok: false, message: 'Second player has not joined yet.' };
+    const current = this.getCurrentUser();
+    if (!current) return { ok: false, message: 'You must be logged in.' };
+    if (!this.isMatchParticipant(match, current.id)) {
+      return { ok: false, message: 'Only players in this match can upload a screenshot.' };
+    }
+    const timingStatus = this.getResultTimingStatus(match);
+    if (!timingStatus.ready) {
+      return {
+        ok: false,
+        message: `Result upload opens after match time ends. Time left: ${this.formatClock(timingStatus.remainingSeconds)}.`,
+      };
+    }
+
+    const response = await this.api.submitMatchResult(matchId, {
+      screenshotDataUrl: payload.dataUrl,
+      fileName: payload.fileName,
+      mimeType: payload.mimeType === 'image/png' ? 'image/png' : 'image/jpeg',
+      size: payload.size,
+      idempotencyKey: this.createIdempotencyKey('RESULT', `${matchId}:${payload.fileName}:${payload.size}`),
+    });
+    if (!response.success) return this.fromApiError(response.error);
+
+    if (response.data.match) {
+      this.state.matches = this.state.matches.map((item) => (item.id === matchId ? response.data.match! : item));
+    } else {
+      match.status = 'pending_verification';
+      match.screenshotUrl = response.data.resultSubmission.screenshotUrl;
       match.screenshotFileName = payload.fileName;
       match.screenshotMimeType = payload.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+      match.uploadedAt = response.data.resultSubmission.createdAt;
+      match.verifiedAt = undefined;
+      match.adminId = undefined;
+      match.verificationNote = undefined;
     }
+
+    this.state.notifications.unshift({
+      id: uid(),
+      type: 'match',
+      message: `Result uploaded for ${match.game}. Match is pending backend verification.`,
+      createdAt: now(),
+      read: false,
+    });
     this.persist();
     this.hydrateSubjects();
+    this.emitMatchRealtimeUpdate(this.state.matches.find((item) => item.id === matchId) || match, 'result_submitted');
     return { ok: true };
   }
 
   autoVerifyPendingMatch(matchId: string, note = 'Platform auto-verification complete.') {
-    const match = this.state.matches.find((item) => item.id === matchId);
-    if (!match) return { ok: false, message: 'Match not found.' };
-    if (match.status !== 'pending_verification') return { ok: false, message: 'Match is not pending verification.' };
-    if (!match.player2Id || !match.winnerId) return { ok: false, message: 'Incomplete match data.' };
-
-    match.adminId = 'platform-auto';
-    match.verifiedAt = now();
-    match.verificationNote = note.trim() || 'Platform auto-verification complete.';
-
-    const loserId = match.player1Id === match.winnerId ? match.player2Id : match.player1Id;
-    const commission = Math.round(match.escrowTotal * match.commissionRate * 100) / 100;
-    const prizePaid = Math.round((match.escrowTotal - commission) * 100) / 100;
-
-    this.unlockFunds(match.player1Id, match.stake);
-    this.unlockFunds(match.player2Id, match.stake);
-    this.adjustAvailableBalance(match.winnerId, prizePaid);
-
-    this.state.users = this.state.users.map((u) => {
-      if (u.id === match.winnerId) return { ...u, wins: u.wins + 1 };
-      if (u.id === loserId) return { ...u, losses: u.losses + 1 };
-      return u;
-    });
-
-    match.status = 'verified';
-    match.prizePaid = prizePaid;
-
-    this.state.transactions.unshift({
-      id: uid(),
-      type: 'reward',
-      amount: prizePaid,
-      createdAt: now(),
-      status: 'completed',
-      note: `Auto-verified payout (${match.game})`,
-    });
-
-    this.state.notifications.unshift({
-      id: uid(),
-      type: 'payment',
-      message: `Match auto-verified. Winner credited $${prizePaid}.`,
-      createdAt: now(),
-      read: false,
-    });
-
-    this.state.spotlightPosts.unshift({
-      id: uid(),
-      title: `${match.game} Match Verified`,
-      body: `${this.getUser(match.winnerId)?.username || 'Winner'} paid $${prizePaid} after auto-verification.`,
-      tag: 'Result',
-      createdAt: now(),
-      image: match.screenshotUrl,
-      likeUserIds: [],
-      comments: [],
-    });
-
-    this.persist();
-    this.hydrateSubjects();
-    return { ok: true };
+    void matchId;
+    void note;
+    return {
+      ok: false,
+      message: 'Automatic verification must run on the ArenaX backend.',
+    };
   }
 
-  reviewPendingMatch(matchId: string, decision: 'approved' | 'rejected', note = '') {
+  async reviewPendingMatch(
+    matchId: string,
+    decision: 'approved' | 'rejected',
+    note = ''
+  ): Promise<ArenaActionResult> {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in.' };
     if (!current.isAdmin) return { ok: false, message: 'Only admins can verify screenshots.' };
@@ -664,71 +662,28 @@ export class ArenaService {
     const match = this.state.matches.find((item) => item.id === matchId);
     if (!match) return { ok: false, message: 'Match not found.' };
     if (match.status !== 'pending_verification') return { ok: false, message: 'Match is not pending verification.' };
-    if (!match.player2Id || !match.winnerId) return { ok: false, message: 'Incomplete match data.' };
+    if (!match.player2Id) return { ok: false, message: 'Incomplete match data.' };
 
-    match.adminId = current.id;
-    match.verifiedAt = now();
-    match.verificationNote = note.trim() || undefined;
-
-    if (decision === 'rejected') {
-      match.status = 'rejected';
-      this.state.notifications.unshift({
-        id: uid(),
-        type: 'match',
-        message: `Screenshot rejected for ${match.game}. Re-upload required.`,
-        createdAt: now(),
-        read: false,
-      });
-      this.persist();
-      this.hydrateSubjects();
-      return { ok: true };
-    }
-
-    const loserId = match.player1Id === match.winnerId ? match.player2Id : match.player1Id;
-    const commission = Math.round(match.escrowTotal * match.commissionRate * 100) / 100;
-    const prizePaid = Math.round((match.escrowTotal - commission) * 100) / 100;
-
-    this.unlockFunds(match.player1Id, match.stake);
-    this.unlockFunds(match.player2Id, match.stake);
-    this.adjustAvailableBalance(match.winnerId, prizePaid);
-
-    this.state.users = this.state.users.map((u) => {
-      if (u.id === match.winnerId) return { ...u, wins: u.wins + 1 };
-      if (u.id === loserId) return { ...u, losses: u.losses + 1 };
-      return u;
+    const response = await this.api.reviewMatch(matchId, {
+      decision,
+      note,
+      idempotencyKey: this.createIdempotencyKey('REVIEW', `${matchId}:${decision}`),
     });
+    if (!response.success) return this.fromApiError(response.error);
 
-    match.status = 'verified';
-    match.prizePaid = prizePaid;
-
-    this.state.transactions.unshift({
-      id: uid(),
-      type: 'reward',
-      amount: prizePaid,
-      createdAt: now(),
-      status: 'completed',
-      note: `Verified payout (${match.game})`,
-    });
-
+    this.state.matches = this.state.matches.map((item) => (item.id === matchId ? response.data.match : item));
+    this.applyWalletFromApi(response.data.wallet);
+    this.addApiTransaction(response.data.transaction);
     this.state.notifications.unshift({
       id: uid(),
-      type: 'payment',
-      message: `Screenshot approved. Winner credited $${prizePaid}.`,
+      type: decision === 'approved' ? 'payment' : 'match',
+      message:
+        decision === 'approved'
+          ? `Screenshot approved by backend. Settlement status updated.`
+          : `Screenshot rejected for ${match.game}. Re-upload required.`,
       createdAt: now(),
       read: false,
     });
-
-    this.state.spotlightPosts.unshift({
-      id: uid(),
-      title: `${match.game} Match Verified`,
-      body: `${this.getUser(match.winnerId)?.username || 'Winner'} paid $${prizePaid} after verification.`,
-      tag: 'Result',
-      createdAt: now(),
-      image: match.screenshotUrl,
-      likeUserIds: [],
-      comments: [],
-    });
-
     this.persist();
     this.hydrateSubjects();
     return { ok: true };
@@ -738,7 +693,7 @@ export class ArenaService {
     return this.state.matches.filter((match) => match.status === 'pending_verification');
   }
 
-  joinTournament(tournamentId: string, paymentCurrency: 'NGN' | 'USD' = 'USD'): ArenaActionResult {
+  async joinTournament(tournamentId: string, paymentCurrency: 'NGN' | 'USD' = 'USD'): Promise<ArenaActionResult> {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in to join.', redirectTo: '/auth/login' };
 
@@ -752,153 +707,61 @@ export class ArenaService {
     if (tournament.participants.length >= tournament.maxPlayers) return { ok: false, message: 'Tournament is full.' };
     const requiredEntryFee = paymentCurrency === 'NGN' ? tournament.entryFeeNGN || 0 : tournament.entryFeeUSD || 0;
     if (requiredEntryFee <= 0) return { ok: false, message: 'Tournament entry fee is not configured.' };
-    if (current.walletBalance < requiredEntryFee) {
-      return { ok: false, message: 'Insufficient wallet balance.', needsDeposit: true };
-    }
 
-    const paymentRef = this.createPaystackReference('TOUR');
-    const paymentResult = this.verifyPaystackPayment({
-      referenceId: paymentRef,
-      expectedAmount: requiredEntryFee,
-      currency: paymentCurrency,
-      context: `Tournament entry fee: ${tournament.title}`,
-      userId: current.id,
+    const response = await this.api.joinTournament(tournamentId, {
+      paymentCurrency,
+      idempotencyKey: this.createIdempotencyKey('TOUR', tournamentId),
     });
-    if (!paymentResult.ok) return paymentResult;
+    if (!response.success) return this.fromApiError(response.error);
 
-    const createdAt = now();
-    const lockResult = this.lockFunds(
-      current.id,
-      requiredEntryFee,
-      'tournament_entry_fee',
-      `Tournament entry fee (${paymentCurrency}): ${tournament.title}`,
-      { transactionId: paymentResult.transactionId || uid(), createdAt }
+    this.state.tournaments = this.state.tournaments.map((item) =>
+      item.id === tournamentId ? response.data.tournament : item
     );
-    if (!lockResult.ok) return lockResult;
-
-    tournament.participants.push(current.id);
-    tournament.paymentCurrency = paymentCurrency;
-    tournament.entries = [
-      {
-        id: uid(),
-        tournamentId: tournament.id,
-        userId: current.id,
-        username: current.username,
-        joinedAt: createdAt,
-        status: 'registered',
-      },
-      ...(tournament.entries || []),
-    ];
-    this.recalculateTournamentPool(tournament);
-    if (tournament.participants.length >= tournament.maxPlayers) {
-      tournament.status = 'ready';
-      tournament.bracket = this.generateTournamentBracket(tournament);
-      this.emitTournamentRealtimeUpdate(
-        tournament,
-        'bracket_updated',
-        `${tournament.title}: bracket generated with ${tournament.participants.length} players.`
-      );
-    } else if (tournament.status === 'upcoming') {
-      tournament.status = 'open';
-    }
-
+    this.applyWalletFromApi(response.data.wallet);
+    this.addApiTransaction(response.data.transaction);
     this.state.notifications.unshift({
       id: uid(),
       type: 'tournament',
-      message: `Joined tournament: ${tournament.title}`,
-      createdAt,
-      read: false,
-    });
-
-    this.state.notifications.unshift({
-      id: uid(),
-      type: 'tournament',
-      message: `Reminder set: ${tournament.title} starts ${tournament.startsAt}`,
-      createdAt,
-      read: false,
-    });
-
-    this.state.spotlightPosts.unshift({
-      id: uid(),
-      title: `${tournament.title} Player List Updated`,
-      body: `${tournament.participants.length}/${tournament.maxPlayers} players registered.`,
-      tag: 'Announcement',
+      message: `Joined tournament: ${response.data.tournament.title}`,
       createdAt: now(),
-      image: tournament.image,
-      likeUserIds: [],
-      comments: [],
+      read: false,
     });
-
     this.persist();
     this.hydrateSubjects();
     this.emitTournamentRealtimeUpdate(
-      tournament,
+      response.data.tournament,
       'player_joined',
-      `${tournament.title}: registration updated (${tournament.participants.length}/${tournament.maxPlayers}).`
+      `${response.data.tournament.title}: registration confirmed by backend.`
     );
-
-    return { ok: true, transactionId: paymentResult.transactionId || lockResult.transactionId, transactionAt: lockResult.createdAt };
+    return { ok: true, transactionId: response.data.transaction?.id, transactionAt: response.data.transaction?.createdAt };
   }
 
-  completeTournament(tournamentId: string, forcedWinnerId?: string) {
+  async completeTournament(tournamentId: string, forcedWinnerId?: string): Promise<ArenaActionResult> {
+    void forcedWinnerId;
     const tournament = this.state.tournaments.find((item) => item.id === tournamentId);
     if (!tournament) return { ok: false, message: 'Tournament not found.' };
     if (!tournament.participants.length) return { ok: false, message: 'No participants registered.' };
 
-    const winnerId =
-      forcedWinnerId && tournament.participants.includes(forcedWinnerId)
-        ? forcedWinnerId
-        : tournament.participants[Math.floor(Math.random() * tournament.participants.length)];
+    const response = await this.api.completeTournament(tournamentId, this.createIdempotencyKey('TOUR-COMPLETE', tournamentId));
+    if (!response.success) return this.fromApiError(response.error);
 
-    this.recalculateTournamentPool(tournament);
-
-    const participantEntryAmount =
-      (tournament.paymentCurrency || 'USD') === 'NGN' ? tournament.entryFeeNGN || 0 : tournament.entryFeeUSD || 0;
-    for (const participantId of tournament.participants) {
-      this.unlockFunds(participantId, participantEntryAmount);
-    }
-
-    const prizePool = tournament.prizePool;
-    const firstPlace = Math.round(prizePool * 0.6 * 100) / 100;
-    const secondPlace = Math.round(prizePool * 0.25 * 100) / 100;
-    const thirdPlace = Math.round(prizePool * 0.15 * 100) / 100;
-    tournament.payoutBreakdown = { first: firstPlace, second: secondPlace, third: thirdPlace };
-    this.adjustAvailableBalance(winnerId, firstPlace);
-
-    tournament.status = 'ended';
-    tournament.winnerId = winnerId;
-
-    this.state.transactions.unshift({
-      id: uid(),
-      type: 'reward',
-      amount: firstPlace,
-      createdAt: now(),
-      status: 'completed',
-      note: `Tournament payout (1st place): ${tournament.title}`,
-    });
-
-    this.state.spotlightPosts.unshift({
-      id: uid(),
-      title: `${tournament.title} Champion`,
-      body: `${this.getUser(winnerId)?.username || 'A player'} won ${tournament.game} and earned ${firstPlace} (${(tournament.paymentCurrency || 'USD')}).`,
-      tag: 'Result',
-      createdAt: now(),
-      image: tournament.image,
-      likeUserIds: [],
-      comments: [],
-    });
-
+    this.state.tournaments = this.state.tournaments.map((item) =>
+      item.id === tournamentId ? response.data.tournament : item
+    );
     this.state.notifications.unshift({
       id: uid(),
       type: 'tournament',
-      message: `${tournament.title} ended. Winner has been paid automatically.`,
+      message: `${response.data.tournament.title} completion confirmed by backend.`,
       createdAt: now(),
       read: false,
     });
-
     this.persist();
     this.hydrateSubjects();
-    this.emitTournamentRealtimeUpdate(tournament, 'tournament_completed', `${tournament.title} has been completed.`);
+    this.emitTournamentRealtimeUpdate(
+      response.data.tournament,
+      'tournament_completed',
+      `${response.data.tournament.title} has been completed.`
+    );
     return { ok: true };
   }
 
@@ -1060,7 +923,7 @@ export class ArenaService {
         createdAt: now(),
         read: false,
       });
-      this.createChatWith(request.fromUserId);
+      this.createChatWith(request.fromUserId).catch(() => {});
     }
 
     this.persist();
@@ -1090,7 +953,7 @@ export class ArenaService {
     return 'none';
   }
 
-  createChatWith(userId: string) {
+  async createChatWith(userId: string) {
     const current = this.getCurrentUser();
     if (!current) return '';
     if (userId === current.id) return '';
@@ -1099,6 +962,14 @@ export class ArenaService {
       (c) => c.participantIds.includes(userId) && c.participantIds.includes(current.id)
     );
     if (existing) return existing.id;
+    if (this.chatApi.isConfigured) {
+      const response = await this.chatApi.createPrivateRoom(userId);
+      this.upsertBackendRoom(response.room);
+      await this.realtime.joinChatRoom(response.room.id);
+      this.persist();
+      this.hydrateSubjects();
+      return response.room.id;
+    }
     const chatId = uid();
     this.state.chats.unshift({
       id: chatId,
@@ -1165,7 +1036,7 @@ export class ArenaService {
     return this.state.chats.find((chat) => chat.id === chatId && chat.participantIds.includes(currentUserId));
   }
 
-  sendMessage(chatId: string, message: { text?: string; image?: string; replyToId?: string }) {
+  async sendMessage(chatId: string, message: { text?: string; image?: string; replyToId?: string }) {
     const current = this.getCurrentUser();
     if (!current) return;
     const chat = this.state.chats.find((c) => c.id === chatId);
@@ -1173,6 +1044,20 @@ export class ArenaService {
     if (!chat.participantIds.includes(current.id)) return;
     const text = (message.text || '').trim();
     if (!text && !message.image) return;
+    if (this.chatApi.isConfigured) {
+      const response = await this.realtime.sendChatMessage({
+        roomId: chatId,
+        text,
+        attachmentUrl: message.image,
+        replyToMessageId: message.replyToId,
+        messageType: message.image ? 'IMAGE' : 'TEXT',
+      });
+      if (!response.ok || !response.message) {
+        throw new Error(response.error?.message || 'Message failed to send.');
+      }
+      this.applyBackendMessage(response.message);
+      return response.message.id;
+    }
     const newMessage = {
       id: uid(),
       senderId: current.id,
@@ -1187,7 +1072,6 @@ export class ArenaService {
       if (participantId === current.id) continue;
       this.pushIncomingChatNotification(chat.id, current.id, text || 'Sent you a message.', participantId);
     }
-    setTimeout(() => this.markDelivered(chatId, newMessage.id), 400);
     const roomType = chatId.startsWith('tournament-chat-') ? 'team' : chat.participantIds.length > 2 ? 'lobby' : 'private';
     const payload: SendMessagePayload = {
       chatId,
@@ -1216,6 +1100,13 @@ export class ArenaService {
   deleteMessage(chatId: string, messageId: string) {
     const current = this.getCurrentUser();
     if (!current) return;
+    if (this.chatApi.isConfigured) {
+      this.realtime.deleteChatMessage(chatId, messageId).then((response) => {
+        if (!response.ok || !response.message) return;
+        this.applyBackendMessage(response.message);
+      });
+      return;
+    }
     const chat = this.state.chats.find((c) => c.id === chatId);
     if (!chat) return;
     const message = chat.messages.find((m) => m.id === messageId);
@@ -1226,7 +1117,15 @@ export class ArenaService {
     this.hydrateSubjects();
   }
 
-  reactToMessage(chatId: string, messageId: string, reaction: string) {
+  async reactToMessage(chatId: string, messageId: string, reaction: string) {
+    if (this.chatApi.isConfigured) {
+      const chat = this.state.chats.find((c) => c.id === chatId);
+      const existing = chat?.messages.find((m) => m.id === messageId);
+      const nextReaction = existing?.reaction === reaction ? '' : reaction;
+      const response = await this.chatApi.setReaction(messageId, nextReaction);
+      this.applyBackendMessage(response.message);
+      return;
+    }
     const chat = this.state.chats.find((c) => c.id === chatId);
     if (!chat) return;
     const message = chat.messages.find((m) => m.id === messageId);
@@ -1234,6 +1133,14 @@ export class ArenaService {
     message.reaction = message.reaction === reaction ? undefined : reaction;
     this.persist();
     this.hydrateSubjects();
+  }
+
+  startTyping(chatId: string) {
+    if (this.chatApi.isConfigured) this.realtime.startTyping(chatId);
+  }
+
+  stopTyping(chatId: string) {
+    if (this.chatApi.isConfigured) this.realtime.stopTyping(chatId);
   }
 
   markDelivered(chatId: string, messageId: string) {
@@ -1257,6 +1164,18 @@ export class ArenaService {
   }
 
   markAllUserMessagesSeen(chatId: string, recipientId: string) {
+    if (this.chatApi.isConfigured) {
+      this.chatApi
+        .markRead(chatId)
+        .then((receipt) => this.applyChatReadReceipt(receipt))
+        .catch(() => {});
+      this.realtime.markChatRead(chatId).then((response) => {
+        if (response.ok && response.roomId && response.userId && response.readAt && response.messages) {
+          this.applyChatReadReceipt(response as ChatReadPayload);
+        }
+      });
+      return;
+    }
     const chat = this.state.chats.find((c) => c.id === chatId);
     if (!chat) return;
     let updated = false;
@@ -1272,7 +1191,31 @@ export class ArenaService {
     }
   }
 
-  deposit(input: { amount: number; currency: Currency; method: string }) {
+  async refreshWallet(): Promise<ArenaActionResult> {
+    const current = this.getCurrentUser();
+    if (!current) return { ok: false, message: 'You must be logged in.' };
+    const response = await this.api.getWallet();
+    if (!response.success) return this.fromApiError(response.error);
+
+    this.applyWalletFromApi(response.data.wallet);
+    this.state.transactions = response.data.transactions;
+    if (response.data.user) {
+      this.state.users = this.state.users.map((user) =>
+        user.id === response.data.user?.id
+          ? {
+              ...user,
+              walletBalance: response.data.user.walletBalance,
+              lockedBalance: response.data.user.lockedBalance,
+            }
+          : user
+      );
+    }
+    this.persist();
+    this.hydrateSubjects();
+    return { ok: true };
+  }
+
+  async deposit(input: { amount: number; currency: Currency; method: string }): Promise<ArenaActionResult & { referenceId?: string; status?: string }> {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in.' };
     const { amount, currency, method } = input;
@@ -1280,53 +1223,82 @@ export class ArenaService {
     if (amount < 100) return { ok: false, message: 'Minimum deposit is 100 units.' };
     if (amount > 500_000) return { ok: false, message: 'Maximum deposit is 500,000 units.' };
 
-    const referenceId = `DEP-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
-    const transaction: TransactionItem = {
-      id: uid(),
-      type: 'deposit',
+    const response = await this.api.createDeposit({
       amount,
       currency,
       method,
-      referenceId,
-      createdAt: now(),
-      status: 'pending',
-      details: `Deposit via ${method}`,
-    };
-    this.state.transactions.unshift(transaction);
-    this.adjustAvailableBalance(current.id, amount);
-    transaction.status = 'completed';
+      idempotencyKey: this.createIdempotencyKey('DEP', `${currency}:${amount}:${method}`),
+    });
+    if (!response.success) return this.fromApiError(response.error);
+
+    this.applyWalletFromApi(response.data.wallet);
+    this.addApiTransaction(response.data.transaction);
     this.persist();
     this.hydrateSubjects();
-    return { ok: true, referenceId, status: transaction.status };
+    return { ok: true, referenceId: response.data.referenceId, status: response.data.status };
   }
 
-  withdraw(input: { amount: number; currency: Currency; method: string; destination: string }) {
+  async withdraw(input: {
+    amount: number;
+    currency: Currency;
+    method: string;
+    destination: string;
+    authorization: {
+      type: 'pin' | 'biometric';
+      pin?: string;
+      biometricAssertionId?: string;
+    };
+  }): Promise<ArenaActionResult & { referenceId?: string; status?: string }> {
     const current = this.getCurrentUser();
     if (!current) return { ok: false, message: 'You must be logged in.' };
-    const { amount, currency, method, destination } = input;
+    const { amount, currency, method, destination, authorization } = input;
     if (!amount || Number.isNaN(amount) || amount <= 0) return { ok: false, message: 'Enter a valid withdrawal amount.' };
     if (amount < 500) return { ok: false, message: 'Minimum withdrawal is 500 units.' };
     if (amount > 200_000) return { ok: false, message: 'Maximum withdrawal per request is 200,000 units.' };
-    if (amount > current.walletBalance) return { ok: false, message: 'Insufficient available balance for this withdrawal.' };
 
-    const referenceId = `WDR-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
-    const transaction: TransactionItem = {
-      id: uid(),
-      type: 'withdraw',
+    const response = await this.api.requestWithdrawal({
       amount,
       currency,
       method,
-      referenceId,
-      createdAt: now(),
-      status: 'pending',
-      details: `Payout to ${destination}`,
-    };
-    this.state.transactions.unshift(transaction);
-    this.adjustAvailableBalance(current.id, -amount);
-    transaction.status = 'processed';
+      destination,
+      idempotencyKey: this.createIdempotencyKey('WDR', `${currency}:${amount}:${method}:${destination}`),
+      authorization,
+    });
+    if (!response.success) return this.fromApiError(response.error);
+
+    this.applyWalletFromApi(response.data.wallet);
+    this.addApiTransaction(response.data.transaction);
     this.persist();
     this.hydrateSubjects();
-    return { ok: true, referenceId, status: transaction.status };
+    return { ok: true, referenceId: response.data.referenceId, status: response.data.status };
+  }
+
+  async getWalletSecurity() {
+    const response = await this.api.getWalletSecurity();
+    if (!response.success) {
+      return {
+        ok: false,
+        message: response.error.message,
+        hasTransactionPin: false,
+        biometricAvailable: false,
+        pinLockedUntil: '',
+      };
+    }
+    return { ok: true, ...response.data };
+  }
+
+  async setTransactionPin(pin: string) {
+    const response = await this.api.setTransactionPin(pin);
+    if (!response.success) {
+      return {
+        ok: false,
+        message: response.error.message,
+        hasTransactionPin: false,
+        biometricAvailable: false,
+        pinLockedUntil: '',
+      };
+    }
+    return { ok: true, ...response.data };
   }
 
   markNotificationRead(id: string) {
@@ -1364,11 +1336,16 @@ export class ArenaService {
     if (!currentUserId) return undefined;
     const chat = this.state.chats.find((item) => item.id === chatId && item.participantIds.includes(currentUserId));
     if (chat) {
-      this.realtime.joinRoom({
-        roomId: chat.id,
-        roomType: chat.id.startsWith('tournament-chat-') ? 'team' : chat.participantIds.length > 2 ? 'lobby' : 'private',
-        userId: currentUserId,
-      });
+      if (this.chatApi.isConfigured) {
+        this.realtime.joinChatRoom(chat.id).catch(() => {});
+        this.loadBackendMessages(chat.id).catch(() => {});
+      } else {
+        this.realtime.joinRoom({
+          roomId: chat.id,
+          roomType: chat.id.startsWith('tournament-chat-') ? 'team' : chat.participantIds.length > 2 ? 'lobby' : 'private',
+          userId: currentUserId,
+        });
+      }
     }
     return chat;
   }
@@ -1392,6 +1369,52 @@ export class ArenaService {
     const confidence = 0.82;
     const decision = confidence >= 0.75 ? 'verified' : 'rejected';
     return { ok: true, decision, confidence };
+  }
+
+  private fromApiError(error: ApiError): ArenaActionResult {
+    return {
+      ok: false,
+      message: error.message,
+      needsDeposit: error.code === 'INSUFFICIENT_FUNDS',
+    };
+  }
+
+  private applyWalletFromApi(wallet: Wallet | undefined) {
+    if (!wallet) return;
+    this.state.users = this.state.users.map((user) =>
+      user.id === wallet.userId
+        ? {
+            ...user,
+            walletBalance: wallet.balance,
+            lockedBalance: wallet.lockedBalance,
+          }
+        : user
+    );
+  }
+
+  private addApiTransaction(transaction: WalletTransaction | undefined) {
+    if (!transaction) return;
+    const exists = this.state.transactions.some((item) => item.id === transaction.id);
+    if (exists) {
+      this.state.transactions = this.state.transactions.map((item) => (item.id === transaction.id ? transaction : item));
+      return;
+    }
+    this.state.transactions.unshift(transaction);
+  }
+
+  private createIdempotencyKey(prefix: string, seed: string) {
+    const current = this.getCurrentUser();
+    const base = `${current?.id || 'anonymous'}:${seed}`;
+    let hash = 0;
+    for (let index = 0; index < base.length; index += 1) {
+      hash = (hash * 31 + base.charCodeAt(index)) >>> 0;
+    }
+    return `${prefix}-${hash.toString(16).toUpperCase()}`;
+  }
+
+  private estimateDataUrlBytes(dataUrl: string) {
+    const base64 = dataUrl.split(',')[1] || '';
+    return Math.ceil((base64.length * 3) / 4);
   }
 
   private bindRealtimeEvents() {
@@ -1425,6 +1448,134 @@ export class ArenaService {
       this.persist();
       this.hydrateSubjects();
     });
+
+    this.realtime.chatMessage$.subscribe((payload) => {
+      this.applyBackendMessage(payload);
+      const currentUserId = this.state.currentUserId;
+      if (currentUserId && payload.senderId !== currentUserId) {
+        this.realtime.markChatDelivered(payload.roomId, payload.id).catch(() => {});
+      }
+    });
+
+    this.realtime.chatDelivered$.subscribe((payload) => {
+      this.applyBackendMessage(payload);
+    });
+
+    this.realtime.chatRead$.subscribe((payload) => {
+      this.applyChatReadReceipt(payload);
+    });
+
+    this.realtime.chatDeleted$.subscribe((payload) => {
+      this.applyBackendMessage(payload);
+    });
+
+    this.realtime.chatPresence$.subscribe((payload) => {
+      this.state.users = this.state.users.map((user) =>
+        user.id === payload.userId ? { ...user, online: payload.status === 'ONLINE' } : user
+      );
+      this.hydrateSubjects();
+    });
+  }
+
+  private async loadBackendChatRooms() {
+    if (!this.chatApi.isConfigured || !this.getCurrentUser()) return;
+    const response = await this.chatApi.listRooms();
+    for (const room of response.rooms) {
+      this.upsertBackendRoom(room);
+      this.realtime.joinChatRoom(room.id).catch(() => {});
+    }
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  private async loadBackendMessages(chatId: string) {
+    if (!this.chatApi.isConfigured || !this.getCurrentUser()) return;
+    const response = await this.chatApi.listMessages(chatId, 50);
+    const chat = this.state.chats.find((item) => item.id === chatId);
+    if (!chat) return;
+    chat.messages = response.messages.map((message) => this.fromBackendMessage(message));
+    this.persist();
+    this.hydrateSubjects();
+    for (const message of response.messages) {
+      if (message.senderId !== this.state.currentUserId && message.status === 'sent') {
+        this.realtime.markChatDelivered(message.roomId, message.id).catch(() => {});
+      }
+    }
+  }
+
+  private upsertBackendRoom(room: BackendChatRoomPayload) {
+    const existing = this.state.chats.find((chat) => chat.id === room.id);
+    if (existing) {
+      existing.type = room.type;
+      existing.participantIds = room.participantIds;
+      if (room.lastMessage) this.upsertMessage(existing, this.fromBackendMessage(room.lastMessage));
+      return;
+    }
+    this.state.chats.unshift({
+      id: room.id,
+      type: room.type,
+      participantIds: room.participantIds,
+      messages: room.lastMessage ? [this.fromBackendMessage(room.lastMessage)] : [],
+    });
+  }
+
+  private applyBackendMessage(payload: BackendChatMessagePayload) {
+    let chat = this.state.chats.find((item) => item.id === payload.roomId);
+    if (!chat) {
+      const currentUserId = this.state.currentUserId;
+      chat = {
+        id: payload.roomId,
+        type: 'PRIVATE',
+        participantIds: [...new Set([payload.senderId, currentUserId || ''].filter(Boolean))],
+        messages: [],
+      };
+      this.state.chats.unshift(chat);
+    }
+    if (!chat.participantIds.includes(payload.senderId)) {
+      chat.participantIds = [...new Set([...chat.participantIds, payload.senderId])];
+    }
+    const message = this.fromBackendMessage(payload);
+    this.upsertMessage(chat, message);
+    if (this.state.currentUserId && payload.senderId !== this.state.currentUserId) {
+      this.pushIncomingChatNotification(payload.roomId, payload.senderId, message.text || 'Sent you a message.', this.state.currentUserId);
+    }
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  private applyChatReadReceipt(payload: ChatReadPayload) {
+    const chat = this.state.chats.find((item) => item.id === payload.roomId);
+    if (!chat) return;
+    for (const backendMessage of payload.messages || []) {
+      this.upsertMessage(chat, this.fromBackendMessage(backendMessage));
+    }
+    this.persist();
+    this.hydrateSubjects();
+  }
+
+  private upsertMessage(chat: ChatThread, message: ChatThread['messages'][number]) {
+    const existingIndex = chat.messages.findIndex((item) => item.id === message.id);
+    if (existingIndex >= 0) {
+      chat.messages[existingIndex] = { ...chat.messages[existingIndex], ...message };
+      return;
+    }
+    chat.messages.push(message);
+    chat.messages.sort((a, b) => Date.parse(a.sentAt) - Date.parse(b.sentAt));
+  }
+
+  private fromBackendMessage(message: BackendChatMessagePayload): ChatThread['messages'][number] {
+    return {
+      id: message.id,
+      senderId: message.senderId,
+      text: message.deletedAt ? 'Message deleted' : message.text,
+      image: message.deletedAt ? undefined : message.attachmentUrl,
+      sentAt: message.createdAt,
+      status: message.status,
+      replyToId: message.replyToMessageId,
+      reaction: message.reaction,
+      deletedAt: message.deletedAt,
+      deletedBy: message.deletedBy,
+    };
   }
 
   private applyIncomingRealtimeMessage(payload: SendMessagePayload) {
@@ -2035,7 +2186,8 @@ export class ArenaService {
 
   private normalizeState(input: Partial<ArenaState>): ArenaState {
     const seeded = this.seedState();
-    const sourceUsers = input.users || seeded.users;
+    const inputUsers = (input.users || []).filter((user) => !this.isDemoUser(user));
+    const sourceUsers = [...inputUsers];
     const hasAdmin = sourceUsers.some((user) => !!user.isAdmin);
     const users = sourceUsers.map((user, index) => ({
       ...user,
@@ -2052,6 +2204,8 @@ export class ArenaService {
 
     const seasons = this.normalizeSeasons(input.seasons || seeded.seasons, seeded.seasons);
     const credentials = this.normalizeCredentials(input.credentials || {}, users);
+    const userIds = new Set(users.map((user) => user.id));
+    const validParticipantIds = (ids: string[]) => ids.filter((id) => userIds.has(id));
 
     return {
       users,
@@ -2060,15 +2214,24 @@ export class ArenaService {
         typeof input.currentUserId === 'string' && users.some((user) => user.id === input.currentUserId)
           ? input.currentUserId
           : undefined,
-      friendRequests: (input.friendRequests || seeded.friendRequests).map((request) => ({
-        ...request,
-        status:
-          request.status === 'accepted' || request.status === 'declined' || request.status === 'pending'
-            ? request.status
-            : 'pending',
-      })),
-      challenges: input.challenges || [],
-      matches: (input.matches || seeded.matches).map((match) => ({
+      friendRequests: (input.friendRequests || [])
+        .filter((request) => userIds.has(request.fromUserId) && userIds.has(request.toUserId))
+        .map((request) => ({
+          ...request,
+          status:
+            request.status === 'accepted' || request.status === 'declined' || request.status === 'pending'
+              ? request.status
+              : 'pending',
+        })),
+      challenges: (input.challenges || []).filter(
+        (challenge) => userIds.has(challenge.fromUserId) && userIds.has(challenge.toUserId)
+      ),
+      matches: (input.matches || []).filter((match) => {
+        if (!userIds.has(match.player1Id)) return false;
+        if (match.player2Id && !userIds.has(match.player2Id)) return false;
+        if (match.winnerId && !userIds.has(match.winnerId)) return false;
+        return true;
+      }).map((match) => ({
         ...match,
         roomCode: (match.roomCode || this.buildFallbackRoomCode(match.id)).trim().toUpperCase(),
         status: this.normalizeMatchStatus(match.status),
@@ -2084,28 +2247,42 @@ export class ArenaService {
         player1GameId: match.player1GameId || users.find((u) => u.id === match.player1Id)?.gameId || 'N/A',
         player2GameId: match.player2GameId || (match.player2Id ? users.find((u) => u.id === match.player2Id)?.gameId : undefined),
       })),
-      tournaments: this.withArenaXCalendarTournaments(input.tournaments || seeded.tournaments, users),
+      tournaments: this.withArenaXCalendarTournaments(input.tournaments?.length ? input.tournaments : seeded.tournaments, users).map(
+        (tournament) => ({
+          ...tournament,
+          participants: validParticipantIds(tournament.participants || []),
+          entries: (tournament.entries || []).filter((entry) => userIds.has(entry.userId)),
+        })
+      ),
       seasons,
-      spotlightPosts: this.withRequiredSpotlightPosts(input.spotlightPosts || seeded.spotlightPosts),
-      chats: (input.chats || seeded.chats).map((chat) => ({
-        ...chat,
-        // Remove old seeded/auto bot-like messages from legacy builds.
-        messages: (chat.messages || [])
-          .filter((message) => !DEFAULT_CHAT_TEXTS.has((message.text || '').trim()))
-          .map((message) => ({
-            ...message,
-            // Remove legacy pasted image URLs from older chat builds.
-            image:
-              typeof message.image === 'string' &&
-              (message.image.startsWith('http://') || message.image.startsWith('https://'))
-                ? undefined
-                : message.image,
-          })),
+      spotlightPosts: this.withRequiredSpotlightPosts(input.spotlightPosts || [], seeded.spotlightPosts, seeded, users).map((post) => ({
+        ...post,
+        likeUserIds: (post.likeUserIds || []).filter((userId) => userIds.has(userId)),
+        comments: (post.comments || []).filter((comment) => userIds.has(comment.userId)),
       })),
-      notifications: input.notifications || seeded.notifications,
-      transactions: input.transactions || seeded.transactions,
+      chats: (input.chats || [])
+        .filter((chat) => chat.participantIds.every((participantId) => userIds.has(participantId)))
+        .map((chat) => ({
+          ...chat,
+          messages: (chat.messages || [])
+            .filter((message) => userIds.has(message.senderId) && !DEFAULT_CHAT_TEXTS.has((message.text || '').trim()))
+            .map((message) => ({
+              ...message,
+              image:
+                typeof message.image === 'string' &&
+                (message.image.startsWith('http://') || message.image.startsWith('https://'))
+                  ? undefined
+                  : message.image,
+            })),
+        })),
+      notifications: (input.notifications || []).filter((note) => !note.userId || userIds.has(note.userId)),
+      transactions: input.transactions || [],
       commissionRate: typeof input.commissionRate === 'number' ? input.commissionRate : seeded.commissionRate,
     };
+  }
+
+  private repairContentState() {
+    this.state = this.normalizeState(this.state);
   }
 
   private normalizeSeasons(seasons: Season[], fallback: Season[]) {
@@ -2118,14 +2295,81 @@ export class ArenaService {
   }
 
   private normalizeMatchStatus(status: string | undefined) {
-    if (status === 'waiting' || status === 'live' || status === 'finished') return status;
+    if (
+      status === 'waiting' ||
+      status === 'live' ||
+      status === 'finished' ||
+      status === 'pending_verification' ||
+      status === 'verified' ||
+      status === 'rejected'
+    ) {
+      return status;
+    }
     if (status === 'pending') return 'waiting';
     if (status === 'active') return 'live';
     return 'finished';
   }
 
-  private withRequiredSpotlightPosts(posts: SpotlightPost[]) {
-    const normalized: SpotlightPost[] = [...posts].map((post) => ({
+  private withSeededChallenges(challenges: Challenge[], seeded: ArenaState, users: UserProfile[]) {
+    const normalizedSeeded = seeded.challenges.map((challenge) => ({
+      ...challenge,
+      fromUserId: this.resolveSeededUserId(seeded, users, challenge.fromUserId),
+      toUserId: this.resolveSeededUserId(seeded, users, challenge.toUserId),
+    }));
+    const merged = [...challenges];
+    normalizedSeeded.forEach((seededChallenge) => {
+      const exists = merged.some(
+        (challenge) =>
+          challenge.game === seededChallenge.game &&
+          challenge.stake === seededChallenge.stake &&
+          challenge.status === seededChallenge.status
+      );
+      if (!exists) merged.push(seededChallenge);
+    });
+    return merged;
+  }
+
+  private withSeededMatches(matches: Match[], seeded: ArenaState, users: UserProfile[]) {
+    const normalizedSeeded = seeded.matches.map((match) => ({
+      ...match,
+      player1Id: this.resolveSeededUserId(seeded, users, match.player1Id),
+      player2Id: match.player2Id ? this.resolveSeededUserId(seeded, users, match.player2Id) : undefined,
+      winnerId: match.winnerId ? this.resolveSeededUserId(seeded, users, match.winnerId) : undefined,
+      adminId: match.adminId ? this.resolveSeededUserId(seeded, users, match.adminId) : undefined,
+    }));
+    const merged = [...matches];
+    normalizedSeeded.forEach((seededMatch) => {
+      const exists = merged.some(
+        (match) =>
+          match.game === seededMatch.game &&
+          match.status === seededMatch.status &&
+          match.stake === seededMatch.stake
+      );
+      if (!exists) merged.push(seededMatch);
+    });
+    return merged;
+  }
+
+  private withRequiredSpotlightPosts(
+    posts: SpotlightPost[],
+    seededPosts: SpotlightPost[],
+    seeded: ArenaState,
+    users: UserProfile[]
+  ) {
+    const remappedSeeded = seededPosts.map((post) => ({
+      ...post,
+      likeUserIds: (post.likeUserIds || []).map((userId) => this.resolveSeededUserId(seeded, users, userId)),
+      comments: (post.comments || []).map((comment) => ({
+        ...comment,
+        userId: this.resolveSeededUserId(seeded, users, comment.userId),
+      })),
+    }));
+    const merged = [...posts];
+    remappedSeeded.forEach((seededPost) => {
+      if (!merged.some((post) => post.title === seededPost.title)) merged.push(seededPost);
+    });
+
+    const normalized: SpotlightPost[] = merged.map((post) => ({
       ...post,
       comments: (post.comments || []).map((comment) => ({
         ...comment,
@@ -2135,6 +2379,18 @@ export class ArenaService {
     const hasFakerPost = normalized.some((post) => post.title === 'Faker Wins Best Esports Athlete at The Game Awards 2024');
     if (!hasFakerPost) normalized.unshift(this.createFakerSpotlightPost());
     return normalized;
+  }
+
+  private resolveSeededUserId(seeded: ArenaState, users: UserProfile[], seedUserId: string) {
+    const seedUser = seeded.users.find((user) => user.id === seedUserId);
+    if (!seedUser) return seedUserId;
+    return (
+      users.find(
+        (user) =>
+          user.email.toLowerCase() === seedUser.email.toLowerCase() ||
+          user.username.toLowerCase() === seedUser.username.toLowerCase()
+      )?.id || seedUserId
+    );
   }
 
   private createFakerSpotlightPost(): SpotlightPost {
@@ -2195,56 +2451,50 @@ export class ArenaService {
   }
 
   private removeDemoUsers(state: ArenaState): ArenaState {
-    const currentUserId = state.currentUserId;
-    const removedIds = new Set<string>();
-    const users = state.users.filter((user) => {
-      const isDemo =
-        DEMO_USER_IDENTIFIERS.has(user.email) ||
-        DEMO_USER_IDENTIFIERS.has(user.username) ||
-        user.email.toLowerCase().endsWith('@arenax.app');
-      if (isDemo && user.id !== currentUserId) {
-        removedIds.add(user.id);
-        return false;
-      }
-      return true;
-    });
-
-    if (!removedIds.size) return state;
-
-    const keepUser = (id?: string) => !!id && !removedIds.has(id);
-    const credentials = Object.entries(state.credentials).reduce<Record<string, string>>((acc, [userId, hash]) => {
-      if (!removedIds.has(userId)) acc[userId] = hash;
-      return acc;
-    }, {});
-
+    const users = state.users.filter((user) => !this.isDemoUser(user));
+    const userIds = new Set(users.map((user) => user.id));
     return {
       ...state,
       users,
-      credentials,
-      currentUserId: keepUser(state.currentUserId) ? state.currentUserId : undefined,
-      friendRequests: state.friendRequests.filter((item) => keepUser(item.fromUserId) && keepUser(item.toUserId)),
-      challenges: state.challenges.filter((item) => keepUser(item.fromUserId) && keepUser(item.toUserId)),
-      matches: state.matches.filter((item) => keepUser(item.player1Id) && (!item.player2Id || keepUser(item.player2Id))),
-      tournaments: state.tournaments
-        .map((tournament) => ({
-          ...tournament,
-          participants: tournament.participants.filter((participantId) => keepUser(participantId)),
-        }))
-        .filter((tournament) => tournament.participants.length > 0),
-      chats: state.chats
-        .map((chat) => ({
-          ...chat,
-          participantIds: chat.participantIds.filter((participantId) => keepUser(participantId)),
-          messages: chat.messages.filter((message) => keepUser(message.senderId)),
-        }))
-        .filter((chat) => chat.participantIds.length > 0),
-      notifications: state.notifications.filter((item) => !item.userId || keepUser(item.userId)),
-      spotlightPosts: state.spotlightPosts.map((post) => ({
-        ...post,
-        likeUserIds: (post.likeUserIds || []).filter((userId) => keepUser(userId)),
-        comments: (post.comments || []).filter((comment) => keepUser(comment.userId)),
+      credentials: Object.entries(state.credentials).reduce<Record<string, string>>((acc, [userId, hash]) => {
+        if (userIds.has(userId)) acc[userId] = hash;
+        return acc;
+      }, {}),
+      currentUserId: state.currentUserId && userIds.has(state.currentUserId) ? state.currentUserId : undefined,
+      friendRequests: state.friendRequests.filter(
+        (request) => userIds.has(request.fromUserId) && userIds.has(request.toUserId)
+      ),
+      challenges: state.challenges.filter(
+        (challenge) => userIds.has(challenge.fromUserId) && userIds.has(challenge.toUserId)
+      ),
+      matches: state.matches.filter(
+        (match) =>
+          userIds.has(match.player1Id) &&
+          (!match.player2Id || userIds.has(match.player2Id)) &&
+          (!match.winnerId || userIds.has(match.winnerId))
+      ),
+      tournaments: state.tournaments.map((tournament) => ({
+        ...tournament,
+        participants: (tournament.participants || []).filter((id) => userIds.has(id)),
+        entries: (tournament.entries || []).filter((entry) => userIds.has(entry.userId)),
       })),
+      chats: state.chats.filter((chat) => chat.participantIds.every((id) => userIds.has(id))),
+      notifications: state.notifications.filter((note) => !note.userId || userIds.has(note.userId)),
     };
+  }
+
+  private isDemoUser(user: Pick<UserProfile, 'email' | 'username' | 'gameId'>) {
+    const email = user.email.toLowerCase();
+    const username = user.username.toLowerCase();
+    return (
+      email.endsWith('@arenax.app') ||
+      username === 'stephenx' ||
+      username === 'shadowlynx' ||
+      username === 'novastrike' ||
+      username === 'blazewolf' ||
+      username === 'arenax community' ||
+      user.gameId === 'AX-COMMUNITY'
+    );
   }
 
   private hashPassword(password: string) {

@@ -18,6 +18,18 @@ export const ARENAX_EVENTS = {
   tournamentCompleted: 'tournament:completed',
   invitePlayer: 'invite_player',
   notification: 'notification',
+  chatJoin: 'chat:join',
+  chatLeave: 'chat:leave',
+  chatSend: 'chat:send',
+  chatMessage: 'chat:message',
+  chatDelivered: 'chat:delivered',
+  chatRead: 'chat:read',
+  chatDelete: 'chat:delete',
+  chatMessageDeleted: 'chat:message-deleted',
+  chatTypingStart: 'chat:typing:start',
+  chatTypingStop: 'chat:typing:stop',
+  chatPresence: 'chat:presence',
+  chatError: 'chat:error',
 } as const;
 
 export type ArenaRoomType = 'lobby' | 'match' | 'team' | 'private';
@@ -98,4 +110,52 @@ export interface RealtimeNotificationPayload {
   message: string;
   createdAt: string;
   roomId?: string;
+}
+
+export interface BackendChatMessagePayload {
+  id: string;
+  roomId: string;
+  senderId: string;
+  text?: string;
+  messageType: 'TEXT' | 'IMAGE' | 'SYSTEM';
+  replyToMessageId?: string;
+  attachmentUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+  deletedBy?: string;
+  status: 'sent' | 'delivered' | 'seen';
+  reaction?: string;
+}
+
+export interface BackendChatRoomPayload {
+  id: string;
+  type: 'PRIVATE' | 'MATCH' | 'TOURNAMENT' | 'GROUP';
+  participantIds: string[];
+  createdAt: string;
+  updatedAt: string;
+  lastMessage?: BackendChatMessagePayload;
+}
+
+export interface ChatReadPayload {
+  roomId: string;
+  userId: string;
+  readAt: string;
+  messages: BackendChatMessagePayload[];
+}
+
+export interface ChatPresencePayload {
+  userId: string;
+  status: 'ONLINE' | 'OFFLINE';
+  at: string;
+}
+
+export interface ChatTypingPayload {
+  roomId: string;
+  userId: string;
+}
+
+export interface ChatErrorPayload {
+  code: string;
+  message: string;
 }

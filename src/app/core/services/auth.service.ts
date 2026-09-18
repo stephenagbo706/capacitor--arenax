@@ -1,7 +1,10 @@
 import { Injectable, inject } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import {
   Auth,
+  GoogleAuthProvider,
   User,
   browserLocalPersistence,
   createUserWithEmailAndPassword,
@@ -11,7 +14,9 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   setPersistence,
+  signInWithCredential,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
 } from 'firebase/auth';
@@ -67,6 +72,40 @@ export class AuthService {
     }
   }
 
+  async loginWithGoogle(): Promise<AuthResult> {
+    if (!this.auth) return { ok: false, message: 'Firebase Auth is not configured.' };
+
+    try {
+      let signedInUser: User | null = null;
+
+      if (Capacitor.isNativePlatform()) {
+        const result = await FirebaseAuthentication.signInWithGoogle({ skipNativeAuth: true });
+        const idToken = result.credential?.idToken;
+        const accessToken = result.credential?.accessToken;
+        if (!idToken) {
+          return { ok: false, message: 'Google Sign-In did not return a valid credential.' };
+        }
+
+        const credential = GoogleAuthProvider.credential(idToken, accessToken);
+        const userCredential = await signInWithCredential(this.auth, credential);
+        signedInUser = userCredential.user;
+      } else {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const userCredential = await signInWithPopup(this.auth, provider);
+        signedInUser = userCredential.user;
+      }
+
+      if (signedInUser) {
+        await this.syncArenaUser(signedInUser);
+      }
+
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, message: this.resolveErrorMessage(error) };
+    }
+  }
+
   async register(username: string, email: string, password: string): Promise<AuthResult> {
     if (!this.auth) return { ok: false, message: 'Firebase Auth is not configured.' };
 
@@ -83,7 +122,7 @@ export class AuthService {
       if (normalizedUsername) {
         await updateProfile(credential.user, { displayName: normalizedUsername });
       }
-      this.syncArenaUser(credential.user, normalizedUsername);
+      await this.syncArenaUser(credential.user, normalizedUsername);
       return { ok: true };
     } catch (error) {
       return { ok: false, message: this.resolveErrorMessage(error) };
@@ -127,8 +166,8 @@ export class AuthService {
     }
 
     await new Promise<void>((resolve) => {
-      onAuthStateChanged(this.auth!, (user) => {
-        this.syncArenaUser(user);
+      onAuthStateChanged(this.auth!, async (user) => {
+        await this.syncArenaUser(user);
         if (!this.didResolveInitialAuthState) {
           this.didResolveInitialAuthState = true;
           resolve();
@@ -152,7 +191,7 @@ export class AuthService {
     }
 
     const username = usernameOverride || user.displayName || email.split('@')[0] || 'ArenaX Player';
-    this.arena.syncFromAuthUser({ uid: user.uid, email, username });
+    this.arena.syncFromAuthUser({ uid: user.uid, email, username, avatar: user.photoURL || undefined });
     const token = await user.getIdToken().catch(() => '');
     this.realtime.connect({
       userId: user.uid,
@@ -185,6 +224,18 @@ export class AuthService {
         return 'Too many attempts. Try again later.';
       case 'auth/network-request-failed':
         return 'Network error. Check your internet connection.';
+      case 'auth/popup-closed-by-user':
+      case 'auth/cancelled-popup-request':
+      case '12501':
+        return 'Google Sign-In was cancelled.';
+      case 'auth/popup-blocked':
+        return 'Google Sign-In was blocked by the browser. Allow popups and try again.';
+      case 'auth/account-exists-with-different-credential':
+        return 'An ArenaX account already uses this email. Log in with your existing method first.';
+      case 'auth/unauthorized-domain':
+        return 'This domain is not authorized for Google Sign-In.';
+      case 'auth/operation-not-allowed':
+        return 'Google Sign-In is not enabled for this ArenaX project.';
       default:
         return 'Authentication failed. Please try again.';
     }

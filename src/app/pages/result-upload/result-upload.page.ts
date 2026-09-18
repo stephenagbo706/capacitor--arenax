@@ -26,6 +26,7 @@ export class ResultUploadPage {
   screenshotSize = 0;
   error = '';
   success = '';
+  isSubmitting = false;
   clock$ = timer(0, 1000);
   currentUserId = this.arena.getCurrentUser()?.id || '';
 
@@ -86,7 +87,8 @@ export class ResultUploadPage {
     return 'assets/match-icons/fifa-mobile.jpg';
   }
 
-  submit() {
+  async submit() {
+    if (this.isSubmitting) return;
     this.success = '';
     if (this.isUploadLocked) {
       this.error = `You can upload only when match time is complete. Time left: ${this.uploadLockTimeLeft}.`;
@@ -110,13 +112,15 @@ export class ResultUploadPage {
       return;
     }
 
-    const uploadResult = this.arena.uploadMatchScreenshot(this.matchId, {
+    this.isSubmitting = true;
+    const uploadResult = await this.arena.uploadMatchScreenshot(this.matchId, {
       winnerId: this.winnerId,
       fileName: this.screenshotFileName,
       mimeType: this.screenshotMimeType,
       size: this.screenshotSize,
       dataUrl: this.screenshotDataUrl,
     });
+    this.isSubmitting = false;
     if (!uploadResult?.ok) {
       this.error = uploadResult?.message || 'Could not upload screenshot.';
       return;

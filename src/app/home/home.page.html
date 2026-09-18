@@ -424,7 +424,7 @@
           <i class="fa-solid fa-chevron-left"></i>
         </button>
         <div class="profile-brand">ARENA<span>X</span></div>
-        <button class="icon-orb" type="button" aria-label="Settings">
+        <button class="icon-orb" type="button" aria-label="Settings" (click)="refreshPermissionStatus()">
           <i class="fa-solid fa-gear"></i>
         </button>
       </header>
@@ -442,7 +442,42 @@
         <h2 class="profile-name esports-font">StephenAgbo</h2>
         <p class="profile-id">ArenaX ID: AX472910</p>
         <p class="profile-subtitle">Member since 2024</p>
+        <p class="permission-notice" *ngIf="permissionNotice">{{ permissionNotice }}</p>
       </article>
+
+      <section class="profile-permissions" *ngIf="permissionItems.length">
+        <div class="profile-permissions-head">
+          <div>
+            <h3>Phone Permissions</h3>
+            <p>Manage the mobile access ArenaX uses on this device.</p>
+          </div>
+          <button class="mini-refresh" type="button" (click)="refreshPermissionStatus()">Refresh</button>
+        </div>
+
+        <article class="profile-permission-row" *ngFor="let item of permissionItems">
+          <div>
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.detail }}</span>
+          </div>
+          <em [class.allowed]="item.state === 'granted'">{{ item.label }}</em>
+          <button
+            *ngIf="item.canRequest && item.state !== 'granted'"
+            type="button"
+            [disabled]="permissionBusyKey === item.key"
+            (click)="enablePermission(item)"
+          >
+            {{ permissionBusyKey === item.key ? 'Checking...' : 'Enable' }}
+          </button>
+          <button
+            *ngIf="item.canOpenSettings && item.state !== 'granted'"
+            type="button"
+            [disabled]="permissionBusyKey === 'settings'"
+            (click)="openPermissionSettings()"
+          >
+            Open Settings
+          </button>
+        </article>
+      </section>
 
       <div class="profile-stats-grid">
         <article class="profile-stat-card matches-card">

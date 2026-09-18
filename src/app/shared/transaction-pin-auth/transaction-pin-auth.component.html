@@ -1,0 +1,26 @@
+<div class="pin-auth" aria-label="Transaction PIN authorization">
+  <div class="pin-slots" aria-hidden="true">
+    <span *ngFor="let filled of maskedSlots" [class.filled]="filled"></span>
+  </div>
+
+  <p class="pin-error" *ngIf="error">{{ error }}</p>
+
+  <div class="pin-pad">
+    <button
+      *ngFor="let digit of digits"
+      type="button"
+      class="pin-key"
+      [disabled]="disabled"
+      (click)="addDigit(digit)"
+      [attr.aria-label]="'Enter digit ' + digit"
+    >
+      {{ digit }}
+    </button>
+    <button type="button" class="pin-key pin-key--muted" [disabled]="disabled" (click)="backspace()">
+      Delete
+    </button>
+    <button type="button" class="pin-key pin-key--submit" [disabled]="disabled || pin.length < 4" (click)="submit()">
+      Authorize
+    </button>
+  </div>
+</div>

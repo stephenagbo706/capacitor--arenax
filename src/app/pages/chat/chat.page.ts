@@ -1,10 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DatePipe, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { ArenaService } from '../../core/services/arena.service';
+import { RealtimeService } from '../../core/services/realtime.service';
 import { ChatMessage, ChatThread, UserProfile } from '../../core/models/arena.models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-chat',
@@ -13,9 +15,10 @@ import { ChatMessage, ChatThread, UserProfile } from '../../core/models/arena.mo
   templateUrl: './chat.page.html',
   styleUrls: ['./chat.page.scss'],
 })
-export class ChatPage implements OnInit {
+export class ChatPage implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private arena = inject(ArenaService);
+  private realtime = inject(RealtimeService);
 
   chatId = '';
   message = '';
@@ -29,13 +32,29 @@ export class ChatPage implements OnInit {
   swipeStart?: { x: number; y: number };
   longPressTimer?: any;
   toast?: string;
+  private readonly subs = new Subscription();
 
   constructor() {
     this.chatId = this.route.snapshot.paramMap.get('id') || '';
   }
 
   ngOnInit(): void {
+    this.subs.add(
+      this.realtime.chatTypingStart$.subscribe((payload) => {
+        if (payload.roomId === this.chatId && payload.userId !== this.currentUserId) this.typing = true;
+      })
+    );
+    this.subs.add(
+      this.realtime.chatTypingStop$.subscribe((payload) => {
+        if (payload.roomId === this.chatId && payload.userId !== this.currentUserId) this.typing = false;
+      })
+    );
     this.markThreadSeen();
+  }
+
+  ngOnDestroy(): void {
+    this.arena.stopTyping(this.chatId);
+    this.subs.unsubscribe();
   }
 
   get chat() {
@@ -81,18 +100,22 @@ export class ChatPage implements OnInit {
     return this.arena.getGlobalRank(user.id);
   }
 
-  send() {
+  async send() {
     if (!this.message.trim() && !this.attachmentData) return;
     if (!this.chat) return;
-    this.arena.sendMessage(this.chatId, {
-      text: this.message,
-      image: this.attachmentData,
-      replyToId: this.replyingTo?.id,
-    });
-    this.message = '';
-    this.attachmentData = undefined;
-    this.replyingTo = null;
-    this.markThreadSeen();
+    try {
+      await this.arena.sendMessage(this.chatId, {
+        text: this.message,
+        image: this.attachmentData,
+        replyToId: this.replyingTo?.id,
+      });
+      this.message = '';
+      this.attachmentData = undefined;
+      this.replyingTo = null;
+      this.markThreadSeen();
+    } catch (error) {
+      this.showToast((error as { message?: string })?.message || 'Message failed to send');
+    }
   }
 
   onImageSelected(event: Event) {
@@ -149,11 +172,15 @@ export class ChatPage implements OnInit {
     this.copyMessage(message, true);
   }
 
-  copyMessage(message: ChatMessage, preferGameId = false) {
+  async copyMessage(message: ChatMessage, preferGameId = false) {
     const textToCopy = preferGameId ? this.extractGameId(message.text) || message.text : message.text;
     if (!textToCopy) return;
-    navigator.clipboard?.writeText(textToCopy);
-    this.showToast(preferGameId ? 'Game ID copied' : 'Message copied');
+    try {
+      await navigator.clipboard?.writeText(textToCopy);
+      this.showToast(preferGameId ? 'Game ID copied' : 'Message copied');
+    } catch {
+      this.showToast('Copy failed');
+    }
   }
 
   extractGameId(text?: string) {
@@ -171,17 +198,21 @@ export class ChatPage implements OnInit {
     this.replyComposerOpen = true;
   }
 
-  sendReply() {
+  async sendReply() {
     const text = this.replyMessage.trim();
     if (!text || !this.replyingTo || !this.chat) return;
-    this.arena.sendMessage(this.chatId, {
-      text,
-      replyToId: this.replyingTo.id,
-    });
-    this.replyMessage = '';
-    this.replyingTo = null;
-    this.replyComposerOpen = false;
-    this.markThreadSeen();
+    try {
+      await this.arena.sendMessage(this.chatId, {
+        text,
+        replyToId: this.replyingTo.id,
+      });
+      this.replyMessage = '';
+      this.replyingTo = null;
+      this.replyComposerOpen = false;
+      this.markThreadSeen();
+    } catch (error) {
+      this.showToast((error as { message?: string })?.message || 'Reply failed to send');
+    }
   }
 
   deleteMessage(message: ChatMessage) {
@@ -192,6 +223,10 @@ export class ChatPage implements OnInit {
 
   react(message: ChatMessage, emoji: string) {
     this.arena.reactToMessage(this.chatId, message.id, emoji);
+  }
+
+  onMessageInput() {
+    this.arena.startTyping(this.chatId);
   }
 
   private showToast(text: string) {

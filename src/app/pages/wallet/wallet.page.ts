@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AsyncPipe, CommonModule, DatePipe, NgForOf, TitleCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IonContent, IonToggle } from '@ionic/angular/standalone';
@@ -12,7 +12,7 @@ import { BottomNavComponent } from '../../shared/bottom-nav.component';
   templateUrl: './wallet.page.html',
   styleUrls: ['./wallet.page.scss'],
 })
-export class WalletPage {
+export class WalletPage implements OnInit {
   private arena = inject(ArenaService);
 
   user$ = this.arena.currentUser$;
@@ -20,6 +20,14 @@ export class WalletPage {
   nairaBalance = 0;
   usdBalance = 0;
   preferredCurrency: 'NGN' | 'USD' = this.loadPreferredCurrency();
+  walletError = '';
+
+  async ngOnInit() {
+    const result = await this.arena.refreshWallet();
+    if (!result.ok) {
+      this.walletError = result.message || 'Wallet could not be refreshed.';
+    }
+  }
 
   setPreferredCurrency(currency: WalletPage['preferredCurrency']) {
     this.preferredCurrency = currency;

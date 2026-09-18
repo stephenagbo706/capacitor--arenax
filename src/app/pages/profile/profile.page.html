@@ -1,5 +1,5 @@
 <ion-content [fullscreen]="true">
-  <div class="profile-page" *ngIf="user$ | async as user">
+  <div class="profile-page" *ngIf="(user$ | async) || fallbackUser as user">
     <section class="profile-hero">
       <div class="hero-actions">
         <button class="ax-btn ax-btn-light" type="button" (click)="cycleProfileIcon(user)">

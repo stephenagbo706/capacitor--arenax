@@ -66,12 +66,12 @@ export class AdminDashboardPage {
     return this.arena.getUser(id);
   }
 
-  approveMatch(match: Match) {
+  async approveMatch(match: Match) {
     if (this.processingMatchId) return;
     this.actionMessage = '';
     this.actionError = '';
     this.processingMatchId = match.id;
-    const result = this.arena.reviewPendingMatch(match.id, 'approved', 'Approved by admin dashboard.');
+    const result = await this.arena.reviewPendingMatch(match.id, 'approved', 'Approved by admin dashboard.');
     if (!result.ok) {
       this.actionError = result.message || 'Could not approve this match.';
       this.processingMatchId = '';
@@ -81,13 +81,13 @@ export class AdminDashboardPage {
     this.processingMatchId = '';
   }
 
-  rejectMatch(match: Match) {
+  async rejectMatch(match: Match) {
     if (this.processingMatchId) return;
     const note = window.prompt('Add a rejection reason for the player (optional):', 'Screenshot is unclear.') || '';
     this.actionMessage = '';
     this.actionError = '';
     this.processingMatchId = match.id;
-    const result = this.arena.reviewPendingMatch(match.id, 'rejected', note);
+    const result = await this.arena.reviewPendingMatch(match.id, 'rejected', note);
     if (!result.ok) {
       this.actionError = result.message || 'Could not reject this match.';
       this.processingMatchId = '';

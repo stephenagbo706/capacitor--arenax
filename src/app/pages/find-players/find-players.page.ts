@@ -70,10 +70,14 @@ export class FindPlayersPage {
     this.statusMessage = 'Challenge sent and stake locked in escrow. Match is now waiting for join.';
   }
 
-  startChat(playerId: string) {
-    const chatId = this.arena.createChatWith(playerId);
-    if (!chatId) return;
-    this.router.navigate(['/chat', chatId]);
+  async startChat(playerId: string) {
+    try {
+      const chatId = await this.arena.createChatWith(playerId);
+      if (!chatId) return;
+      this.router.navigate(['/chat', chatId]);
+    } catch (error) {
+      this.errorMessage = (error as { message?: string })?.message || 'Unable to start chat.';
+    }
   }
 
   sendFriendRequest(playerId: string) {

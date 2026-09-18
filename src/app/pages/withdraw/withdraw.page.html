@@ -5,19 +5,15 @@
       <p class="ax-muted">Move winnings to your payout option.</p>
     </header>
 
-    <section class="ax-card withdraw-card">
+    <section class="ax-card withdraw-card" *ngIf="view === 'form'">
       <div class="withdraw-head">
         <p>Choose currency, destination, and method for requesting a payout.</p>
         <small class="ax-muted">Withdrawal limits: {{ minAmount }}–{{ maxAmount }} units | 24h cooldown.</small>
       </div>
 
       <div class="currency-toggle">
-        <button type="button" [class.active]="currency === 'NGN'" (click)="currency = 'NGN'">
-          ₦ Naira
-        </button>
-        <button type="button" [class.active]="currency === 'USD'" (click)="currency = 'USD'">
-          $ Dollar
-        </button>
+        <button type="button" [class.active]="currency === 'NGN'" (click)="currency = 'NGN'">₦ Naira</button>
+        <button type="button" [class.active]="currency === 'USD'" (click)="currency = 'USD'">$ Dollar</button>
       </div>
 
       <div class="method-options">
@@ -43,26 +39,202 @@
 
       <label class="ax-field">
         <span>Amount</span>
-        <input
-          class="ax-input"
-          type="number"
-          [min]="minAmount"
-          [max]="maxAmount"
-          [(ngModel)]="amount"
-        />
+        <input class="ax-input" type="number" [min]="minAmount" [max]="maxAmount" [(ngModel)]="amount" />
       </label>
+
+      <section class="withdraw-security">
+        <div class="security-head">
+          <div>
+            <strong>Withdrawal security</strong>
+            <span class="ax-muted">
+              {{ hasTransactionPin ? 'Transaction PIN is required before money leaves your wallet.' : 'Create a transaction PIN before your first withdrawal.' }}
+            </span>
+          </div>
+          <span class="security-state" [class.ready]="hasTransactionPin">
+            {{ hasTransactionPin ? 'Protected' : 'PIN required' }}
+          </span>
+        </div>
+
+        <div class="pin-setup-card" *ngIf="!hasTransactionPin">
+          <div class="pin-setup-copy">
+            <strong>Set transaction PIN</strong>
+            <small class="ax-muted">Create a 4 to 6 digit PIN before your first withdrawal.</small>
+          </div>
+
+          <div class="pin-grid">
+            <label class="ax-field">
+              <span>New transaction PIN</span>
+              <input
+                class="ax-input"
+                type="password"
+                inputmode="numeric"
+                maxlength="6"
+                autocomplete="new-password"
+                placeholder="4 to 6 digits"
+                [(ngModel)]="setupPin"
+              />
+            </label>
+            <label class="ax-field">
+              <span>Confirm PIN</span>
+              <input
+                class="ax-input"
+                type="password"
+                inputmode="numeric"
+                maxlength="6"
+                autocomplete="new-password"
+                placeholder="Repeat PIN"
+                [(ngModel)]="setupPinConfirm"
+              />
+            </label>
+          </div>
+
+          <button class="ax-btn ax-btn-secondary pin-save-btn" type="button" [disabled]="!canSaveTransactionPin" (click)="saveTransactionPin()">
+            {{ processing ? 'Saving...' : 'Set transaction PIN' }}
+          </button>
+        </div>
+
+        <div class="security-success" *ngIf="securitySuccess">
+          <span class="result-mark result-mark--small">✓</span>
+          <p>{{ securitySuccess }}</p>
+        </div>
+
+        <div class="biometric-status" [class.ready]="biometricAvailable">
+          <span class="fingerprint-icon">⌾</span>
+          <div>
+            <strong>{{ biometricAvailable ? biometricLabel + ' ready' : biometricLabel }}</strong>
+            <small class="ax-muted">{{ biometricStatusText }}</small>
+          </div>
+        </div>
+
+        <button
+          *ngIf="!biometricAvailable && biometricCanOpenSettings"
+          class="link-button settings-link"
+          type="button"
+          [disabled]="processing"
+          (click)="openBiometricSettings()"
+        >
+          Open device settings
+        </button>
+      </section>
 
       <p class="ax-error" *ngIf="error">{{ error }}</p>
 
-      <button class="ax-btn ax-btn-primary" (click)="submit()">Request Withdrawal</button>
+      <button class="ax-btn ax-btn-primary" [disabled]="!canSubmitForm" (click)="reviewWithdrawal()">
+        Review Withdrawal
+      </button>
+    </section>
 
-      <div class="status-panel" *ngIf="status !== 'idle'">
-        <p class="status-label">{{ statusMessage }}</p>
-        <div class="status-badges">
-          <span class="status-chip" [class.active]="status === 'pending'">Pending</span>
-          <span class="status-chip" [class.active]="status === 'processed'">Processed</span>
+    <section class="ax-card withdraw-card" *ngIf="view === 'review'">
+      <div class="withdraw-head">
+        <p>Review withdrawal</p>
+        <small class="ax-muted">Confirm the details before authorization.</small>
+      </div>
+
+      <div class="review-panel">
+        <div>
+          <span>Amount</span>
+          <strong>{{ formattedAmount }}</strong>
         </div>
-        <p *ngIf="referenceId">Reference ID: {{ referenceId }}</p>
+        <div>
+          <span>Destination</span>
+          <strong>{{ destination }}</strong>
+        </div>
+        <div>
+          <span>Method</span>
+          <strong>{{ selectedMethod }}</strong>
+        </div>
+      </div>
+
+      <p class="ax-muted">Authorize this withdrawal to continue.</p>
+
+      <div class="action-row">
+        <button class="ax-btn ax-btn-secondary" type="button" [disabled]="processing" (click)="editWithdrawal()">Edit</button>
+        <button class="ax-btn ax-btn-primary" type="button" [disabled]="processing" (click)="continueToAuth()">
+          Confirm Withdrawal
+        </button>
+      </div>
+    </section>
+
+    <section class="ax-card withdraw-card" *ngIf="view === 'auth'">
+      <div class="withdraw-head">
+        <p>Confirm Withdrawal</p>
+        <small class="ax-muted">{{ formattedAmount }} to {{ destination }}</small>
+      </div>
+
+      <div class="security-tabs" *ngIf="biometricAvailable">
+        <button type="button" [class.active]="authMethod === 'biometric'" [disabled]="processing" (click)="useAuthMethod('biometric')">
+          {{ biometricLabel }}
+        </button>
+        <button type="button" [class.active]="authMethod === 'pin'" [disabled]="processing" (click)="useAuthMethod('pin')">
+          Transaction PIN
+        </button>
+      </div>
+
+      <div class="fingerprint-panel" *ngIf="authMethod === 'biometric' && biometricAvailable">
+        <button class="fingerprint-button" type="button" [disabled]="processing" (click)="authorizeWithBiometric()">
+          <span class="fingerprint-icon">⌾</span>
+          <span>{{ processing ? 'Checking...' : 'Use ' + biometricLabel }}</span>
+        </button>
+        <button class="link-button" type="button" [disabled]="processing" (click)="useAuthMethod('pin')">
+          Use Transaction PIN instead
+        </button>
+      </div>
+
+      <app-transaction-pin-auth
+        *ngIf="authMethod === 'pin'"
+        [disabled]="processing"
+        [error]="authError"
+        (authorize)="authorizeWithPin($event)"
+      ></app-transaction-pin-auth>
+
+      <p class="ax-error" *ngIf="authError && authMethod !== 'pin'">{{ authError }}</p>
+      <p class="ax-muted" *ngIf="pinLockedUntil">PIN temporarily locked until {{ pinLockedUntil }}.</p>
+    </section>
+
+    <section class="ax-card withdraw-card" *ngIf="view === 'success'">
+      <div class="result-panel result-panel--success">
+        <span class="result-mark">✓</span>
+        <h3>Withdrawal Successful</h3>
+        <strong class="success-amount">{{ formattedAmount }}</strong>
+        <p class="ax-muted">{{ statusMessage || 'Your withdrawal has been submitted successfully.' }}</p>
+      </div>
+
+      <div class="review-panel">
+        <div>
+          <span>Amount</span>
+          <strong>{{ formattedAmount }}</strong>
+        </div>
+        <div>
+          <span>Destination</span>
+          <strong>{{ destination }}</strong>
+        </div>
+        <div>
+          <span>Reference ID</span>
+          <strong>{{ referenceId || 'Pending reference' }}</strong>
+        </div>
+        <div>
+          <span>Date/time</span>
+          <strong>{{ completedAt }}</strong>
+        </div>
+        <div>
+          <span>Status</span>
+          <strong>{{ status }}</strong>
+        </div>
+      </div>
+
+      <button class="ax-btn ax-btn-primary" type="button" (click)="done()">Done</button>
+    </section>
+
+    <section class="ax-card withdraw-card" *ngIf="view === 'failure'">
+      <div class="result-panel result-panel--failed">
+        <span class="result-mark">!</span>
+        <h3>Withdrawal Failed</h3>
+        <p class="ax-muted">{{ statusMessage || 'The withdrawal was not completed.' }}</p>
+      </div>
+
+      <div class="action-row">
+        <button class="ax-btn ax-btn-secondary" type="button" [disabled]="processing" (click)="editWithdrawal()">Edit details</button>
+        <button class="ax-btn ax-btn-primary" type="button" [disabled]="processing" (click)="retry()">Retry authorization</button>
       </div>
     </section>
   </div>

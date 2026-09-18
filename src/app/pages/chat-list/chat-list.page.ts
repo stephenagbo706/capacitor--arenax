@@ -65,12 +65,16 @@ export class ChatListPage {
     });
   }
 
-  startChat(userId: string) {
+  async startChat(userId: string) {
     this.errorMessage = '';
     this.statusMessage = '';
-    const chatId = this.arena.createChatWith(userId);
-    if (!chatId) return;
-    this.router.navigate(['/chat', chatId]);
+    try {
+      const chatId = await this.arena.createChatWith(userId);
+      if (!chatId) return;
+      this.router.navigate(['/chat', chatId]);
+    } catch (error) {
+      this.errorMessage = (error as { message?: string })?.message || 'Unable to start chat.';
+    }
   }
 
   sendFriendRequest(userId: string) {

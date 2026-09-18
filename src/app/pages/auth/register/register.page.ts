@@ -25,6 +25,7 @@ export class RegisterPage {
   error = '';
   status = '';
   currentSlide = 0;
+  isGoogleLoading = false;
 
   nextSlide() {
     this.status = '';
@@ -69,5 +70,21 @@ export class RegisterPage {
     this.error = '';
     this.status = 'Registration successful. You are now logged in.';
     setTimeout(() => this.router.navigateByUrl('/home'), 900);
+  }
+
+  async continueWithGoogle() {
+    if (this.isGoogleLoading) return;
+
+    this.isGoogleLoading = true;
+    this.error = '';
+    this.status = '';
+    const result = await this.auth.loginWithGoogle();
+    this.isGoogleLoading = false;
+    if (!result.ok) {
+      this.error = result.message || 'Google Sign-In failed.';
+      return;
+    }
+
+    await this.router.navigateByUrl('/home');
   }
 }

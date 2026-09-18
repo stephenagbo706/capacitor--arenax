@@ -24,6 +24,16 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>ArenaX uses the camera when you capture a profile or match-related image.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>ArenaX uses Face ID or Touch ID to verify withdrawals before money leaves your wallet.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ArenaX uses your approximate location only for nearby app features while you are using the app.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>ArenaX may save edited images you choose to keep on your device.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ArenaX uses photo access when you choose an image for your profile or app uploads.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

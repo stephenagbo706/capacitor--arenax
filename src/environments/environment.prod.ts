@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
+  apiUrl: 'https://api.arenax.gg',
   socketUrl: 'https://api.arenax.gg',
   firebase: {
     apiKey: 'AIzaSyB7z1HkruJbwmTgSGq0nWjkVdEIxHVY_7c',

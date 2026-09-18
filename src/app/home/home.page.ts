@@ -1,11 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { DecimalPipe, NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
-import { Capacitor } from '@capacitor/core';
-import { Camera } from '@capacitor/camera';
-import { Geolocation } from '@capacitor/geolocation';
-import { PushNotifications } from '@capacitor/push-notifications';
+import { ArenaPermissionItem, PermissionService } from '../core/services/permission.service';
 
 @Component({
   selector: 'app-home',
@@ -14,6 +11,8 @@ import { PushNotifications } from '@capacitor/push-notifications';
   imports: [IonContent, NgFor, NgIf, RouterLink, DecimalPipe],
 })
 export class HomePage {
+  private permissions = inject(PermissionService);
+
   activeScreen: 'scr-login' | 'scr-home' | 'scr-create' | 'scr-tournaments' | 'scr-wallet' | 'scr-profile' | 'scr-admin' =
     'scr-login';
   activeGameIndex = 0;
@@ -27,6 +26,9 @@ export class HomePage {
   adminFilter: 'All' | 'Pending' | 'Disputed' | 'Escrow' = 'All';
   profileImageSrc = this.loadProfileImage();
   createError = '';
+  permissionNotice = '';
+  permissionItems: ArenaPermissionItem[] = [];
+  permissionBusyKey = '';
   nairaBalance = 0;
   usdBalance = 0;
   preferredCurrency: 'NGN' | 'USD' = this.loadPreferredCurrency();
@@ -94,37 +96,11 @@ export class HomePage {
 
   private readonly profileImageKey = 'arenax_profile_image';
 
-  constructor() {
-    this.requestNativePermissions();
-  }
-
-  private async requestNativePermissions() {
-    if (Capacitor.getPlatform() !== 'android') return;
-
-    try {
-      await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
-    } catch (error) {
-      console.warn('Camera permission request failed', error);
-    }
-
-    try {
-      await Geolocation.requestPermissions();
-    } catch (error) {
-      console.warn('Location permission request failed', error);
-    }
-
-    try {
-      const notificationPermission = await PushNotifications.checkPermissions();
-      if (notificationPermission.receive === 'prompt') {
-        await PushNotifications.requestPermissions();
-      }
-    } catch (error) {
-      console.warn('Notification permission request failed', error);
-    }
-  }
-
   setScreen(screen: HomePage['activeScreen']) {
     this.activeScreen = screen;
+    if (screen === 'scr-profile') {
+      this.refreshPermissionStatus();
+    }
   }
 
   selectGame(index: number) {
@@ -223,8 +199,38 @@ export class HomePage {
     input.value = '';
   }
 
-  openEditProfile() {
-    alert('Open edit profile screen.');
+  async openEditProfile() {
+    this.permissionNotice = '';
+    const result = await this.permissions.pickProfileImage();
+    if (result.state === 'granted' && result.dataUrl) {
+      this.profileImageSrc = result.dataUrl;
+      localStorage.setItem(this.profileImageKey, result.dataUrl);
+      return;
+    }
+    this.permissionNotice = result.message || 'ArenaX could not update your profile image.';
+    this.refreshPermissionStatus();
+  }
+
+  async refreshPermissionStatus() {
+    this.permissionItems = await this.permissions.getPermissionItems();
+  }
+
+  async enablePermission(item: ArenaPermissionItem) {
+    this.permissionBusyKey = item.key;
+    this.permissionNotice = '';
+    await this.permissions.tap();
+    const result = await this.permissions.requestPermission(item.key);
+    this.permissionNotice = result.message || '';
+    this.permissionItems = await this.permissions.getPermissionItems();
+    this.permissionBusyKey = '';
+  }
+
+  async openPermissionSettings() {
+    this.permissionBusyKey = 'settings';
+    const result = await this.permissions.openAppSettings();
+    this.permissionNotice = result.message || '';
+    this.permissionItems = await this.permissions.getPermissionItems();
+    this.permissionBusyKey = '';
   }
 
   openBadgeDetails(badgeName: string) {

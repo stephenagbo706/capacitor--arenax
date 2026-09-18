@@ -10,4 +10,45 @@
       <small>{{ popup.message }}</small>
     </span>
   </button>
+
+  <section class="permission-sheet" *ngIf="permissionOnboardingOpen" aria-label="ArenaX mobile permissions">
+    <div class="permission-panel">
+      <header>
+        <strong>Phone Permissions</strong>
+        <p>ArenaX asks only when a mobile feature needs access.</p>
+      </header>
+
+      <div class="permission-list">
+        <article class="permission-item" *ngFor="let item of permissionItems">
+          <div>
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.detail }}</span>
+          </div>
+          <em [class.allowed]="item.state === 'granted'">{{ item.label }}</em>
+          <button
+            *ngIf="item.canRequest && item.state !== 'granted'"
+            class="permission-action"
+            type="button"
+            [disabled]="permissionBusyKey === item.key"
+            (click)="requestOnboardingPermission(item)"
+          >
+            {{ permissionBusyKey === item.key ? 'Checking...' : 'Enable' }}
+          </button>
+          <button
+            *ngIf="item.canOpenSettings && item.state !== 'granted'"
+            class="permission-action permission-action--ghost"
+            type="button"
+            [disabled]="permissionBusyKey === 'settings'"
+            (click)="openPermissionSettings()"
+          >
+            Open Settings
+          </button>
+        </article>
+      </div>
+
+      <p class="permission-message" *ngIf="permissionMessage">{{ permissionMessage }}</p>
+
+      <button class="permission-done" type="button" (click)="dismissPermissionOnboarding()">Continue to ArenaX</button>
+    </div>
+  </section>
 </ion-app>

@@ -4,6 +4,11 @@ import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import {
   ARENAX_EVENTS,
+  BackendChatMessagePayload,
+  ChatErrorPayload,
+  ChatPresencePayload,
+  ChatReadPayload,
+  ChatTypingPayload,
   InvitePlayerPayload,
   JoinRoomPayload,
   MatchUpdatePayload,
@@ -33,6 +38,14 @@ export class RealtimeService {
   readonly invite$ = new Subject<InvitePlayerPayload>();
   readonly tournamentUpdate$ = new Subject<TournamentUpdatePayload>();
   readonly notification$ = new Subject<RealtimeNotificationPayload>();
+  readonly chatMessage$ = new Subject<BackendChatMessagePayload>();
+  readonly chatDelivered$ = new Subject<BackendChatMessagePayload>();
+  readonly chatRead$ = new Subject<ChatReadPayload>();
+  readonly chatDeleted$ = new Subject<BackendChatMessagePayload>();
+  readonly chatTypingStart$ = new Subject<ChatTypingPayload>();
+  readonly chatTypingStop$ = new Subject<ChatTypingPayload>();
+  readonly chatPresence$ = new Subject<ChatPresencePayload>();
+  readonly chatError$ = new Subject<ChatErrorPayload>();
 
   connect(context: RealtimeAuthContext) {
     this.authContext = context;
@@ -61,6 +74,48 @@ export class RealtimeService {
     if (this.activeRooms.has(roomKey)) return;
     this.socket.emit(ARENAX_EVENTS.joinRoom, payload);
     this.activeRooms.add(roomKey);
+  }
+
+  joinChatRoom(roomId: string) {
+    if (!this.socket || !this.authContext) return Promise.resolve(false);
+    this.activeRooms.add(`chat:${roomId}`);
+    return this.emitWithAck(ARENAX_EVENTS.chatJoin, { roomId }).then((response) => response.ok);
+  }
+
+  leaveChatRoom(roomId: string) {
+    if (!this.socket) return;
+    this.socket.emit(ARENAX_EVENTS.chatLeave, { roomId });
+    this.activeRooms.delete(`chat:${roomId}`);
+  }
+
+  sendChatMessage(payload: {
+    roomId: string;
+    text?: string;
+    messageType?: 'TEXT' | 'IMAGE';
+    replyToMessageId?: string;
+    attachmentUrl?: string;
+  }) {
+    return this.emitWithAck<{ message?: BackendChatMessagePayload }>(ARENAX_EVENTS.chatSend, payload);
+  }
+
+  markChatDelivered(roomId: string, messageId: string) {
+    return this.emitWithAck<{ message?: BackendChatMessagePayload }>(ARENAX_EVENTS.chatDelivered, { roomId, messageId });
+  }
+
+  markChatRead(roomId: string) {
+    return this.emitWithAck<Partial<ChatReadPayload>>(ARENAX_EVENTS.chatRead, { roomId });
+  }
+
+  deleteChatMessage(roomId: string, messageId: string) {
+    return this.emitWithAck<{ message?: BackendChatMessagePayload }>(ARENAX_EVENTS.chatDelete, { roomId, messageId });
+  }
+
+  startTyping(roomId: string) {
+    this.socket?.emit(ARENAX_EVENTS.chatTypingStart, { roomId });
+  }
+
+  stopTyping(roomId: string) {
+    this.socket?.emit(ARENAX_EVENTS.chatTypingStop, { roomId });
   }
 
   leaveRoom(payload: JoinRoomPayload) {
@@ -152,6 +207,21 @@ export class RealtimeService {
     this.socket.on(ARENAX_EVENTS.notification, (payload: RealtimeNotificationPayload) =>
       this.notification$.next(payload)
     );
+    this.socket.on(ARENAX_EVENTS.chatMessage, (payload: BackendChatMessagePayload) => this.chatMessage$.next(payload));
+    this.socket.on(ARENAX_EVENTS.chatDelivered, (payload: { message: BackendChatMessagePayload }) => {
+      if (payload?.message) this.chatDelivered$.next(payload.message);
+    });
+    this.socket.on(ARENAX_EVENTS.chatRead, (payload: ChatReadPayload) => this.chatRead$.next(payload));
+    this.socket.on(ARENAX_EVENTS.chatMessageDeleted, (payload: { message: BackendChatMessagePayload }) => {
+      if (payload?.message) this.chatDeleted$.next(payload.message);
+    });
+    this.socket.on(ARENAX_EVENTS.chatTypingStart, (payload: ChatTypingPayload) => this.chatTypingStart$.next(payload));
+    this.socket.on(ARENAX_EVENTS.chatTypingStop, (payload: ChatTypingPayload) => this.chatTypingStop$.next(payload));
+    this.socket.on(ARENAX_EVENTS.chatPresence, (payload: ChatPresencePayload) => this.chatPresence$.next(payload));
+    this.socket.on(ARENAX_EVENTS.chatError, (payload: ChatErrorPayload) => this.chatError$.next(payload));
+    this.socket.on('connect_error', (error) => {
+      this.chatError$.next({ code: 'SOCKET_ERROR', message: error.message || 'Unable to connect to chat.' });
+    });
 
     this.socket.connect();
   }
@@ -169,6 +239,10 @@ export class RealtimeService {
   private rejoinRooms() {
     if (!this.socket || !this.authContext) return;
     for (const key of this.activeRooms) {
+      if (key.startsWith('chat:')) {
+        this.socket.emit(ARENAX_EVENTS.chatJoin, { roomId: key.slice(5) });
+        continue;
+      }
       const [roomType, roomId] = key.split(':');
       if (!roomId || !roomType) continue;
       this.socket.emit(ARENAX_EVENTS.joinRoom, {
@@ -177,6 +251,29 @@ export class RealtimeService {
         userId: this.authContext.userId,
       });
     }
+  }
+
+  private emitWithAck<T = Record<string, unknown>>(eventName: string, payload: unknown) {
+    return new Promise<{ ok: boolean; error?: ChatErrorPayload } & T>((resolve) => {
+      if (!this.socket || !this.socket.connected) {
+        resolve({ ok: false, error: { code: 'SOCKET_ERROR', message: 'Chat is disconnected.' } } as unknown as {
+          ok: boolean;
+        } & T);
+        return;
+      }
+      this.socket.timeout(10000).emit(eventName, payload, (error: Error | null, response: ({ ok: boolean } & T) | undefined) => {
+        if (error) {
+          resolve({
+            ok: false,
+            error: { code: 'SOCKET_ERROR', message: 'Chat server did not acknowledge the request.' },
+          } as unknown as { ok: boolean } & T);
+          return;
+        }
+        resolve((response || { ok: false, error: { code: 'SOCKET_ERROR', message: 'Invalid chat server response.' } }) as {
+          ok: boolean;
+        } & T);
+      });
+    });
   }
 
   private resolveTournamentEventName(action: TournamentUpdatePayload['action']) {

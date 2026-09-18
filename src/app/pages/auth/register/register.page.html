@@ -16,6 +16,17 @@
                   <input class="ax-input" type="text" placeholder="Full Name" [(ngModel)]="username" />
                   <input class="ax-input" type="email" placeholder="Email Address" [(ngModel)]="email" />
                   <ion-button expand="block" class="ax-btn ax-btn-primary ax-register-btn" type="button" (click)="nextSlide()">Next</ion-button>
+                  <div class="ax-auth-divider"><span>or</span></div>
+                  <ion-button
+                    expand="block"
+                    class="ax-btn ax-google-btn ax-register-btn"
+                    type="button"
+                    [disabled]="isGoogleLoading"
+                    (click)="continueWithGoogle()"
+                  >
+                    <i class="fa-brands fa-google" aria-hidden="true"></i>
+                    {{ isGoogleLoading ? 'Connecting...' : 'Continue with Google' }}
+                  </ion-button>
                 </section>
 
                 <section class="ax-grid ax-slide" aria-label="Registration step 2">

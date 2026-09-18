@@ -40,7 +40,9 @@
         <p class="meta">Tournament: {{ card.matchStartDate | date:'MMM d' }} - {{ card.matchEndDate | date:'MMM d, y' }}</p>
         <p class="meta">Countdown: {{ countdownTo(card.matchStartDate) }}</p>
         <div class="featured-actions">
-          <button type="button" (click)="joinTournament(card)">Join Now</button>
+          <button type="button" [disabled]="joiningCardId === card.id" (click)="joinTournament(card)">
+            {{ joiningCardId === card.id ? 'Joining...' : 'Join Now' }}
+          </button>
           <button type="button" (click)="viewTournament(card)">View</button>
         </div>
         <p class="row-feedback" [class.err]="feedbackType === 'error'" [class.ok]="feedbackType === 'ok'" *ngIf="hasCardFeedback(card.id)">
@@ -61,7 +63,9 @@
           <p class="meta">Participants: {{ card.participants }}/{{ card.maxPlayers }} • Starts: {{ card.matchStartDate | date:'MMM d, y' }}</p>
           <p class="meta">Reg: {{ card.registrationOpenDate | date:'MMM d' }} - {{ card.registrationCloseDate | date:'MMM d' }} • Countdown: {{ countdownTo(card.matchStartDate) }}</p>
           <div class="row-actions">
-            <button type="button" (click)="joinTournament(card)">Register</button>
+            <button type="button" [disabled]="joiningCardId === card.id" (click)="joinTournament(card)">
+              {{ joiningCardId === card.id ? 'Joining...' : 'Register' }}
+            </button>
             <button type="button" (click)="setReminder(card)">Reminder</button>
             <button type="button" (click)="addToCalendar(card)">Add to Calendar</button>
           </div>

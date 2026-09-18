@@ -25,13 +25,14 @@ export class DepositPage {
   minAmount = 100;
   maxAmount = 500000;
 
-  submit() {
+  async submit() {
+    if (this.status === 'pending') return;
     this.error = '';
     this.referenceId = '';
     this.statusMessage = '';
     this.status = 'pending';
 
-    const result = this.arena.deposit({
+    const result = await this.arena.deposit({
       amount: this.amount,
       currency: this.currency,
       method: this.selectedMethod,

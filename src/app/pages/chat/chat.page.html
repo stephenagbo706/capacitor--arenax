@@ -119,7 +119,7 @@
           <i class="fa-regular fa-image" aria-hidden="true"></i>
         </button>
         <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
-        <input class="ax-input" placeholder="Type a message" [(ngModel)]="message" />
+        <input class="ax-input" placeholder="Type a message" [(ngModel)]="message" (ngModelChange)="onMessageInput()" />
         <button class="ax-btn ax-btn-primary" (click)="send()">Send</button>
       </div>
 

@@ -26,6 +26,10 @@ export class ProfilePage {
     'assets/ax-ui/tournament-area.jpg',
   ];
 
+  get fallbackUser() {
+    return this.arena.getCurrentUser() || this.users$.value[0] || null;
+  }
+
   cycleProfileIcon(user: UserProfile) {
     const current = this.avatarCycle.indexOf(user.avatar);
     const nextIndex = current >= 0 ? (current + 1) % this.avatarCycle.length : 0;

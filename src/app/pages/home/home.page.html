@@ -1,5 +1,5 @@
 <ion-content [fullscreen]="true">
-  <div class="ax-home" *ngIf="user$ | async as user">
+  <div class="ax-home" *ngIf="(user$ | async) || fallbackUser as user">
     <div class="ax-home__grid" aria-hidden="true"></div>
 
     <header class="ax-home__top">
@@ -60,8 +60,8 @@
         </div>
         <div class="match-avatars">
           <div class="avatar-group">
-            <img [src]="getUser(match.player1Id)?.avatar" alt="Player" />
-            <img [src]="getUser(match.player2Id || '')?.avatar" alt="Player" />
+            <img [src]="getUser(match.player1Id)?.avatar || defaultAvatar" alt="Player" />
+            <img [src]="getUser(match.player2Id || '')?.avatar || defaultAvatar" alt="Player" />
           </div>
           <i class="fa-solid fa-gamepad"></i>
           <div class="avatar-group right"></div>

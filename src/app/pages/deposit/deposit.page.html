@@ -44,7 +44,9 @@
 
       <p class="ax-error" *ngIf="error">{{ error }}</p>
 
-      <button class="ax-btn ax-btn-primary" (click)="submit()">Confirm Deposit</button>
+      <button class="ax-btn ax-btn-primary" [disabled]="status === 'pending'" (click)="submit()">
+        {{ status === 'pending' ? 'Confirming...' : 'Confirm Deposit' }}
+      </button>
 
       <div class="status-panel" *ngIf="status !== 'idle'">
         <p class="status-label">{{ statusMessage }}</p>

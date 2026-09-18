@@ -52,6 +52,7 @@ export class TournamentsPage implements OnInit, OnDestroy {
   feedbackCardId = '';
   feedbackType: 'error' | 'ok' | '' = '';
   feedbackMessage = '';
+  joiningCardId = '';
 
   private timerSub?: Subscription;
   private realtimeSub?: Subscription;
@@ -178,7 +179,8 @@ export class TournamentsPage implements OnInit, OnDestroy {
     return `${days}d ${hours}h`;
   }
 
-  joinTournament(card: CalendarCard) {
+  async joinTournament(card: CalendarCard) {
+    if (this.joiningCardId) return;
     this.errorMessage = '';
     this.actionMessage = '';
     if (!card.linkedTournamentId) {
@@ -186,7 +188,9 @@ export class TournamentsPage implements OnInit, OnDestroy {
       return;
     }
 
-    const result = this.arena.joinTournament(card.linkedTournamentId);
+    this.joiningCardId = card.id;
+    const result = await this.arena.joinTournament(card.linkedTournamentId);
+    this.joiningCardId = '';
     if (!result.ok) {
       this.setCardFeedback(card.id, 'error', result.message || 'Unable to join tournament.');
       if (result.redirectTo) {
