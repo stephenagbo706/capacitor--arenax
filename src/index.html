@@ -24,7 +24,22 @@
 </head>
 
 <body>
-  <app-root></app-root>
+  <app-root>
+    <div style="min-height:100vh;display:grid;place-items:center;background:#04071b;color:#f3f6ff;font-family:Arial,sans-serif;text-align:center;padding:24px;">
+      <div>
+        <strong style="display:block;font-size:24px;margin-bottom:8px;">ArenaX is loading</strong>
+        <span style="font-size:14px;color:#b8c7ff;">Starting the mobile app...</span>
+      </div>
+    </div>
+  </app-root>
+  <script>
+    window.addEventListener('error', function (event) {
+      console.error('[ArenaX startup error]', event.message, event.filename, event.lineno, event.colno, event.error && event.error.stack);
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+      console.error('[ArenaX startup rejection]', event.reason && (event.reason.stack || event.reason.message || event.reason));
+    });
+  </script>
 </body>
 
 </html>
