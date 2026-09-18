@@ -9,6 +9,7 @@ import {
   browserLocalPersistence,
   createUserWithEmailAndPassword,
   getAuth,
+  getRedirectResult,
   indexedDBLocalPersistence,
   inMemoryPersistence,
   onAuthStateChanged,
@@ -16,6 +17,7 @@ import {
   setPersistence,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   updateProfile,
 } from 'firebase/auth';
@@ -89,12 +91,16 @@ export class AuthService {
       let signedInUser: User | null = null;
 
       if (Capacitor.isNativePlatform()) {
-        const result = await FirebaseAuthentication.signInWithGoogle();
+        const result = await FirebaseAuthentication.signInWithGoogle({ useCredentialManager: false });
+        if (!result.user) {
+          return { ok: false, message: 'Google Sign-In completed, but no ArenaX account session was created.' };
+        }
         await this.syncNativeArenaUser(result.user);
       } else {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
-        const userCredential = await signInWithPopup(this.auth, provider);
+        const userCredential = await this.signInWithGooglePopupOrRedirect(provider);
+        if (!userCredential) return { ok: true };
         signedInUser = userCredential.user;
       }
 
@@ -200,6 +206,18 @@ export class AuthService {
 
     await new Promise<void>((resolve) => {
       onAuthStateChanged(this.auth!, async (user) => {
+        if (!user) {
+          const redirectUser = await this.consumeRedirectResult();
+          if (redirectUser) {
+            await this.syncArenaUser(redirectUser);
+            if (!this.didResolveInitialAuthState) {
+              this.didResolveInitialAuthState = true;
+              resolve();
+            }
+            return;
+          }
+        }
+
         await this.syncArenaUser(user);
         if (!this.didResolveInitialAuthState) {
           this.didResolveInitialAuthState = true;
@@ -207,6 +225,30 @@ export class AuthService {
         }
       });
     });
+  }
+
+  private async signInWithGooglePopupOrRedirect(provider: GoogleAuthProvider) {
+    if (!this.auth) return null;
+
+    try {
+      return await signInWithPopup(this.auth, provider);
+    } catch (error) {
+      if (!this.shouldUseRedirectFallback(error)) throw error;
+      await signInWithRedirect(this.auth, provider);
+      return null;
+    }
+  }
+
+  private async consumeRedirectResult() {
+    if (!this.auth) return null;
+
+    try {
+      const redirectResult = await getRedirectResult(this.auth);
+      return redirectResult?.user || null;
+    } catch (error) {
+      console.warn('Google redirect sign-in failed', error);
+      return null;
+    }
   }
 
   private async syncArenaUser(user: User | null, usernameOverride?: string) {
@@ -293,11 +335,37 @@ export class AuthService {
       case 'auth/account-exists-with-different-credential':
         return 'An ArenaX account already uses this email. Log in with your existing method first.';
       case 'auth/unauthorized-domain':
-        return 'This domain is not authorized for Google Sign-In.';
+        return 'This domain is not authorized for Google Sign-In. Add capacitor-arenax.vercel.app in Firebase Auth Authorized domains.';
       case 'auth/operation-not-allowed':
         return 'Google Sign-In is not enabled for this ArenaX project.';
+      case '10':
+      case '12500':
+      case 'auth/configuration-not-found':
+        return 'Google Sign-In is not configured correctly for this Android app. Add the app SHA fingerprint in Firebase, then download the updated google-services.json.';
       default:
+        if (this.isNativeGoogleConfigurationError(error)) {
+          return 'Google Sign-In is not configured correctly for this Android app. Add the app SHA fingerprint in Firebase, then download the updated google-services.json.';
+        }
         return 'Authentication failed. Please try again.';
     }
+  }
+
+  private isNativeGoogleConfigurationError(error: unknown) {
+    const message = ((error as { message?: string })?.message || '').toLowerCase();
+    return (
+      message.includes('developer_error') ||
+      message.includes('api_exception: 10') ||
+      message.includes('configuration_not_found') ||
+      message.includes('invalid oauth client')
+    );
+  }
+
+  private shouldUseRedirectFallback(error: unknown) {
+    const code = (error as { code?: string })?.code || '';
+    return (
+      code === 'auth/popup-blocked' ||
+      code === 'auth/cancelled-popup-request' ||
+      code === 'auth/operation-not-supported-in-this-environment'
+    );
   }
 }
