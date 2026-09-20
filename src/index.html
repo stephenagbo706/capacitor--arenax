@@ -17,6 +17,114 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    .app-loading {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 32px;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(56, 223, 248, 0.16), transparent 28%),
+        linear-gradient(170deg, #04071b 0%, #08133b 48%, #0b1d50 100%);
+      color: #f3f6ff;
+      font-family: 'Outfit', Arial, sans-serif;
+      text-align: center;
+    }
+
+    .app-loading__content {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+      width: min(100%, 280px);
+    }
+
+    .app-loading__logo-wrap {
+      width: 112px;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(132, 156, 255, 0.22);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.36), 0 0 34px rgba(56, 223, 248, 0.16);
+      backdrop-filter: blur(12px);
+    }
+
+    .app-loading__logo {
+      width: 82px;
+      height: 82px;
+      object-fit: contain;
+      filter: drop-shadow(0 12px 26px rgba(56, 223, 248, 0.24));
+    }
+
+    .app-loading__brand {
+      display: grid;
+      gap: 4px;
+    }
+
+    .app-loading__title {
+      margin: 0;
+      font-size: 1.95rem;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .app-loading__subtitle {
+      margin: 0;
+      color: rgba(229, 237, 255, 0.78);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .app-loading__dots {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 24px;
+      margin-top: 2px;
+    }
+
+    .app-loading__dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #38dff8;
+      box-shadow: 0 0 16px rgba(56, 223, 248, 0.52);
+      animation: ax-loading-dot 1.05s ease-in-out infinite;
+    }
+
+    .app-loading__dots span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .app-loading__dots span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes ax-loading-dot {
+      0%,
+      80%,
+      100% {
+        opacity: 0.35;
+        transform: translateY(0) scale(0.82);
+      }
+
+      40% {
+        opacity: 1;
+        transform: translateY(-7px) scale(1);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .app-loading__dots span {
+        animation: none;
+        opacity: 0.8;
+      }
+    }
+  </style>
 
   <!-- add to homescreen for ios -->
   <meta name="mobile-web-app-capable" content="yes" />
@@ -25,10 +133,20 @@
 
 <body>
   <app-root>
-    <div style="min-height:100vh;display:grid;place-items:center;background:#04071b;color:#f3f6ff;font-family:Arial,sans-serif;text-align:center;padding:24px;">
-      <div>
-        <strong style="display:block;font-size:24px;margin-bottom:8px;">ArenaX is loading</strong>
-        <span style="font-size:14px;color:#b8c7ff;">Starting the mobile app...</span>
+    <div class="app-loading" role="status" aria-live="polite" aria-label="ArenaX is loading">
+      <div class="app-loading__content">
+        <div class="app-loading__logo-wrap" aria-hidden="true">
+          <img class="app-loading__logo" src="assets/ax-ui/logo.png" alt="" />
+        </div>
+        <div class="app-loading__brand">
+          <h1 class="app-loading__title">ArenaX</h1>
+          <p class="app-loading__subtitle">Loading your arena</p>
+        </div>
+        <div class="app-loading__dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
     </div>
   </app-root>

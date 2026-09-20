@@ -1,6 +1,23 @@
 <ion-app>
   <ion-router-outlet></ion-router-outlet>
 
+  <section class="startup-loading" *ngIf="showStartupLoading" role="status" aria-live="polite" aria-label="ArenaX is loading">
+    <div class="startup-loading__content">
+      <div class="startup-loading__logo-wrap" aria-hidden="true">
+        <img class="startup-loading__logo" src="assets/ax-ui/logo.png" alt="" />
+      </div>
+      <div class="startup-loading__brand">
+        <h1>ArenaX</h1>
+        <p>Loading your arena</p>
+      </div>
+      <div class="startup-loading__dots" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </section>
+
   <button class="chat-popup" *ngIf="chatPopup as popup" type="button" (click)="openChatNotification()">
     <span class="chat-popup__icon">
       <i class="fa-regular fa-message"></i>

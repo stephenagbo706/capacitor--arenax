@@ -1,3 +1,110 @@
+.startup-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(56, 223, 248, 0.16), transparent 28%),
+    linear-gradient(170deg, #04071b 0%, #08133b 48%, #0b1d50 100%);
+  color: #f3f6ff;
+  text-align: center;
+}
+
+.startup-loading__content {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: min(100%, 280px);
+}
+
+.startup-loading__logo-wrap {
+  width: 112px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(132, 156, 255, 0.22);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.36), 0 0 34px rgba(56, 223, 248, 0.16);
+  backdrop-filter: blur(12px);
+}
+
+.startup-loading__logo {
+  width: 82px;
+  height: 82px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 26px rgba(56, 223, 248, 0.24));
+}
+
+.startup-loading__brand {
+  display: grid;
+  gap: 4px;
+}
+
+.startup-loading__brand h1 {
+  margin: 0;
+  font-size: 1.95rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.startup-loading__brand p {
+  margin: 0;
+  color: rgba(229, 237, 255, 0.78);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.startup-loading__dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 24px;
+  margin-top: 2px;
+}
+
+.startup-loading__dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #38dff8;
+  box-shadow: 0 0 16px rgba(56, 223, 248, 0.52);
+  animation: ax-startup-loading-dot 1.05s ease-in-out infinite;
+}
+
+.startup-loading__dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.startup-loading__dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes ax-startup-loading-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0) scale(0.82);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-7px) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .startup-loading__dots span {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+
 .chat-popup {
   position: fixed;
   left: 1rem;

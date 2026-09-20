@@ -26,13 +26,18 @@ export class AppComponent implements OnDestroy, OnInit {
   permissionItems: ArenaPermissionItem[] = [];
   permissionBusyKey = '';
   permissionMessage = '';
+  showStartupLoading = true;
   private readonly seenNotificationIds = new Set<string>();
   private readonly permissionOnboardingKey = 'arenax_android_permission_onboarding_seen';
   private readonly notificationsSub: Subscription;
   private hidePopupTimer: ReturnType<typeof setTimeout> | null = null;
+  private startupLoadingTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     void this.auth.waitUntilReady();
+    this.startupLoadingTimer = setTimeout(() => {
+      this.showStartupLoading = false;
+    }, 4000);
     this.notificationsSub = this.arena.notifications$.subscribe((notifications) => {
       const incoming = notifications.find(
         (note) => note.type === 'chat' && !note.read && !this.seenNotificationIds.has(note.id)
@@ -95,5 +100,6 @@ export class AppComponent implements OnDestroy, OnInit {
   ngOnDestroy() {
     this.notificationsSub.unsubscribe();
     if (this.hidePopupTimer) clearTimeout(this.hidePopupTimer);
+    if (this.startupLoadingTimer) clearTimeout(this.startupLoadingTimer);
   }
 }

@@ -266,15 +266,16 @@ export class PermissionService {
       await BiometricAuth.authenticate({
         reason: 'Authorize this ArenaX withdrawal',
         cancelTitle: 'Cancel',
+        allowDeviceCredential: true,
         iosFallbackTitle: 'Use Passcode',
         androidTitle: 'Confirm Withdrawal',
-        androidSubtitle: 'Use your device biometric to continue',
+        androidSubtitle: `Use ${availability.label.toLowerCase()} or your screen lock to continue`,
         androidConfirmationRequired: false,
-        androidBiometryStrength: AndroidBiometryStrength.strong,
+        androidBiometryStrength: AndroidBiometryStrength.weak,
       });
 
       await this.notifySuccess();
-      return { ...availability, assertionId: crypto.randomUUID() };
+      return { ...availability, assertionId: this.createBiometricAssertionId() };
     } catch (error) {
       await this.notifyFailure();
       if (error instanceof BiometryError) {
@@ -283,6 +284,12 @@ export class PermissionService {
         }
         if (error.code === BiometryErrorType.biometryNotEnrolled) {
           return { ...availability, state: 'restricted', message: 'No biometric is enrolled on this device.', canOpenSettings: true };
+        }
+        if (error.code === BiometryErrorType.biometryLockout) {
+          return { ...availability, state: 'restricted', message: 'Biometric authentication is temporarily locked. Use your device screen lock or Transaction PIN.', canOpenSettings: true };
+        }
+        if (error.code === BiometryErrorType.passcodeNotSet || error.code === BiometryErrorType.noDeviceCredential) {
+          return { ...availability, state: 'restricted', message: 'Set a device screen lock before using biometric withdrawal approval.', canOpenSettings: true };
         }
       }
       return { ...availability, state: 'denied', message: 'Biometric authentication failed. Use Transaction PIN instead.' };
@@ -365,5 +372,18 @@ export class PermissionService {
       default:
         return 'Biometric';
     }
+  }
+
+  private createBiometricAssertionId() {
+    if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+    const bytes = new Uint8Array(16);
+    globalThis.crypto?.getRandomValues?.(bytes);
+    if (bytes.some(Boolean)) {
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0'));
+      return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10).join('')}`;
+    }
+    return `bio-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   }
 }

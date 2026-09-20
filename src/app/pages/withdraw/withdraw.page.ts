@@ -212,6 +212,7 @@ export class WithdrawPage implements OnInit {
     this.error = '';
     this.authError = '';
     await this.permissions.openAppSettings();
+    await this.refreshBiometricStatus();
   }
 
   async retry() {
