@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { timer } from 'rxjs';
 import { ArenaService } from '../../core/services/arena.service';
+import { GameResultAiService } from '../../core/services/game-result-ai.service';
 
 @Component({
   selector: 'app-result-upload',
@@ -16,6 +17,7 @@ import { ArenaService } from '../../core/services/arena.service';
 export class ResultUploadPage {
   private route = inject(ActivatedRoute);
   private arena = inject(ArenaService);
+  private ai = inject(GameResultAiService);
   private router = inject(Router);
 
   matchId = '';
@@ -26,6 +28,8 @@ export class ResultUploadPage {
   screenshotSize = 0;
   error = '';
   success = '';
+  aiStatus = '';
+  aiError = '';
   isSubmitting = false;
   clock$ = timer(0, 1000);
   currentUserId = this.arena.getCurrentUser()?.id || '';
@@ -87,15 +91,44 @@ export class ResultUploadPage {
     return 'assets/match-icons/fifa-mobile.jpg';
   }
 
+  private verifyAiWinnerForCurrentScreenshot(): { ok: boolean; message: string; winnerId?: string } {
+    if (!this.match || !this.screenshotDataUrl || !this.screenshotFileName) {
+      return { ok: false, message: 'Upload a screenshot before AI verification runs.' };
+    }
+
+    const participants = [this.match.player1Id, this.match.player2Id].filter((id): id is string => Boolean(id));
+    if (participants.length < 2) {
+      return { ok: false, message: 'This match does not have both players ready for AI verification.' };
+    }
+
+    const verification = this.ai.verifyGoalScoreFromScreenshot(
+      this.screenshotDataUrl,
+      this.screenshotFileName,
+      this.match.game,
+      participants[0],
+      participants[1]
+    );
+
+    if (!verification.valid || !verification.winnerId) {
+      return { ok: false, message: verification.reason || 'AI could not verify a winner from this screenshot.' };
+    }
+
+    this.winnerId = verification.winnerId;
+    this.aiStatus = `${verification.reason} Winner: ${this.arena.getUser(verification.winnerId)?.username || 'player'} (${verification.playerScores[verification.winnerId] ?? 0} goals).`;
+    this.aiError = '';
+    return { ok: true, message: verification.reason, winnerId: verification.winnerId };
+  }
+
   async submit() {
     if (this.isSubmitting) return;
     this.success = '';
+    this.aiError = '';
     if (this.isUploadLocked) {
       this.error = `You can upload only when match time is complete. Time left: ${this.uploadLockTimeLeft}.`;
       return;
     }
-    if (!this.winnerId || !this.matchId) {
-      this.error = 'Winner and match are required.';
+    if (!this.matchId) {
+      this.error = 'Match is required.';
       return;
     }
     if (this.match?.status !== 'live') {
@@ -107,8 +140,14 @@ export class ResultUploadPage {
       return;
     }
 
+    const aiCheck = this.verifyAiWinnerForCurrentScreenshot();
+    if (!aiCheck.ok) {
+      this.error = aiCheck.message;
+      return;
+    }
+
     if (this.currentUserId !== this.winnerId) {
-      this.error = 'You can only submit results for your own Game ID.';
+      this.error = 'AI verified a different winner. Only the winning player can submit this result.';
       return;
     }
 
@@ -127,7 +166,7 @@ export class ResultUploadPage {
     }
 
     this.error = '';
-    this.success = 'Result submitted. Your match is now pending admin verification.';
+    this.success = 'AI verified the score and your result is now pending admin review.';
     setTimeout(() => {
       this.router.navigate(['/matches', this.matchId]);
     }, 700);
@@ -163,10 +202,34 @@ export class ResultUploadPage {
         return;
       }
       this.error = '';
+      this.aiError = '';
+      this.aiStatus = 'Checking screenshot score and winner...';
       this.screenshotDataUrl = dataUrl;
       this.screenshotFileName = file.name;
       this.screenshotMimeType = file.type;
       this.screenshotSize = file.size;
+
+      if (!this.match) {
+        this.aiStatus = 'No active match found for this upload.';
+        return;
+      }
+
+      const verification = this.ai.verifyGoalScoreFromScreenshot(
+        dataUrl,
+        file.name,
+        this.match.game,
+        this.match.player1Id,
+        this.match.player2Id || this.match.player1Id
+      );
+
+      if (!verification.valid || !verification.winnerId) {
+        this.aiStatus = verification.reason;
+        this.aiError = 'AI could not confirm the winner from the screenshot. Please upload a clearer scoreboard image.';
+        return;
+      }
+
+      this.winnerId = verification.winnerId;
+      this.aiStatus = `${verification.reason} Winner confirmed as ${this.arena.getUser(verification.winnerId)?.username || 'player'}.`;
     };
     reader.readAsDataURL(file);
     input.value = '';
