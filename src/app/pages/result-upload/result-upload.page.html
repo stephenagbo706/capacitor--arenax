@@ -30,6 +30,10 @@
       <label class="ax-field">Match Screenshot
         <input class="ax-input" type="file" accept="image/png,image/jpeg" (change)="onScreenshotSelected($event)" [disabled]="isUploadLocked" />
       </label>
+
+      <p class="ax-status" *ngIf="aiStatus">{{ aiStatus }}</p>
+      <p class="ax-error" *ngIf="aiError">{{ aiError }}</p>
+
       <img *ngIf="screenshotDataUrl" class="proof-preview" [src]="screenshotDataUrl" alt="Screenshot preview" />
       <p class="ax-error" *ngIf="error">{{ error }}</p>
       <p class="success" *ngIf="success">{{ success }}</p>
